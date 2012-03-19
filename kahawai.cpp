@@ -115,8 +115,9 @@ bool InitKahawai()
 		}
 
 		kahawaiiConfigFile->ReadChar(role);
-
-		if(role == Client)
+		int iRole = atoi(&role);
+		//TODO: Fix this (atoi of a char)
+		if(iRole == Client)
 		{
 			kahawaiProcessId = Client;
 			fileSystem->CloseFile(kahawaiiConfigFile);
