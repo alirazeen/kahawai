@@ -92,6 +92,11 @@ bool InitMapping(int size)
 
 bool InitKahawai()
 {
+#ifdef NO_NETWORKING
+	return false; //cannot do KAHAWAI without networking
+#endif
+
+
 	idFile* kahawaiiConfigFile=NULL;
 	char role;
 
