@@ -1,4 +1,9 @@
 #include "kahawai.h"
+#include<iostream>
+#include<fstream>
+#include<string>
+
+using namespace std;
 
 KAHAWAI_MODE kahawaiProcessId = Undefined;
 HANDLE kahawaiMutex = NULL;
@@ -6,9 +11,15 @@ HANDLE kahawaiMap;
 HANDLE kahawaiSlaveBarrier;
 HANDLE kahawaiMasterBarrier;
 const char kahawaiMaster[8] = "leader\n";
-int kahawaiLoVideoMode;
-int kahawaiHiVideoMode;
+int kahawaiLoVideoHeight;
+int kahawaiLoVideoWidth;
+int kahawaiHiVideoHeight;
+int kahawaiHiVideoWidth;
+char kahawaiServerIP[75];
+int kahawaiServerPort;
+
 int kahawaiIFrameSkip; //to be used in I-Frame mode
+
 
 /*
 =================
@@ -97,8 +108,9 @@ bool InitKahawai()
 #endif
 
 
-	idFile* kahawaiiConfigFile=NULL;
-	char role;
+	ifstream kahawaiiConfigFile;
+	int server;
+	string line;
 
 	char loVideoMode;
 	char hiVideoMode;
@@ -106,42 +118,52 @@ bool InitKahawai()
 	//TODO:Something much fancier could be done here. but this will	if(fileSystem->IsInitialized())
 	{
 	
-		if(!fileSystem->IsInitialized())
-			fileSystem->Init();
 
-		if(!kahawaiiConfigFile)
+		kahawaiiConfigFile.open("kahawai.cfg",ios::in);
+		if(!kahawaiiConfigFile.is_open())
 		{
-			kahawaiiConfigFile = fileSystem->OpenFileRead("kahawai.cfg");
-			if(!kahawaiiConfigFile)
-			{
-				return false;
-			}
-
+			return false;
 		}
 
-		kahawaiiConfigFile->ReadChar(role);
-		int iRole = atoi(&role);
-		//TODO: Fix this (atoi of a char)
-		if(iRole == Client)
+		getline(kahawaiiConfigFile,line);
+		server = atoi(line.c_str());
+
+		if(!server==1)
 		{
 			kahawaiProcessId = Client;
-			fileSystem->CloseFile(kahawaiiConfigFile);
+			getline(kahawaiiConfigFile,line);
+			strcpy_s(kahawaiServerIP,line.c_str());
+
+			getline(kahawaiiConfigFile,line);
+			kahawaiServerPort=atoi(line.c_str());
+
+			kahawaiiConfigFile.close();
 			return true;
 		}
 		else //Otherwise is server, and can be either master or slave process. Determine through mapping
 		{
 			//read the configuration for the lo and hi resolution modes
-			kahawaiiConfigFile->ReadChar(loVideoMode);
-			kahawaiiConfigFile->ReadChar(hiVideoMode);
 
-			kahawaiLoVideoMode = atoi(&loVideoMode);
-			kahawaiHiVideoMode = atoi(&hiVideoMode);
+			getline(kahawaiiConfigFile,line);
+			kahawaiServerPort=atoi(line.c_str());
 
-			fileSystem->CloseFile(kahawaiiConfigFile);
+			getline(kahawaiiConfigFile,line);
+			kahawaiLoVideoWidth=atoi(line.c_str());
+
+			getline(kahawaiiConfigFile,line);
+			kahawaiLoVideoHeight=atoi(line.c_str());
+			
+			getline(kahawaiiConfigFile,line);
+			kahawaiHiVideoWidth=atoi(line.c_str());
+
+			getline(kahawaiiConfigFile,line);
+			kahawaiHiVideoHeight=atoi(line.c_str());
+
+			kahawaiiConfigFile.close();
 			//Initialize file mapping to share low resolution image between both processes
-			return InitMapping(KAHAWAI_WIDTH[kahawaiLoVideoMode] * KAHAWAI_HEIGHT[kahawaiLoVideoMode] * 3);
+			return InitMapping((kahawaiLoVideoHeight * kahawaiLoVideoWidth * 3)/2);
 		}
-
+		return 0;
 	}
 
 }
