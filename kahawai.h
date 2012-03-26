@@ -1,6 +1,7 @@
 #ifndef KAHAWAI_H
 #define KAHAWAI_H
 
+//Library includes
 #include <stdint.h>
 #include <stdio.h>
 #include <SDL.h>
@@ -42,14 +43,15 @@ extern "C" {
 
 #endif
 
-
-enum KAHAWAI_MODE { Master=0, Slave=1, Client=2, Undefined=3};
+//Defines, enums and constants
 #define MAPPING_SIZE (1024*768*3)+18
-
-#define KAHAWAI_MAP_FILE "kahawai.dat"
-
 const char kahawaiMaster[8] = "leader\n";
 
+#define KAHAWAI_MAP_FILE "kahawai.dat"
+#define KAHAWAI_CONFIG "kahawai.cfg"
+
+enum KAHAWAI_MODE { Master=0, Slave=1, Client=2, Undefined=3};
+enum ENCODING_PROFILE { Default, IPFrame};
 
 
 class Kahawai
@@ -59,22 +61,23 @@ private:
 
 
 	//SERVER IPC
-	KAHAWAI_MODE kahawaiProcessId;
-	HANDLE kahawaiMutex;
-	HANDLE kahawaiMap;
-	HANDLE kahawaiSlaveBarrier;
-	HANDLE kahawaiMasterBarrier;
+	KAHAWAI_MODE Role;
+	HANDLE Mutex;
+	HANDLE Map;
+	HANDLE SlaveBarrier;
+	HANDLE MasterBarrier;
+	byte* mappedBuffer;
 
 	//VIDEO QUALITY SETTINGS
-	int kahawaiLoVideoHeight;
-	int kahawaiLoVideoWidth;
-	int kahawaiHiVideoHeight;
-	int kahawaiHiVideoWidth;
-	int kahawaiIFrameSkip;
+	int LoVideoHeight;
+	int LoVideoWidth;
+	int HiVideoHeight;
+	int HiVideoWidth;
+	int IFrameSkip;
 
 	//NETWORK SETTINGS
-	int kahawaiServerPort;
-	char kahawaiServerIP[75];
+	int ServerPort;
+	char ServerIP[75];
 
 	//VIDEO ENCODING/DECODING STATE
 	bool x264_initialized;
@@ -83,21 +86,22 @@ private:
 	bool networkInitialized;
 	bool streamFinished;
 
+
 	//VIDEO STREAMING SERVER SOCKET
 	SOCKET kahawaiSocket;
 
-
+	//FFMPEG State
 	AVCodecContext *avcodec_opts[AVMEDIA_TYPE_NB];
 	AVDictionary *format_opts, *codec_opts;
 	AVFormatContext *pFormatCtx;
-	int i, videoStream;
+	int videoStream;
 	AVPacket packet;
 	AVCodecContext *pCodecCtx;
 	AVFrame *pFrame;
-
 	AVCodec *pCodec;
 	AVDictionary **opts;
 
+	//SDL Video player settings
 	SDL_Overlay     *bmp;
 	SDL_Surface     *screen;
 	SDL_Rect        rect;
@@ -110,6 +114,7 @@ private:
 		AVDictionary *codec_opts);
 
 	bool InitMapping(int size);
+	void MapRegion();
 	void ReadFrameBuffer( int width, int height, byte *buffer);
 	byte delta(byte hi, byte lo);
 	byte patch(byte delta, byte lo);
@@ -118,7 +123,7 @@ private:
 	bool initializeX264(int width, int height, int fps=60);
 	bool initializeFfmpeg();
 	int decodeAndShow(byte* low,int width, int height);
-
+	bool encodeAndSend(x264_picture_t* pic_in);
 
 
 public:
@@ -128,9 +133,10 @@ public:
 	bool isMaster();
 	bool isSlave();
 	bool isClient();
+	bool isServer();
 	KAHAWAI_MODE getRole();
 
-	void TakeScreenshot( int width, int height, const char *fileName, int blends);
+	void CaptureDelta( int width, int height, int frameNumber);
 
 };
 

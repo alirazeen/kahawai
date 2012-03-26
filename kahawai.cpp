@@ -12,6 +12,7 @@ Kahawai::Kahawai(void)
 	encoder = NULL;
 	ffmpeg_initialized = false;
 	networkInitialized = false;
+	mappedBuffer = NULL;
 }
 
 
@@ -42,7 +43,7 @@ bool Kahawai::InitMapping(int size)
 		return false;
 
 	//Init File Mapping Handle
-	kahawaiMap = CreateFileMapping
+	Map = CreateFileMapping
 		(sharedFile,
 		NULL,
 		PAGE_READWRITE,
@@ -50,34 +51,34 @@ bool Kahawai::InitMapping(int size)
 		size,
 		_T("SharedFile"));
 
-	if(!kahawaiMap)
+	if(!Map)
 		return false;
 
 	//Define a Mutex for accessing the file map.
-	kahawaiMutex = CreateMutex(
+	Mutex = CreateMutex(
 		NULL,
 		FALSE,
 		_T("FILE MUTEX"));
 
-	if(!kahawaiMutex)
+	if(!Mutex)
 		return false;
 
-	kahawaiSlaveBarrier = CreateEvent(
+	SlaveBarrier = CreateEvent(
 		NULL,
 		FALSE,
 		FALSE,
 		"KahawaiiSlave");
 
-	kahawaiMasterBarrier = CreateEvent(
+	MasterBarrier = CreateEvent(
 		NULL,
 		FALSE,
 		FALSE,
 		"KahawaiiMaster");
 
 
-	WaitForSingleObject(kahawaiMutex,INFINITE);
+	WaitForSingleObject(Mutex,INFINITE);
 
-	char* b = (char*) MapViewOfFile(kahawaiMap,
+	char* b = (char*) MapViewOfFile(Map,
 		FILE_MAP_ALL_ACCESS,
 		0,
 		0,
@@ -86,33 +87,34 @@ bool Kahawai::InitMapping(int size)
 	if(strcmp(kahawaiMaster,b)!=0)
 	{
 		strcpy(b,kahawaiMaster);
-		kahawaiProcessId = Master;
+		Role = Master;
 	}
 	else
 	{
-		kahawaiProcessId = Slave;
+		Role = Slave;
 	}
 
 	UnmapViewOfFile(b);
-	ReleaseMutex(kahawaiMutex);
+	ReleaseMutex(Mutex);
 
 	return true;
 }
 
+/********************************************************************************/
+/* Initialization of Kahawai. Must be called before using other Kahawai services*/
+/********************************************************************************/
 bool Kahawai::Init()
 {
 	ifstream kahawaiiConfigFile;
 	int server;
 	string line;
 
-	char loVideoMode;
-	char hiVideoMode;
 
-	//TODO:Something much fancier could be done here. but this will	if(fileSystem->IsInitialized())
+	//TODO:Something much fancier could be done here. 
 	{
 
 
-		kahawaiiConfigFile.open("kahawai.cfg",ios::in);
+		kahawaiiConfigFile.open(KAHAWAI_CONFIG,ios::in);
 		if(!kahawaiiConfigFile.is_open())
 		{
 			return false;
@@ -123,47 +125,53 @@ bool Kahawai::Init()
 
 		if(!server==1)
 		{
-			kahawaiProcessId = Client;
-			getline(kahawaiiConfigFile,line);
-			strcpy_s(kahawaiServerIP,line.c_str());
-
-			getline(kahawaiiConfigFile,line);
-			kahawaiServerPort=atoi(line.c_str());
-
-			kahawaiiConfigFile.close();
-			return true;
+			Role = Client;
 		}
 		else //Otherwise is server, and can be either master or slave process. Determine through mapping
 		{
+			Role = Master;//for now counts as master. Effective role assigned on InitMapping
+		}
 			//read the configuration for the lo and hi resolution modes
 
+		if(isClient())
+		{
 			getline(kahawaiiConfigFile,line);
-			kahawaiServerPort=atoi(line.c_str());
+			strcpy_s(ServerIP,line.c_str());
+		}
 
-			getline(kahawaiiConfigFile,line);
-			kahawaiLoVideoWidth=atoi(line.c_str());
+		getline(kahawaiiConfigFile,line);
+		ServerPort=atoi(line.c_str());
 
-			getline(kahawaiiConfigFile,line);
-			kahawaiLoVideoHeight=atoi(line.c_str());
+		getline(kahawaiiConfigFile,line);
+		LoVideoWidth=atoi(line.c_str());
 
-			getline(kahawaiiConfigFile,line);
-			kahawaiHiVideoWidth=atoi(line.c_str());
+		getline(kahawaiiConfigFile,line);
+		LoVideoHeight=atoi(line.c_str());
 
-			getline(kahawaiiConfigFile,line);
-			kahawaiHiVideoHeight=atoi(line.c_str());
+		getline(kahawaiiConfigFile,line);
+		HiVideoWidth=atoi(line.c_str());
 
+		getline(kahawaiiConfigFile,line);
+		HiVideoHeight=atoi(line.c_str());
+
+		if(isServer())
+		{
 			kahawaiiConfigFile.close();
 			//Initialize file mapping to share low resolution image between both processes
-			return InitMapping((kahawaiLoVideoHeight * kahawaiLoVideoWidth * 3)/2);
+			return InitMapping((LoVideoHeight * LoVideoWidth * 3)/2);
 		}
-		return 0;
+		else
+		{
+			kahawaiiConfigFile.close();
+			return true;
+		}
 	}
 
 }
 
 
-VOID Kahawai::ReadFrameBuffer(int width, int height, byte *buffer) {
-	//session->UpdateScreen();
+VOID Kahawai::ReadFrameBuffer(int width, int height, byte *buffer) 
+{
 	glReadBuffer( GL_FRONT );
 	glReadPixels( 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer ); 
 }
@@ -216,7 +224,7 @@ int Kahawai::initNetwork(){
 	networkInitialized = true;
 
 	//The port you want the server to listen on
-	int host_port= kahawaiServerPort;
+	int host_port= ServerPort;
 
 	//Initialize socket support WINDOWS ONLY!
 	unsigned short wVersionRequested;
@@ -288,9 +296,9 @@ int Kahawai::initNetwork(){
 bool Kahawai::initializeX264(int width, int height, int fps)
 {
 	x264_param_t param;
-	x264_nal_t *headers;
-	int i_nal;
 
+
+	//define compression parameters
 	x264_param_default_preset(&param, "veryfast", "zerolatency");
 	param.i_threads = 1;
 	param.i_width = width;
@@ -310,11 +318,6 @@ bool Kahawai::initializeX264(int width, int height, int fps)
 	x264_param_apply_profile(&param, "baseline");
 	x264_initialized = true;
 	encoder = x264_encoder_open(&param);
-	//x264_encoder_headers( encoder, &headers, &i_nal );
-
-	//idFile* movieOut;
-	//movieOut = fileSystem->WriteFile("kahawai.h264",headers->p_payload)
-
 
 	return true;
 }
@@ -340,28 +343,28 @@ bool Kahawai::initializeFfmpeg()
 	pFormatCtx->flags |= 0x0080;
 	// Open video file
 	char url[100];
-	sprintf_s(url,100,"tcp://%s:%d",kahawaiServerIP,kahawaiServerPort);
+	sprintf_s(url,100,"tcp://%s:%d",ServerIP,ServerPort);
 
 	if (avformat_open_input(&pFormatCtx, url, NULL, NULL) != 0)
-		return -1; // Couldn't open file
+		return false; // Couldn't open file
 
 	opts = setup_find_stream_info_opts(pFormatCtx, codec_opts);
 	// Retrieve stream information
 	if (avformat_find_stream_info(pFormatCtx, opts) < 0)
-		return -1; // Couldn't find stream information
+		return false; // Couldn't find stream information
 
 	// Dump information about file onto standard error
 	av_dump_format(pFormatCtx, 0, "kahawai.264", 0);
 
 	// Find the first video stream
 	videoStream = -1;
-	for (i = 0; i < pFormatCtx->nb_streams; i++)
+	for (unsigned int i = 0; i < pFormatCtx->nb_streams; i++)
 		if (pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
 			videoStream = i;
 			break;
 		}
 		if (videoStream == -1)
-			return -1; // Didn't find a video stream
+			return false; // Didn't find a video stream
 
 		// Get a pointer to the codec context for the video stream
 		pCodecCtx = pFormatCtx->streams[videoStream]->codec;
@@ -370,11 +373,11 @@ bool Kahawai::initializeFfmpeg()
 		pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
 		if (pCodec == NULL) {
 			fprintf(stderr, "Unsupported codec!\n");
-			return -1; // Codec not found
+			return false; // Codec not found
 		}
 		// Open codec
 		if (avcodec_open2(pCodecCtx, pCodec, opts) < 0)
-			return -1; // Could not open codec
+			return false; // Could not open codec
 
 		// Allocate video frame
 		pFrame = avcodec_alloc_frame();
@@ -396,6 +399,59 @@ bool Kahawai::initializeFfmpeg()
 		return true;
 }
 
+bool Kahawai::encodeAndSend(x264_picture_t* pic_in)
+{
+	int					i, c;
+	x264_picture_t		pic_out;
+	x264_nal_t*			nals;
+	int					i_nals;
+
+	#ifdef WRITE_CAPTURE
+	fileSystem->WriteFile( fileName, pic_in.img.plane[0], c );
+	#endif
+
+	c = (HiVideoWidth * HiVideoHeight * 3)/2; //YUV420p 4 bytes each 6 pixels
+
+	//Apply delta to each byte of the image
+	for (i=0 ; i<c ; i+=3) {
+		pic_in->img.plane[0][i] = delta(pic_in->img.plane[0][i],mappedBuffer[i]);
+		pic_in->img.plane[0][i+1] = delta(pic_in->img.plane[0][i+1],mappedBuffer[i+1]);
+		pic_in->img.plane[0][i+2] = delta(pic_in->img.plane[0][i+2],mappedBuffer[i+2]);
+	}
+
+
+#ifdef WRITE_DELTA
+	fileSystem->WriteFile( fileName, pic_in.img.plane[0], c );
+#endif
+
+	//Encode the frame
+	int frame_size = x264_encoder_encode(encoder, &nals, &i_nals, pic_in, &pic_out);
+
+	#ifdef WRITE_VIDEO		
+	if (frame_size >= 0)
+	{
+		idFile* movieOut;
+		movieOut = fileSystem->OpenFileAppend("kahawai.h264");
+
+		//fileSystem->WriteFile( fileName, pic_out.img.plane[0], frame_size );
+		movieOut->Write(nals[0].p_payload, frame_size);
+		fileSystem->CloseFile(movieOut);
+
+	}
+	#endif
+
+	//write to TCP socket
+	if (frame_size >= 0)
+	{
+		initNetwork();
+		send(kahawaiSocket,(char*) nals[0].p_payload,frame_size,0);
+	}
+
+	return true;
+
+}
+
+
 int Kahawai::decodeAndShow(byte* low,int width, int height)
 {
 	int frameFinished = 0;
@@ -412,7 +468,6 @@ int Kahawai::decodeAndShow(byte* low,int width, int height)
 			{
 				// Decode video frame
 				avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
-				i++;
 				// Did we get a video frame?
 				if (frameFinished) 
 				{
@@ -438,7 +493,7 @@ int Kahawai::decodeAndShow(byte* low,int width, int height)
 						pict.linesize);
 
 					int c = (width * height *3)/2; //YUV420p 4 bytes each 6 pixels
-					for (i=0 ; i<c ; i+=3) {
+					for (int i=0 ; i<c ; i+=3) {
 						pict.data[0][i] = patch(pict.data[0][i],low[i]);
 						pict.data[0][i+1] = patch(pict.data[0][i+1],low[i+1]);
 						pict.data[0][i+2] = patch(pict.data[0][i+2],low[i+2]);
@@ -473,8 +528,6 @@ int Kahawai::decodeAndShow(byte* low,int width, int height)
 		}
 		else
 		{
-			// Free the RGB image
-
 			// Free the YUV frame
 			av_free(pFrame);
 
@@ -484,7 +537,7 @@ int Kahawai::decodeAndShow(byte* low,int width, int height)
 			// Close the video file
 			av_close_input_file(pFormatCtx);
 			frameFinished = 1;
-			streamFinished;
+			streamFinished = true;
 		}
 
 	}
@@ -492,154 +545,107 @@ int Kahawai::decodeAndShow(byte* low,int width, int height)
 	return 0;
 }
 
-/*
-================== 
-CaptureDelta
 
-Move to tr_imagefiles.c...
-
-Will automatically tile render large screen shots if necessary
-Downsample is the number of steps to mipmap the image before saving it
-If ref == NULL, session->updateScreen will be used
-================== 
-*/  
-void Kahawai::TakeScreenshot( int width, int height, const char *fileName, int blends) {
-	byte		*buffer;
-	byte		*loBuffer; //only used by master
-	int			i, j, c;
-	x264_picture_t pic_in, pic_out;
-
-	//Synchronize both processes if running at the server
-	if(kahawaiProcessId==Master)
-	{
-		if(!x264_initialized)
-			initializeX264(width,height);
-
-		//signal and wait for slave
-		SetEvent(kahawaiMasterBarrier);
-		WaitForSingleObject(kahawaiSlaveBarrier, INFINITE);
-	}
-	if(kahawaiProcessId==Slave)
-	{
-		//signal and wait for master
-		SetEvent(kahawaiSlaveBarrier);
-		WaitForSingleObject(kahawaiMasterBarrier,INFINITE);
-	}
-
-	int	pix = width * height;
-
-	buffer =  new byte[3*pix];
-
-	ReadFrameBuffer( width, height, buffer);
-
-	//If master Read Low definition
-	if(kahawaiProcessId==Master)
+void Kahawai::MapRegion()
+{
+	if(Role==Master)
 	{
 		//while the slave will write the low detail version to a memory mapped file
-		loBuffer = (byte*) MapViewOfFile(kahawaiMap,
+		mappedBuffer = (byte*) MapViewOfFile(Map,
 			FILE_MAP_READ,
 			0,
 			0,
-			(pix*3)/2);
+			(LoVideoWidth*LoVideoHeight*3)/2);
 
 	}
-	if(kahawaiProcessId==Slave)
+	if(Role==Slave)
 	{
 		//while the slave will write the low detail version to a memory mapped file
-		loBuffer = (byte*) MapViewOfFile(kahawaiMap,
+		mappedBuffer = (byte*) MapViewOfFile(Map,
 			FILE_MAP_WRITE,
 			0,
 			0,
-			(pix*3)/2);
+			(LoVideoWidth*LoVideoHeight*3)/2);
+	}
+}
+
+/*
+================== 
+CaptureDelta
+================== 
+*/  
+void Kahawai::CaptureDelta( int width, int height, int frameNumber) {
+
+	int					pix				= width * height;
+	byte*				buffer			= new byte[3*pix];
+	struct SwsContext*	convertCtx;
+	x264_picture_t		pic_in;
+
+	//1. Capture screen to buffer
+	ReadFrameBuffer( width, height, buffer);
+
+	//2. Synchronize both processes if running at the server
+	if(Role==Master)
+	{
+		//signal and wait for slave
+		SetEvent(MasterBarrier);
+		WaitForSingleObject(SlaveBarrier, INFINITE);
+	}
+	if(Role==Slave)
+	{
+		//signal and wait for master
+		SetEvent(SlaveBarrier);
+		WaitForSingleObject(MasterBarrier,INFINITE);
 	}
 
+	//3. Get Memory Mapped Region
+	if(isServer() && mappedBuffer==NULL)
+		MapRegion();
 
+	//4. Transformed (and scale) captured screen to YUV420p at target high resolution
+	//Libswscale flips the image when converting it. Flip it in advance, to later get the correct converted image
 	verticalFlip(width,height, buffer,3);
 
-	// _D3XP adds viewnote screenie save to cdpath
-	uint8_t;
-	//data is a pointer to you RGB structure
-	x264_picture_alloc(&pic_in, X264_CSP_I420, width, height);
 	int srcstride = width*3; //RGB stride is just 3*width
 
-	//TODO: (KAHAWAI) Change the context in slave mode to adjust the input resolution
-	struct SwsContext* convertCtx = sws_getContext(width, height, PIX_FMT_RGB24, width, height, PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+	//Allocate the x264 picture structure
+	if(!x264_initialized)
+		initializeX264(HiVideoWidth,HiVideoHeight);
+
+	x264_picture_alloc(&pic_in, X264_CSP_I420, HiVideoWidth, HiVideoHeight);
+
+	//Convert the image to YUV420
+	if(Role==Master)
+	{
+		convertCtx = sws_getContext(width, height, PIX_FMT_RGB24, width, height, PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+	}
+	else
+	{	//TODO: Need to validate wheter bilinear against bicubic is worth it. (Specially at the client)
+		convertCtx = sws_getContext(width, height, PIX_FMT_RGB24, width, height, PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+	}
 
 	uint8_t *src[3]= {buffer, NULL, NULL}; 
 	sws_scale(convertCtx, src, &srcstride, 0, height, pic_in.img.plane, pic_in.img.i_stride);
 
-	if(kahawaiProcessId==Slave)
+	//5. Role specific 
+	switch(Role)
 	{
+	case Master:
+		encodeAndSend(&pic_in);
+		break;
+	case Slave:
 		//write to mapped file
-		memcpy(loBuffer,pic_in.img.plane[0],(width*height*3)/2);
-	}
-
-	//If client read from socket
-	if(kahawaiProcessId==Client)
-	{
-
+		memcpy(mappedBuffer,pic_in.img.plane[0],(width*height*3)/2);
+		break;
+	case Client:
 		initializeFfmpeg();
 		decodeAndShow(pic_in.img.plane[0], width, height);
-
-
 	}
 
-
-	if(kahawaiProcessId==Master)
+	//6. Cleanup
+	if(Role!=Client)
 	{
-
-		c = (width * height * 3)/2; //YUV420p 4 bytes each 6 pixels
-		//#ifdef WRITE_CAPTURE
-		//fileSystem->WriteFile( fileName, pic_in.img.plane[0], c );
-		//#endif
-
-		for (i=0 ; i<c ; i+=3) {
-			pic_in.img.plane[0][i] = delta(pic_in.img.plane[0][i],loBuffer[i]);
-			pic_in.img.plane[0][i+1] = delta(pic_in.img.plane[0][i+1],loBuffer[i+1]);
-			pic_in.img.plane[0][i+2] = delta(pic_in.img.plane[0][i+2],loBuffer[i+2]);
-		}
-
-
-
-#ifdef WRITE_DELTA
-		fileSystem->WriteFile( fileName, pic_in.img.plane[0], c );
-#endif
-		x264_nal_t* nals;
-		int i_nals;
-
-		int frame_size = x264_encoder_encode(encoder, &nals, &i_nals, &pic_in, &pic_out);
-
-		//this should go to a socket or to rtsp
-#ifdef WRITE_VIDEO		
-		if (frame_size >= 0)
-		{
-			idFile* movieOut;
-			movieOut = fileSystem->OpenFileAppend("kahawai.h264");
-
-			//fileSystem->WriteFile( fileName, pic_out.img.plane[0], frame_size );
-			movieOut->Write(nals[0].p_payload, frame_size);
-			fileSystem->CloseFile(movieOut);
-
-		}
-#endif
-
-		//write to TCP socket
-		if (frame_size >= 0)
-		{
-			initNetwork();
-			send(kahawaiSocket,(char*) nals[0].p_payload,frame_size,0);
-		}
-
-
-
-	}
-
-
-	if(kahawaiProcessId!=Client)
-	{
-		//Free x264 pictures
 		sws_freeContext(convertCtx);
-		UnmapViewOfFile(loBuffer);
 	}
 
 	x264_picture_clean(&pic_in);
@@ -649,22 +655,27 @@ void Kahawai::TakeScreenshot( int width, int height, const char *fileName, int b
 
 bool Kahawai::isMaster()
 {
-	return kahawaiProcessId == Master;
+	return Role == Master;
 }
 
 bool Kahawai::isSlave()
 {
-	return kahawaiProcessId == Slave;
+	return Role == Slave;
 }
 
 bool Kahawai::isClient()
 {
-	return kahawaiProcessId == Client;
+	return Role == Client;
+}
+
+bool Kahawai::isServer()
+{
+	return Role != Client;
 }
 
 KAHAWAI_MODE Kahawai::getRole()
 {
-	return kahawaiProcessId;
+	return Role;
 }
 
 
@@ -716,7 +727,6 @@ AVDictionary* Kahawai::filter_codec_opts(AVDictionary *opts, enum CodecID codec_
 
 AVDictionary** Kahawai::setup_find_stream_info_opts(AVFormatContext *s,
 	AVDictionary *codec_opts) {
-		int i;
 		AVDictionary **opts;
 
 		if (!s->nb_streams)
@@ -727,7 +737,7 @@ AVDictionary** Kahawai::setup_find_stream_info_opts(AVFormatContext *s,
 				"Could not alloc memory for stream options.\n");
 			return NULL;
 		}
-		for (i = 0; i < s->nb_streams; i++)
+		for (unsigned int i = 0; i < s->nb_streams; i++)
 			opts[i] = filter_codec_opts(codec_opts, s->streams[i]->codec->codec_id,
 			0);
 		return opts;
