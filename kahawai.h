@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <SDL.h>
 #include <SDL_thread.h>
+#include <assert.h>
 
 extern "C" {
 #include "x264.h"
@@ -44,99 +45,127 @@ extern "C" {
 #endif
 
 //Defines, enums and constants
-#define MAPPING_SIZE (1024*768*3)+18
+
 const char kahawaiMaster[8] = "leader\n";
 
 #define KAHAWAI_MAP_FILE "kahawai.dat"
 #define KAHAWAI_CONFIG "kahawai.cfg"
 
 enum KAHAWAI_MODE { Master=0, Slave=1, Client=2, Undefined=3};
-enum ENCODING_PROFILE { Default, IPFrame};
-
+enum ENCODING_PROFILE { DeltaEncoding, IPFrame};
 
 class Kahawai
 {
 private:
 
+	//Execution mode
 
+	ENCODING_PROFILE profile;
+
+	//I-Frame encoding state
+	int _iFps;
+	bool _decodeThreadInitialized;
+	byte* _iFrameBuffer;
+
+
+	//Kahawai Rendered Frames
+	int _renderedFrames;
+	int _fps; //target game FPS
+	bool _offloading;
+	int _decodedServerFrames;
+
+	//time Interception
+	int _sys_timeBase;
+	int _sys_prevFrame;
+	int _sys_prevTime;
+	bool _timeInitialized;
+	int _timeStep;
 
 	//SERVER IPC
-	KAHAWAI_MODE Role;
-	HANDLE Mutex;
-	HANDLE Map;
-	HANDLE SlaveBarrier;
-	HANDLE MasterBarrier;
-	byte* mappedBuffer;
+	KAHAWAI_MODE _role;
+	HANDLE _mutex;
+	HANDLE _map;
+	HANDLE _slaveBarrier;
+	HANDLE _masterBarrier;
+	byte* _mappedBuffer;
 
 	//VIDEO QUALITY SETTINGS
-	int LoVideoHeight;
-	int LoVideoWidth;
-	int HiVideoHeight;
-	int HiVideoWidth;
-	int IFrameSkip;
+	int _loVideoHeight;
+	int _loVideoWidth;
+	int _hiVideoHeight;
+	int _hiVideoWidth;
+	int _iFrameSkip;
+	int _hiFrameSize;
 
 	//NETWORK SETTINGS
-	int ServerPort;
-	char ServerIP[75];
+	int _serverPort;
+	char _serverIP[75];
 
 	//VIDEO ENCODING/DECODING STATE
-	bool x264_initialized;
-	x264_t* encoder;
-	bool ffmpeg_initialized;
-	bool networkInitialized;
-	bool streamFinished;
+	bool _x264_initialized;
+	x264_t* _encoder;
+	bool _ffmpeg_initialized;
+	bool _networkInitialized;
+	bool _streamFinished;
 
 
 	//VIDEO STREAMING SERVER SOCKET
-	SOCKET kahawaiSocket;
+	SOCKET _socket;
 
 	//FFMPEG State
-	AVCodecContext *avcodec_opts[AVMEDIA_TYPE_NB];
-	AVDictionary *format_opts, *codec_opts;
-	AVFormatContext *pFormatCtx;
-	int videoStream;
-	AVPacket packet;
-	AVCodecContext *pCodecCtx;
-	AVFrame *pFrame;
-	AVCodec *pCodec;
-	AVDictionary **opts;
+	AVCodecContext*		_avcodec_opts[AVMEDIA_TYPE_NB];
+	AVDictionary*		_pFormat_opts;
+	AVDictionary*		_pCodec_opts;
+	AVFormatContext*	_pFormatCtx;
+	int					_pVideoStream;
+	AVCodecContext*		_pCodecCtx;
+	AVFrame*			_pFrame;
+	AVCodec*			_pCodec;
+	AVDictionary**		opts;
 
 	//SDL Video player settings
-	SDL_Overlay     *bmp;
-	SDL_Surface     *screen;
-	SDL_Rect        rect;
-	SDL_Event       event;
+	SDL_Overlay*		_pBmp;
+	SDL_Surface*		_pScreen;
+	SDL_Rect			_screenRect;
 
-	AVDictionary *filter_codec_opts(AVDictionary *opts, enum CodecID codec_id,
+	AVDictionary *FilterCodecOptions(AVDictionary *opts, enum CodecID codec_id,
 		int encoder);
 
-	AVDictionary **setup_find_stream_info_opts(AVFormatContext *s,
-		AVDictionary *codec_opts);
+	AVDictionary **SetupFindStreamInfoOptions(AVFormatContext *s,
+		AVDictionary *pCodec_opts);
 
 	bool InitMapping(int size);
 	void MapRegion();
 	void ReadFrameBuffer( int width, int height, byte *buffer);
-	byte delta(byte hi, byte lo);
-	byte patch(byte delta, byte lo);
-	void verticalFlip(int width, int height, byte* pixelData, int bitsPerPixel);
-	int initNetwork();
-	bool initializeX264(int width, int height, int fps=60);
-	bool initializeFfmpeg();
-	int decodeAndShow(byte* low,int width, int height);
-	bool encodeAndSend(x264_picture_t* pic_in);
+	int InitNetwork();
+	bool InitializeX264(int width, int height, int fps=60);
+	bool InitializeFfmpeg();
+	bool InitializeIFrameSharing();
+	int DecodeAndShow(byte* low,int width, int height);
+	int DecodeAndMix(int width, int height);
+	bool EncodeAndSend(x264_picture_t* pic_in);
+	bool EncodeIFrames(x264_picture_t* pic_in);
 
 
 public:
 	Kahawai(void);
 	~Kahawai(void);
 	bool Init();
-	bool isMaster();
-	bool isSlave();
-	bool isClient();
-	bool isServer();
-	KAHAWAI_MODE getRole();
+	bool IsMaster();
+	bool IsSlave();
+	bool IsClient();
+	bool IsServer();
+	bool IsDelta();
+	bool IsIFrame();
+	bool IsOffloading();
+	ENCODING_PROFILE GetMode();
 
+	KAHAWAI_MODE GetRole();
+
+	void OffloadVideo( int width, int height, int frameNumber);
 	void CaptureDelta( int width, int height, int frameNumber);
+	void CaptureIFrame( int width, int height, int frameNumber);
+	int Sys_Milliseconds();
 
 };
 
