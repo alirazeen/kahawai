@@ -50,6 +50,8 @@ const char kahawaiMaster[8] = "leader\n";
 
 #define KAHAWAI_MAP_FILE "kahawai.dat"
 #define KAHAWAI_CONFIG "kahawai.cfg"
+#define FIRST_VIDEO_STREAM 0
+
 
 enum KAHAWAI_MODE { Master=0, Slave=1, Client=2, Undefined=3};
 enum ENCODING_PROFILE { DeltaEncoding, IPFrame};
@@ -67,6 +69,8 @@ private:
 	bool _decodeThreadInitialized;
 	byte* _iFrameBuffer;
 
+	//Delta encoding state
+	bool _loadedDeltaStream;
 
 	//Kahawai Rendered Frames
 	int _renderedFrames;
@@ -106,6 +110,7 @@ private:
 	x264_t* _encoder;
 	bool _ffmpeg_initialized;
 	bool _networkInitialized;
+	bool _sdlInitialized;
 	bool _streamFinished;
 
 
@@ -113,18 +118,21 @@ private:
 	SOCKET _socket;
 
 	//FFMPEG State
-	AVCodecContext*		_avcodec_opts[AVMEDIA_TYPE_NB];
-	AVDictionary*		_pFormat_opts;
-	AVDictionary*		_pCodec_opts;
+	////AVCodecContext*		_avcodec_opts[AVMEDIA_TYPE_NB];
+	//AVDictionary*		_pFormat_opts;
+	////AVDictionary*		_pCodec_opts;
+
 	AVFormatContext*	_pFormatCtx;
-	int					_pVideoStream;
 	AVCodecContext*		_pCodecCtx;
 	AVFrame*			_pFrame;
-	AVCodec*			_pCodec;
+
+	//int					_pVideoStream;
+	//AVCodec*			_pCodec;
+
 	AVDictionary**		opts;
 
 	//SDL Video player settings
-	SDL_Overlay*		_pBmp;
+	SDL_Overlay*		_pYuvOverlay;
 	SDL_Surface*		_pScreen;
 	SDL_Rect			_screenRect;
 
@@ -137,15 +145,21 @@ private:
 	bool InitMapping(int size);
 	void MapRegion();
 	void ReadFrameBuffer( int width, int height, byte *buffer);
-	int InitNetwork();
+	bool InitNetwork();
 	bool InitializeX264(int width, int height, int fps=60);
 	bool InitializeFfmpeg();
 	bool InitializeIFrameSharing();
-	int DecodeAndShow(byte* low,int width, int height);
-	int DecodeAndMix(int width, int height);
+	bool InitializeSDL();
+
+	bool DecodeAndShow(byte* low,int width, int height);
+	bool DecodeAndMix(int width, int height);
 	bool EncodeAndSend(x264_picture_t* pic_in);
 	bool EncodeIFrames(x264_picture_t* pic_in);
 
+	bool LoadVideo(char* IP, int port, 
+		AVFormatContext**	pFormatCtx, 
+		AVCodecContext**	pCodecCtx, 
+		AVFrame**			pFrame);
 
 public:
 	Kahawai(void);

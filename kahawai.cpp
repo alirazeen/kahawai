@@ -78,6 +78,8 @@ Kahawai::Kahawai(void)
 	_fps=60;
 	_offloading = false;
 	_decodedServerFrames = 0;
+	_sdlInitialized = false;
+	_loadedDeltaStream = false;
 
 
 }
@@ -304,7 +306,7 @@ VOID Kahawai::ReadFrameBuffer(int width, int height, byte *buffer)
 }
 
 
-int Kahawai::InitNetwork(){
+bool Kahawai::InitNetwork(){
 
 	if(_networkInitialized)
 		return true;
@@ -323,7 +325,7 @@ int Kahawai::InitNetwork(){
 	if ( err != 0 || ( LOBYTE( wsaData.wVersion ) != 2 ||
 		HIBYTE( wsaData.wVersion ) != 2 )) {
 			//"Could not find useable sock dll %d\n",WSAGetLastError());
-			return -1;
+			return false;
 	}
 
 	//Initialize sockets and set any options
@@ -332,7 +334,7 @@ int Kahawai::InitNetwork(){
 	hsock = socket(AF_INET, SOCK_STREAM, 0);
 	if(hsock == -1){
 		//"Error initializing socket %d\n",WSAGetLastError());
-		return -1;
+		return false;
 	}
 
 	p_int = (int*)malloc(sizeof(int));
@@ -341,7 +343,7 @@ int Kahawai::InitNetwork(){
 		(setsockopt(hsock, SOL_SOCKET, SO_KEEPALIVE, (char*)p_int, sizeof(int)) == -1 ) ){
 			//"Error setting options %d\n", WSAGetLastError());
 			free(p_int);
-			return -1;
+			return false;
 	}
 	free(p_int);
 
@@ -356,11 +358,11 @@ int Kahawai::InitNetwork(){
 
 	if( bind( hsock, (struct sockaddr*)&my_addr, sizeof(my_addr)) == -1 ){
 		//"Error binding to socket, make sure nothing else is listening on this port %d\n",WSAGetLastError());
-		return -1;
+		return false;
 	}
 	if(listen( hsock, 10) == -1 ){
 		//"Error listening %d\n",WSAGetLastError());
-		return -1;
+		return false;
 	}	
 
 	//Now lets to the server stuff
@@ -371,11 +373,11 @@ int Kahawai::InitNetwork(){
 	while(true){
 
 		if((_socket = accept( hsock, (SOCKADDR*)&sadr, &addr_size))!= INVALID_SOCKET ){
-			return 0;
+			return true;
 		}
 		else
 		{
-			return -1;
+			return false;
 		}
 	}
 }
@@ -468,10 +470,90 @@ bool Kahawai::InitializeX264(int width, int height, int fps)
 	return true;
 }
 
+/************************************************************************/
+/* Initializes SDL to show video at the target high resolution          */
+/************************************************************************/
+bool Kahawai::InitializeSDL()
+{
+	if(_sdlInitialized)
+		return true;
+
+	//Initialize SDL Library
+	if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
+		fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
+		return false;
+	}
+
+	// Make a screen to put our video
+	_pScreen = SDL_SetVideoMode(_hiVideoWidth, _hiVideoHeight, 0, 0);
+	if(!_pScreen) {
+		fprintf(stderr, "SDL: could not set video mode - exiting\n");
+		exit(1);
+	}
+
+	// Allocate a place to put our YUV image on that screen
+	_pYuvOverlay = SDL_CreateYUVOverlay(_hiVideoWidth,
+		_hiVideoHeight,
+		SDL_IYUV_OVERLAY,
+		_pScreen);
+
+	_sdlInitialized = true;
+
+	return true;
+}
+
+bool Kahawai::LoadVideo(char* IP, int port, 
+	AVFormatContext**	ppFormatCtx, 
+	AVCodecContext**	ppCodecCtx, 
+	AVFrame**			ppFrame)
+{
+
+	AVCodec*			pCodec;
+	AVDictionary*		pCodec_opts = NULL;
+	AVDictionary**		opts;
+
+	*ppFormatCtx = avformat_alloc_context();
+	(*ppFormatCtx)->flags |= AVFMT_FLAG_CUSTOM_IO;
+
+	// Open video file
+	char url[100];
+	sprintf_s(url,100,"tcp://%s:%d",IP,port);
+
+	if (avformat_open_input(ppFormatCtx, url, NULL, NULL) != 0)
+		return false; // Couldn't open file
+
+	opts = SetupFindStreamInfoOptions(*ppFormatCtx, pCodec_opts);
+	// Retrieve stream information
+	if (avformat_find_stream_info(*ppFormatCtx, opts) < 0)
+		return false; // Couldn't find stream information
+
+	// Raw video. We only have one video stream (FIRST_VIDEO_STREAM)
+	// If more streams have to be used. Find the right one iterating through _pFormatCtx->streams
+	// Get a pointer to the codec context for the video stream
+	*ppCodecCtx = (*ppFormatCtx)->streams[FIRST_VIDEO_STREAM]->codec;
+
+	// Find the decoder for the video stream
+	pCodec = avcodec_find_decoder((*ppCodecCtx)->codec_id);
+	if (pCodec == NULL) {
+		fprintf(stderr, "Unsupported codec!\n");
+		return false; // Codec not found
+	}
+	// Open codec
+	if (avcodec_open2(*ppCodecCtx, pCodec, opts) < 0)
+		return false; // Could not open codec
+
+	// Allocate video frame
+	*ppFrame = avcodec_alloc_frame();
+
+	return true;
+
+}
+
 bool Kahawai::InitializeFfmpeg()
 {
+
 	if(_ffmpeg_initialized)
-		return 0;
+		return true;
 
 	_ffmpeg_initialized = true;
 
@@ -479,99 +561,8 @@ bool Kahawai::InitializeFfmpeg()
 	av_log_set_flags(AV_LOG_SKIP_REPEATED);
 	av_register_all();
 
-	if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
-		fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
-		return false;
-	}
-
-	_pFormatCtx = avformat_alloc_context();
-	_pFormatCtx->flags |= AVFMT_FLAG_CUSTOM_IO;
-
-	// Open video file
-	char url[100];
-	sprintf_s(url,100,"tcp://%s:%d",_serverIP,_serverPort);
-
-	if (avformat_open_input(&_pFormatCtx, url, NULL, NULL) != 0)
-		return false; // Couldn't open file
-
-	opts = SetupFindStreamInfoOptions(_pFormatCtx, _pCodec_opts);
-	// Retrieve stream information
-	if (avformat_find_stream_info(_pFormatCtx, opts) < 0)
-		return false; // Couldn't find stream information
-
-	// Find the first video stream
-	_pVideoStream = -1;
-	for (unsigned int i = 0; i < _pFormatCtx->nb_streams; i++)
-		if (_pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
-			_pVideoStream = i;
-			break;
-		}
-		if (_pVideoStream == -1)
-			return false; // Didn't find a video stream
-
-		// Get a pointer to the codec context for the video stream
-		_pCodecCtx = _pFormatCtx->streams[_pVideoStream]->codec;
-
-		// Find the decoder for the video stream
-		_pCodec = avcodec_find_decoder(_pCodecCtx->codec_id);
-		if (_pCodec == NULL) {
-			fprintf(stderr, "Unsupported codec!\n");
-			return false; // Codec not found
-		}
-		// Open codec
-		if (avcodec_open2(_pCodecCtx, _pCodec, opts) < 0)
-			return false; // Could not open codec
-
-		// Allocate video frame
-		_pFrame = avcodec_alloc_frame();
-
-		// Make a screen to put our video
-		_pScreen = SDL_SetVideoMode(_pCodecCtx->width, _pCodecCtx->height, 0, 0);
-		if(!_pScreen) {
-			fprintf(stderr, "SDL: could not set video mode - exiting\n");
-			exit(1);
-		}
-
-		// Allocate a place to put our YUV image on that screen
-		_pBmp = SDL_CreateYUVOverlay(_pCodecCtx->width,
-			_pCodecCtx->height,
-			SDL_IYUV_OVERLAY,
-			_pScreen);
-
-
-		return true;
-}
-
-bool Kahawai::EncodeIFrames(x264_picture_t* pic_in)
-{
-	x264_picture_t		pic_out;
-	x264_nal_t*			nals;
-	int					i_nals;
-
-#ifdef WRITE_CAPTURE
-	fileSystem->WriteFile( fileName, pic_in.img.plane[0], c );
-#endif
-
-
-	//Encode the frame
-	int frame_size = x264_encoder_encode(_encoder, &nals, &i_nals, pic_in, &pic_out);
-
-//#ifdef WRITE_IFRAME
-	if (frame_size >= 0)
-	{
-		ofstream movieOut ("i-frames.h264", ios::out | ios::binary | ios::app);
-		movieOut.write((char*)nals[0].p_payload, frame_size);
-		movieOut.close();
-	}
-//#endif
-
-	//Copy the I-Frame data to the buffer
-	memcpy(_iFrameBuffer,(char*)nals[0].p_payload,frame_size);
-	
 	return true;
-
 }
-
 
 bool Kahawai::EncodeAndSend(x264_picture_t* pic_in)
 {
@@ -579,10 +570,6 @@ bool Kahawai::EncodeAndSend(x264_picture_t* pic_in)
 	x264_picture_t		pic_out;
 	x264_nal_t*			nals;
 	int					i_nals;
-
-	#ifdef WRITE_CAPTURE
-	fileSystem->WriteFile( fileName, pic_in.img.plane[0], c );
-	#endif
 
 	c = (_hiVideoWidth * _hiVideoHeight * 3)/2; //YUV420p 4 bytes each 6 pixels
 
@@ -594,25 +581,8 @@ bool Kahawai::EncodeAndSend(x264_picture_t* pic_in)
 	}
 
 
-#ifdef WRITE_DELTA
-	fileSystem->WriteFile( fileName, pic_in.img.plane[0], c );
-#endif
-
 	//Encode the frame
 	int frame_size = x264_encoder_encode(_encoder, &nals, &i_nals, pic_in, &pic_out);
-
-	#ifdef WRITE_VIDEO		
-	if (frame_size >= 0)
-	{
-		idFile* movieOut;
-		movieOut = fileSystem->OpenFileAppend("kahawai.h264");
-
-		//fileSystem->WriteFile( fileName, pic_out.img.plane[0], frame_size );
-		movieOut->Write(nals[0].p_payload, frame_size);
-		fileSystem->CloseFile(movieOut);
-
-	}
-	#endif
 
 	//write to TCP socket
 	if (frame_size >= 0)
@@ -620,6 +590,31 @@ bool Kahawai::EncodeAndSend(x264_picture_t* pic_in)
 		assert(InitNetwork());
 		send(_socket,(char*) nals[0].p_payload,frame_size,0);
 	}
+
+	return true;
+
+}
+
+bool Kahawai::EncodeIFrames(x264_picture_t* pic_in)
+{
+	x264_picture_t		pic_out;
+	x264_nal_t*			nals;
+	int					i_nals;
+
+	//Encode the frame
+	int frame_size = x264_encoder_encode(_encoder, &nals, &i_nals, pic_in, &pic_out);
+
+	//#ifdef WRITE_IFRAME
+	if (frame_size >= 0)
+	{
+		ofstream movieOut ("i-frames.h264", ios::out | ios::binary | ios::app);
+		movieOut.write((char*)nals[0].p_payload, frame_size);
+		movieOut.close();
+	}
+	//#endif
+
+	//Copy the I-Frame data to the buffer
+	memcpy(_iFrameBuffer,(char*)nals[0].p_payload,frame_size);
 
 	return true;
 
@@ -655,7 +650,7 @@ void CopyFrameToOverlay(AVFrame* pFrame, SDL_Overlay* pOverlay, byte* low)
 
 }
 
-int Kahawai::DecodeAndShow(byte* low,int width, int height)
+bool Kahawai::DecodeAndShow(byte* low,int width, int height)
 {
 	int				frameFinished = 0;
 	AVPacket		_Packet;
@@ -668,7 +663,7 @@ int Kahawai::DecodeAndShow(byte* low,int width, int height)
 		avcodec_close(_pCodecCtx);
 		// Close the video file
 		av_close_input_file(_pFormatCtx);
-		return -1;
+		return false;
 	}
 
 	// Read frames 
@@ -677,22 +672,22 @@ int Kahawai::DecodeAndShow(byte* low,int width, int height)
 		if (av_read_frame(_pFormatCtx, &_Packet) >= 0) 
 		{
 			// Is this a packet from the video stream?
-			if (_Packet.stream_index == _pVideoStream) 
+			if (_Packet.stream_index == FIRST_VIDEO_STREAM) 
 			{
 				// Decode video frame
 				avcodec_decode_video2(_pCodecCtx, _pFrame, &frameFinished, &_Packet);
 				// Did we get a video frame?
 				if (frameFinished) 
 				{
-					CopyFrameToOverlay(_pFrame,_pBmp,low);
+					CopyFrameToOverlay(_pFrame,_pYuvOverlay,low);
 
 					//Patch the frame
 					for (int i=0 ; i< _hiFrameSize ; i++) 
 					{
-						_pBmp->pixels[0][i] = Patch(_pBmp->pixels[0][i],low[i]);
+						_pYuvOverlay->pixels[0][i] = Patch(_pYuvOverlay->pixels[0][i],low[i]);
 					}
 
-					SDL_DisplayYUVOverlay(_pBmp, &_screenRect);
+					SDL_DisplayYUVOverlay(_pYuvOverlay, &_screenRect);
 				}
 			}
 
@@ -709,10 +704,10 @@ int Kahawai::DecodeAndShow(byte* low,int width, int height)
 	}
 
 
-	return 0;
+	return true;
 }
 
-int Kahawai::DecodeAndMix(int width, int height)
+bool Kahawai::DecodeAndMix(int width, int height)
 {
 	/*
 	int frameFinished = 0;
@@ -816,7 +811,7 @@ int Kahawai::DecodeAndMix(int width, int height)
 		}
 	}
 	*/
-	return 0;
+	return true;
 }
 
 void Kahawai::MapRegion()
@@ -912,6 +907,13 @@ void Kahawai::CaptureDelta( int width, int height, int frameNumber) {
 		break;
 	case Client:
 		assert(InitializeFfmpeg());
+		assert(InitializeSDL());
+		if(!_loadedDeltaStream)
+		{
+			assert(LoadVideo(_serverIP,_serverPort,&_pFormatCtx,&_pCodecCtx,&_pFrame));
+			_loadedDeltaStream = true;
+		}
+
 		DecodeAndShow(pic_in.img.plane[0], width, height);
 	}
 
@@ -1030,6 +1032,7 @@ bool Kahawai::IsOffloading()
 
 AVDictionary* Kahawai::FilterCodecOptions(AVDictionary *opts, enum CodecID codec_id,
 	int encoder) {
+		AVCodecContext*		_avcodec_opts[AVMEDIA_TYPE_NB];
 		AVDictionary *ret = NULL;
 		AVDictionaryEntry *t = NULL;
 		AVCodec *codec =
