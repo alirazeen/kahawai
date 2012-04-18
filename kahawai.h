@@ -118,17 +118,9 @@ private:
 	SOCKET _socket;
 
 	//FFMPEG State
-	////AVCodecContext*		_avcodec_opts[AVMEDIA_TYPE_NB];
-	//AVDictionary*		_pFormat_opts;
-	////AVDictionary*		_pCodec_opts;
-
 	AVFormatContext*	_pFormatCtx;
 	AVCodecContext*		_pCodecCtx;
 	AVFrame*			_pFrame;
-
-	//int					_pVideoStream;
-	//AVCodec*			_pCodec;
-
 	AVDictionary**		opts;
 
 	//SDL Video player settings
@@ -154,7 +146,8 @@ private:
 	bool DecodeAndShow(byte* low,int width, int height);
 	bool DecodeAndMix(int width, int height);
 	bool EncodeAndSend(x264_picture_t* pic_in);
-	bool EncodeIFrames(x264_picture_t* pic_in);
+	bool EncodeIFrames(x264_picture_t* pic_in, int frameNumber);
+	bool EncodeServerFrames(x264_picture_t* pic_in);
 
 	bool LoadVideo(char* IP, int port, 
 		AVFormatContext**	pFormatCtx, 

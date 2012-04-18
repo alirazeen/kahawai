@@ -12,6 +12,16 @@ using namespace std;
 /* General Kahawai Utilities                                            */ 
 /************************************************************************/
 
+void KahawaiWriteFile(const char* filename, char* content, int length, int suffix = 0)
+{
+	char name[100];
+	sprintf_s(name,100, filename,suffix);
+	ofstream movieOut (name, ios::out | ios::binary | ios::app);
+	movieOut.write(content, length);
+	movieOut.close();
+}
+
+
 //////////////////////////////////////////////////////////////////////////
 // Basic Delta encoding transformation
 //////////////////////////////////////////////////////////////////////////
@@ -391,7 +401,7 @@ bool Kahawai::InitializeX264(int width, int height, int fps)
 	if(IsDelta())
 	{
 		//define compression parameters
-		x264_param_default_preset(&param, "veryfast", "zerolatency");
+		x264_param_default_preset(&param, "placebo", "zerolatency");
 		param.i_threads = 1;
 		param.b_deterministic = 1; //useful when multithreading encoding
 		param.i_width = width;
@@ -414,34 +424,7 @@ bool Kahawai::InitializeX264(int width, int height, int fps)
 	}
 	if(IsIFrame())
 	{
-		if(IsClient())
-		{
-			x264_param_default_preset(&param, "placebo", "zerolatency");
-			param.i_threads = 1;
-			param.b_deterministic = 1; //useful when multithreading encoding
-			param.i_width = width;
-			param.i_height = height;
-			param.i_fps_num = _iFps; //client only renders iFrames at iFps frames per second
-			param.i_fps_den = 1;
-			// Intra refresh:
-			param.i_keyint_max = 1;
-			param.i_scenecut_threshold = 0; //no scene_cut
-			param.b_intra_refresh = 1;
-			//Rate control:
-			param.rc.i_rc_method = X264_RC_CQP; //Constant quality (ALMOST no compression)
-			param.rc.i_qp_constant = 0;
-			param.rc.i_qp_max = 0;
-			param.rc.i_qp_min = 0;
-			//For streaming:
-			param.b_repeat_headers = 1;
-			param.b_annexb = 1;
-			x264_param_apply_profile(&param, "baseline");
-			_x264_initialized = true;
-			_encoder = x264_encoder_open(&param);
-		}
-		else //is Server
-		{
-			x264_param_default_preset(&param, "placebo", "zerolatency");
+			x264_param_default_preset(&param, "veryfast", "zerolatency");
 			param.i_threads = 1;
 			param.b_deterministic = 1; //useful when multithreading encoding
 			param.i_width = width;
@@ -453,18 +436,15 @@ bool Kahawai::InitializeX264(int width, int height, int fps)
 			param.i_scenecut_threshold = 0; //no scene_cut
 			param.b_intra_refresh = 1;
 			//Rate control:
-			param.rc.i_rc_method = X264_RC_CQP;
-			param.rc.i_qp_constant = 0;
-			param.rc.i_qp_max = 25;
-			param.rc.i_qp_min = 0;
-			param.rc.i_qp_step = 25;
+			param.rc.i_rc_method = X264_RC_CRF;
+			param.rc.f_rf_constant = 25;
+			param.rc.f_rf_constant_max = 35;
 			//For streaming:
 			param.b_repeat_headers = 1;
 			param.b_annexb = 1;
 			x264_param_apply_profile(&param, "baseline");
 			_x264_initialized = true;
 			_encoder = x264_encoder_open(&param);
-		}
 	}
 
 	return true;
@@ -566,20 +546,9 @@ bool Kahawai::InitializeFfmpeg()
 
 bool Kahawai::EncodeAndSend(x264_picture_t* pic_in)
 {
-	int					i, c;
 	x264_picture_t		pic_out;
 	x264_nal_t*			nals;
 	int					i_nals;
-
-	c = (_hiVideoWidth * _hiVideoHeight * 3)/2; //YUV420p 4 bytes each 6 pixels
-
-	//Apply delta to each byte of the image
-	for (i=0 ; i<c ; i+=3) {
-		pic_in->img.plane[0][i] = Delta(pic_in->img.plane[0][i],_mappedBuffer[i]);
-		pic_in->img.plane[0][i+1] = Delta(pic_in->img.plane[0][i+1],_mappedBuffer[i+1]);
-		pic_in->img.plane[0][i+2] = Delta(pic_in->img.plane[0][i+2],_mappedBuffer[i+2]);
-	}
-
 
 	//Encode the frame
 	int frame_size = x264_encoder_encode(_encoder, &nals, &i_nals, pic_in, &pic_out);
@@ -589,40 +558,72 @@ bool Kahawai::EncodeAndSend(x264_picture_t* pic_in)
 	{
 		assert(InitNetwork());
 		send(_socket,(char*) nals[0].p_payload,frame_size,0);
+#ifdef WRITE_MOVIE
+		KahawaiWriteFile("e://frames//deltaMovie.h264",(char*) nals[0].p_payload,frame_size);
+#endif
 	}
 
 	return true;
 
 }
 
-bool Kahawai::EncodeIFrames(x264_picture_t* pic_in)
+bool Kahawai::EncodeIFrames(x264_picture_t* pic_in, int frameNumber)
 {
 	x264_picture_t		pic_out;
 	x264_nal_t*			nals;
 	int					i_nals;
 
 	//Encode the frame
+	if(_renderedFrames%5==0)
+	{
+		pic_in->i_type = X264_TYPE_IDR; //lets try with an IDR frame first
+		pic_in->i_qpplus1 = 1;
+		//int frame_size = x264_encoder_encode(_encoder, &nals, &i_nals, pic_in, &pic_out);
+
+		//if (frame_size >= 0)
+			//KahawaiWriteFile("e:\\frames\\i-frames-%05d.h264",(char*)nals[0].p_payload, frame_size,_renderedFrames);
+	}
+	return true;
+
+}
+
+
+bool Kahawai::EncodeServerFrames(x264_picture_t* pic_in)
+{
+	x264_picture_t		pic_out;
+	x264_nal_t*			nals;
+	int					i_nals;
+	char name[100];
+
+
+	if(_renderedFrames%_iFps==0) //is it time to encode an I-Frame
+	{
+		pic_in->i_type = X264_TYPE_IDR; //lets try with an IDR frame first
+		pic_in->i_qpplus1 = 1;
+		sprintf_s(name,100,"e:\\frames\\si-frames-%05d.h264",_renderedFrames);
+	}
+	else
+	{
+		pic_in->i_type = X264_TYPE_P; //otherwise lets encode it as a P-Frame		
+		pic_in->i_qpplus1 = X264_QP_AUTO;
+		sprintf_s(name,100,"e:\\frames\\p-frames-%05d.h264",_renderedFrames);
+	}
+
+	//Encode the frame
 	int frame_size = x264_encoder_encode(_encoder, &nals, &i_nals, pic_in, &pic_out);
 
-	//#ifdef WRITE_IFRAME
-	if (frame_size >= 0)
-	{
-		ofstream movieOut ("i-frames.h264", ios::out | ios::binary | ios::app);
-		movieOut.write((char*)nals[0].p_payload, frame_size);
-		movieOut.close();
-	}
-	//#endif
 
-	//Copy the I-Frame data to the buffer
-	memcpy(_iFrameBuffer,(char*)nals[0].p_payload,frame_size);
+	if (frame_size >= 0)
+		KahawaiWriteFile(name,(char*)nals[0].p_payload, frame_size);
 
 	return true;
 
 }
 
+
 //Transform the AVFrame into a SDL_Overlay
 //Uses sws_scale in the process
-void CopyFrameToOverlay(AVFrame* pFrame, SDL_Overlay* pOverlay, byte* low)
+void CopyFrameToOverlay(AVFrame* pFrame, SDL_Overlay* pOverlay)
 {
 	AVPicture pict;
 
@@ -662,7 +663,7 @@ bool Kahawai::DecodeAndShow(byte* low,int width, int height)
 		// Close the codec
 		avcodec_close(_pCodecCtx);
 		// Close the video file
-		av_close_input_file(_pFormatCtx);
+		avformat_close_input(&_pFormatCtx);
 		return false;
 	}
 
@@ -679,7 +680,7 @@ bool Kahawai::DecodeAndShow(byte* low,int width, int height)
 				// Did we get a video frame?
 				if (frameFinished) 
 				{
-					CopyFrameToOverlay(_pFrame,_pYuvOverlay,low);
+					CopyFrameToOverlay(_pFrame,_pYuvOverlay);
 
 					//Patch the frame
 					for (int i=0 ; i< _hiFrameSize ; i++) 
@@ -709,108 +710,74 @@ bool Kahawai::DecodeAndShow(byte* low,int width, int height)
 
 bool Kahawai::DecodeAndMix(int width, int height)
 {
-	/*
-	int frameFinished = 0;
-
-	//Mutex to wait for renderer to finish I-Frame
-	HANDLE iFrameMutex = OpenMutex(
-		SYNCHRONIZE,
-		FALSE,
-		_T("IFrameMutex")
-		);
+	int				frameFinished = 0;
+	AVPacket		packet;
+	AVPacket		iFramePacket;
 
 	if(_streamFinished)
-		return -1;
+	{
+		// Free the YUV frame
+		//av_free(_pFrame);//TODO: Make sure to free this frame at some point.
+		// Close the codec
+		avcodec_close(_pCodecCtx);
+		// Close the video file
+		av_close_input_file(_pFormatCtx);
+		return false;
+	}
+
+
+	if(_decodedServerFrames % _iFps == 0)
+	{
+		_decodedServerFrames++;
+
+		//now should do the whole
+		if( av_read_frame(_pFormatCtx, &iFramePacket) >= 0)
+		{
+			// Is this a packet from the video stream?
+			if (packet.stream_index == FIRST_VIDEO_STREAM) 
+			{
+				// Decode video frame
+				avcodec_decode_video2(_pCodecCtx, _pFrame, &frameFinished, &packet);
+				// Did we get a video frame?
+				if (frameFinished) 
+				{
+				}
+			}
+		}
+	}
 
 	// Read frames 
 	while(!frameFinished)
 	{
-		//Next frame is an I-Frame rendered locally
-		if(_decodedServerFrames % _iFps == 0)
+		if (av_read_frame(_pFormatCtx, &packet) >= 0) 
 		{
-			//Wait for rendering thread to finish
-			WaitForSingleObject(iFrameMutex,INFINITE);
-			_decodedServerFrames++;
+			// Is this a packet from the video stream?
+			if (packet.stream_index == FIRST_VIDEO_STREAM) 
+			{
+				// Decode video frame
+				avcodec_decode_video2(_pCodecCtx, _pFrame, &frameFinished, &packet);
+				// Did we get a video frame?
+				if (frameFinished) 
+				{
+					CopyFrameToOverlay(_pFrame,_pYuvOverlay);
 
-			//now should do the whole
-			av_read_frame(_pFormatCtx, (AVPacket *)_iFrameBuffer);
+
+					SDL_DisplayYUVOverlay(_pYuvOverlay, &_screenRect);
+				}
+			}
+
+			// Free the packet that was allocated by av_read_frame
+			av_free_packet(&packet);
+			//No event Polling. 
+			//When using with input forwarding to the server, add input handling loop (SDL_PollEvent)
 		}
 		else
 		{
-
-			if (av_read_frame(_pFormatCtx, &_Packet) >= 0) 
-			{
-				// Is this a packet from the video stream?
-				if (_Packet.stream_index == _pVideoStream) 
-				{
-					_decodedServerFrames++;
-					// Decode video frame
-					avcodec_decode_video2(_pCodecCtx, _pFrame, &frameFinished, &_Packet);
-					// Did we get a video frame?
-					if (frameFinished) 
-					{
-						SDL_LockYUVOverlay(_pBmp);
-
-						AVPicture pict;
-						pict.data[0] = _pBmp->pixels[0];
-						pict.data[1] = _pBmp->pixels[1];
-						pict.data[2] = _pBmp->pixels[2];
-
-						pict.linesize[0] = _pBmp->pitches[0];
-						pict.linesize[1] = _pBmp->pitches[1];
-						pict.linesize[2] = _pBmp->pitches[2];
-
-						// Convert the image into YUV format that SDL uses
-						struct SwsContext* img_convert_ctx =
-							sws_getContext(_pCodecCtx->width, _pCodecCtx->height,_pCodecCtx->pix_fmt,
-							_pCodecCtx->width, _pCodecCtx->height, PIX_FMT_YUV420P,
-							SWS_BICUBIC, NULL, NULL, NULL);
-
-						sws_scale(img_convert_ctx, _pFrame->data, _pFrame->linesize,
-							0, _pCodecCtx->height, pict.data,
-							pict.linesize);
-
-						SDL_UnlockYUVOverlay(_pBmp);
-
-						_Rect.x = 0;
-						_Rect.y = 0;
-						_Rect.w = _pCodecCtx->width;
-						_Rect.h = _pCodecCtx->height;
-						SDL_DisplayYUVOverlay(_pBmp, &_Rect);
-					}
-				}
-
-				// Free the packet that was allocated by av_read_frame
-				av_free_packet(&_Packet);
-				SDL_PollEvent(&_Event);
-				switch(_Event.type) 
-				{
-				case SDL_QUIT:
-					SDL_Quit();
-					exit(0);
-					break;
-				default:
-					break;
-				}
-
-			}
-			else
-			{
-				// Free the YUV frame
-				av_free(_pFrame);
-
-				// Close the codec
-				avcodec_close(_pCodecCtx);
-
-				// Close the video file
-				av_close_input_file(_pFormatCtx);
-				frameFinished = 1;
-				_streamFinished = true;
-			}
-
+			frameFinished = 1;
+			_streamFinished = true;
 		}
 	}
-	*/
+
 	return true;
 }
 
@@ -899,6 +866,11 @@ void Kahawai::CaptureDelta( int width, int height, int frameNumber) {
 	switch(_role)
 	{
 	case Master:
+		//Apply delta to each byte of the image
+		for (int i=0 ; i<_hiFrameSize ; i++) 
+		{
+			pic_in.img.plane[0][i] = Delta(pic_in.img.plane[0][i],_mappedBuffer[i]);
+		}
 		EncodeAndSend(&pic_in);
 		break;
 	case Slave:
@@ -961,14 +933,15 @@ void Kahawai::CaptureIFrame( int width, int height, int frameNumber) {
 	switch(_role)
 	{
 	case Master:
-		//encode all sequence, strip I-Frames, send
+		EncodeServerFrames(&pic_in);
 		break;
 	case Client:
-		//encode all as I-Frames, notify display thread when done
-		EncodeIFrames(&pic_in);
+		//encode all as I-Frames send them to localhost socket
+		EncodeIFrames(&pic_in,frameNumber);
 		break;
 
 	}
+
 
 	//4. Cleanup
 	if(_role!=Client)
@@ -1134,6 +1107,7 @@ int Kahawai::Sys_Milliseconds( void ) {
 
 	return sys_curtime; 
 }
+
 
 Kahawai kahawai;
 #endif
