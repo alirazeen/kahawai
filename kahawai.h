@@ -51,6 +51,7 @@ const char kahawaiMaster[8] = "leader\n";
 #define KAHAWAI_MAP_FILE "kahawai.dat"
 #define KAHAWAI_CONFIG "kahawai.cfg"
 #define FIRST_VIDEO_STREAM 0
+#define IFRAME_MUTEX "IFRAME"
 
 
 enum KAHAWAI_MODE { Master=0, Slave=1, Client=2, Undefined=3};
@@ -66,8 +67,12 @@ private:
 
 	//I-Frame encoding state
 	int _iFps;
-	bool _decodeThreadInitialized;
+	bool _crossStreamInitialized;
 	byte* _iFrameBuffer;
+	byte* _pFrameBuffer;
+	int _iFrameBufferSize;
+	bool _loadedPStream;
+	bool _serverSocketInitialized;
 
 	//Delta encoding state
 	bool _loadedDeltaStream;
@@ -104,18 +109,20 @@ private:
 	//NETWORK SETTINGS
 	int _serverPort;
 	char _serverIP[75];
+	bool _networkInitialized;
 
 	//VIDEO ENCODING/DECODING STATE
 	bool _x264_initialized;
 	x264_t* _encoder;
 	bool _ffmpeg_initialized;
-	bool _networkInitialized;
+	bool _socketToClientInitialized;
 	bool _sdlInitialized;
 	bool _streamFinished;
 
 
 	//VIDEO STREAMING SERVER SOCKET
-	SOCKET _socket;
+	SOCKET _clientSocket;
+	SOCKET _serverSocket;
 
 	//FFMPEG State
 	AVFormatContext*	_pFormatCtx;
@@ -134,20 +141,32 @@ private:
 	AVDictionary **SetupFindStreamInfoOptions(AVFormatContext *s,
 		AVDictionary *pCodec_opts);
 
+	bool InitClientIFrame();
 	bool InitMapping(int size);
 	void MapRegion();
 	void ReadFrameBuffer( int width, int height, byte *buffer);
-	bool InitNetwork();
+	bool InitSocketToClient();
+	bool InitServerSocket();
+
 	bool InitializeX264(int width, int height, int fps=60);
 	bool InitializeFfmpeg();
 	bool InitializeIFrameSharing();
 	bool InitializeSDL();
+	bool InitNetworking();
 
 	bool DecodeAndShow(byte* low,int width, int height);
 	bool DecodeAndMix(int width, int height);
 	bool EncodeAndSend(x264_picture_t* pic_in);
-	bool EncodeIFrames(x264_picture_t* pic_in, int frameNumber);
+	bool EncodeIFrames(x264_picture_t* pic_in);
 	bool EncodeServerFrames(x264_picture_t* pic_in);
+
+	//I-P Frame IPC
+	static DWORD WINAPI Kahawai::StaticThreadStart(void* Param);
+
+
+
+
+	DWORD CrossStreams(void);
 
 	bool LoadVideo(char* IP, int port, 
 		AVFormatContext**	pFormatCtx, 
@@ -173,6 +192,7 @@ public:
 	void CaptureDelta( int width, int height, int frameNumber);
 	void CaptureIFrame( int width, int height, int frameNumber);
 	int Sys_Milliseconds();
+	bool skipFrame();
 
 };
 

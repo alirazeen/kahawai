@@ -8,6 +8,7 @@ using namespace std;
 #include<fstream>
 #include<string>
 
+
 /************************************************************************/
 /* General Kahawai Utilities                                            */ 
 /************************************************************************/
@@ -80,10 +81,10 @@ Kahawai::Kahawai(void)
 	_x264_initialized = false;
 	_encoder = NULL;
 	_ffmpeg_initialized = false;
-	_networkInitialized = false;
+	_socketToClientInitialized = false;
 	_timeInitialized = false;
 	_mappedBuffer = NULL;
-	_decodeThreadInitialized = false;
+	_crossStreamInitialized = false;
 	_renderedFrames = 0;
 	_fps=60;
 	_offloading = false;
@@ -105,8 +106,8 @@ bool Kahawai::InitializeIFrameSharing()
 
 	HANDLE iFrameMutex = CreateMutex(
 		NULL,
-		TRUE,
-		_T("IFrameMutex"));
+		FALSE,
+		_T(IFRAME_MUTEX));
 
 	if(!iFrameMutex)
 		return false;
@@ -187,10 +188,75 @@ bool Kahawai::InitMapping(int size)
 		_role = Slave;
 	}
 
+
 	UnmapViewOfFile(b);
 	ReleaseMutex(_mutex);
 
 	return true;
+}
+
+bool Kahawai::InitClientIFrame()
+{
+	if(_crossStreamInitialized)
+		return true;
+
+
+	_crossStreamInitialized = true;
+
+	DWORD ThreadID;
+	HANDLE thread = CreateThread(NULL,0,StaticThreadStart,(void*) this, 0, &ThreadID);
+
+	if(thread==NULL)
+		return false;
+
+	return true;
+}
+
+DWORD WINAPI Kahawai::StaticThreadStart(void* Param)
+{
+	Kahawai* This = (Kahawai*) Param;
+	return This->CrossStreams();
+}
+
+DWORD Kahawai::CrossStreams(void)
+{
+	bool status = true;
+
+	InitServerSocket(); //listen to requests from this same host asking for the resulting stream
+	InitSocketToClient();
+	//init a socket that connects to the loop serversocket
+
+
+
+	int lastFrameRendered = 0;
+	HANDLE mutex = OpenMutex(SYNCHRONIZE,FALSE,IFRAME_MUTEX);
+	int length;
+
+	assert(mutex!=NULL);
+	
+	while(!_streamFinished)
+	{
+		while(lastFrameRendered  >= ((_renderedFrames%_iFps)+_iFps))
+			Sleep(5000);
+		if(lastFrameRendered%_iFps==0) 
+		{
+			WaitForSingleObject(mutex,INFINITE); //wait for the I-frame to be written
+			send(_clientSocket,(char*) _iFrameBuffer,_iFrameBufferSize,0);//TODO: I need to rename this socket and have another one for the loop.
+			lastFrameRendered++;
+			ReleaseMutex(mutex);
+		}
+		else
+		{
+			//Here we receive from the loop socket the PPPP frames
+			recv(_serverSocket,(char*)&length,4,0);
+			recv(_serverSocket,(char*)_pFrameBuffer,length,0);
+		
+			send(_clientSocket,(char*) _pFrameBuffer,length,0);//TODO: I need to rename this socket and have another one for the loop.
+			lastFrameRendered++;
+		}
+	}
+
+	return 0;
 }
 
 /********************************************************************************/
@@ -282,6 +348,7 @@ bool Kahawai::Init()
 	{
 		_timeStep = 1000 / _iFps;
 		_iFrameBuffer = new byte[_loVideoHeight * _loVideoWidth * 3]; //twice the size of the frame should be enough
+		_pFrameBuffer = new byte[_loVideoHeight * _loVideoWidth * 3 * ((60 / _iFps) +1)]; //twice the size of the inter I-frames should be enough
 	}
 	else
 	{
@@ -315,17 +382,64 @@ VOID Kahawai::ReadFrameBuffer(int width, int height, byte *buffer)
 	glReadPixels( 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer ); 
 }
 
+/*******************************************************************************************/
+/* Inits a socket that connects to the localhost server that will provide the IPPPPI stream*/
+/*******************************************************************************************/
+bool Kahawai::InitServerSocket()
+{
+	if(_serverSocketInitialized)
+	{
+		return true;
+	}
 
-bool Kahawai::InitNetwork(){
+	InitNetworking();
 
+	_serverSocketInitialized = true;
+
+	//Initialize sockets and set any options
+	int * p_int ;
+	
+	_serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+	if(_serverSocket == -1){
+		//Error initializing socket
+		return false;
+	}
+
+	p_int = (int*)malloc(sizeof(int));
+	*p_int = 1;
+	if( (setsockopt(_serverSocket, SOL_SOCKET, SO_REUSEADDR, (char*)p_int, sizeof(int)) == -1 )||
+		(setsockopt(_serverSocket, SOL_SOCKET, SO_KEEPALIVE, (char*)p_int, sizeof(int)) == -1 ) ){
+			//Error setting options
+			free(p_int);
+			return false;
+	}
+	free(p_int);
+
+	//Connect to the server
+	struct sockaddr_in my_addr;
+
+	my_addr.sin_family = AF_INET ;
+	my_addr.sin_port = htons(_serverPort);
+
+	memset(&(my_addr.sin_zero), 0, 8);
+	my_addr.sin_addr.s_addr = inet_addr(_serverIP);
+
+
+	if( connect( _serverSocket, (struct sockaddr*)&my_addr, sizeof(my_addr)) == SOCKET_ERROR ){
+		//stderr, "Error connecting socket
+		return false;
+	}
+
+
+	return true;
+
+}
+
+bool Kahawai::InitNetworking()
+{
 	if(_networkInitialized)
 		return true;
-
-	_networkInitialized = true;
-
-	//The port you want the server to listen on
-	int host_port= _serverPort;
-
+#ifdef _MSC_VER
 	//Initialize socket support WINDOWS ONLY!
 	unsigned short wVersionRequested;
 	WSADATA wsaData;
@@ -337,6 +451,23 @@ bool Kahawai::InitNetwork(){
 			//"Could not find useable sock dll %d\n",WSAGetLastError());
 			return false;
 	}
+#endif
+	return true;
+}
+
+
+
+bool Kahawai::InitSocketToClient(){
+
+	if(_socketToClientInitialized)
+		return true;
+
+	InitNetworking();
+
+	_socketToClientInitialized = true;
+
+	//The port you want the server to listen on
+	int host_port= _serverPort;
 
 	//Initialize sockets and set any options
 	int hsock;
@@ -382,7 +513,7 @@ bool Kahawai::InitNetwork(){
 
 	while(true){
 
-		if((_socket = accept( hsock, (SOCKADDR*)&sadr, &addr_size))!= INVALID_SOCKET ){
+		if((_clientSocket = accept( hsock, (SOCKADDR*)&sadr, &addr_size))!= INVALID_SOCKET ){
 			return true;
 		}
 		else
@@ -401,7 +532,7 @@ bool Kahawai::InitializeX264(int width, int height, int fps)
 	if(IsDelta())
 	{
 		//define compression parameters
-		x264_param_default_preset(&param, "placebo", "zerolatency");
+		x264_param_default_preset(&param, "veryfast", "zerolatency");
 		param.i_threads = 1;
 		param.b_deterministic = 1; //useful when multithreading encoding
 		param.i_width = width;
@@ -504,8 +635,8 @@ bool Kahawai::LoadVideo(char* IP, int port,
 
 	opts = SetupFindStreamInfoOptions(*ppFormatCtx, pCodec_opts);
 	// Retrieve stream information
-	if (avformat_find_stream_info(*ppFormatCtx, opts) < 0)
-		return false; // Couldn't find stream information
+	//if (avformat_find_stream_info(*ppFormatCtx, opts) < 0)
+	//	return false; // Couldn't find stream information
 
 	// Raw video. We only have one video stream (FIRST_VIDEO_STREAM)
 	// If more streams have to be used. Find the right one iterating through _pFormatCtx->streams
@@ -556,8 +687,8 @@ bool Kahawai::EncodeAndSend(x264_picture_t* pic_in)
 	//write to TCP socket
 	if (frame_size >= 0)
 	{
-		assert(InitNetwork());
-		send(_socket,(char*) nals[0].p_payload,frame_size,0);
+		InitSocketToClient();
+		send(_clientSocket,(char*) nals[0].p_payload,frame_size,0);
 #ifdef WRITE_MOVIE
 		KahawaiWriteFile("e://frames//deltaMovie.h264",(char*) nals[0].p_payload,frame_size);
 #endif
@@ -567,21 +698,30 @@ bool Kahawai::EncodeAndSend(x264_picture_t* pic_in)
 
 }
 
-bool Kahawai::EncodeIFrames(x264_picture_t* pic_in, int frameNumber)
+bool Kahawai::EncodeIFrames(x264_picture_t* pic_in)
 {
 	x264_picture_t		pic_out;
 	x264_nal_t*			nals;
 	int					i_nals;
+	HANDLE				mutex;
 
 	//Encode the frame
 	if(_renderedFrames%5==0)
 	{
 		pic_in->i_type = X264_TYPE_IDR; //lets try with an IDR frame first
 		pic_in->i_qpplus1 = 1;
-		//int frame_size = x264_encoder_encode(_encoder, &nals, &i_nals, pic_in, &pic_out);
-
-		//if (frame_size >= 0)
-			//KahawaiWriteFile("e:\\frames\\i-frames-%05d.h264",(char*)nals[0].p_payload, frame_size,_renderedFrames);
+		int frame_size = x264_encoder_encode(_encoder, &nals, &i_nals, pic_in, &pic_out);
+		if (frame_size >= 0)
+		{
+			mutex = OpenMutex(SYNCHRONIZE,FALSE,IFRAME_MUTEX);
+			WaitForSingleObject(mutex,INFINITE);
+#ifdef WRITE_MOVIE
+			KahawaiWriteFile("e:\\frames\\i-frames-%05d.h264",(char*)nals[0].p_payload, frame_size,_renderedFrames);
+#endif
+			memcpy(_iFrameBuffer,nals[0].p_payload, frame_size);
+			_iFrameBufferSize = frame_size;
+			ReleaseMutex(mutex);
+		}
 	}
 	return true;
 
@@ -593,28 +733,38 @@ bool Kahawai::EncodeServerFrames(x264_picture_t* pic_in)
 	x264_picture_t		pic_out;
 	x264_nal_t*			nals;
 	int					i_nals;
+#ifdef WRITE_MOVIE
 	char name[100];
-
+#endif 
 
 	if(_renderedFrames%_iFps==0) //is it time to encode an I-Frame
 	{
 		pic_in->i_type = X264_TYPE_IDR; //lets try with an IDR frame first
 		pic_in->i_qpplus1 = 1;
+#ifdef WRITE_MOVIE
 		sprintf_s(name,100,"e:\\frames\\si-frames-%05d.h264",_renderedFrames);
+#endif
 	}
 	else
 	{
 		pic_in->i_type = X264_TYPE_P; //otherwise lets encode it as a P-Frame		
 		pic_in->i_qpplus1 = X264_QP_AUTO;
+#ifdef WRITE_MOVIE
 		sprintf_s(name,100,"e:\\frames\\p-frames-%05d.h264",_renderedFrames);
+#endif
 	}
 
 	//Encode the frame
 	int frame_size = x264_encoder_encode(_encoder, &nals, &i_nals, pic_in, &pic_out);
 
-
-	if (frame_size >= 0)
+	{
+		InitSocketToClient();
+		send(_clientSocket, (char*)&frame_size,sizeof(frame_size),0); //advertise the frame size
+		send(_clientSocket,(char*) nals[0].p_payload,frame_size,0);
+#ifdef WRITE_MOVIE
 		KahawaiWriteFile(name,(char*)nals[0].p_payload, frame_size);
+#endif
+	}
 
 	return true;
 
@@ -683,9 +833,12 @@ bool Kahawai::DecodeAndShow(byte* low,int width, int height)
 					CopyFrameToOverlay(_pFrame,_pYuvOverlay);
 
 					//Patch the frame
-					for (int i=0 ; i< _hiFrameSize ; i++) 
+					if(IsDelta())
 					{
-						_pYuvOverlay->pixels[0][i] = Patch(_pYuvOverlay->pixels[0][i],low[i]);
+						for (int i=0 ; i< _hiFrameSize ; i++) 
+						{
+							_pYuvOverlay->pixels[0][i] = Patch(_pYuvOverlay->pixels[0][i],low[i]);
+						}
 					}
 
 					SDL_DisplayYUVOverlay(_pYuvOverlay, &_screenRect);
@@ -708,11 +861,12 @@ bool Kahawai::DecodeAndShow(byte* low,int width, int height)
 	return true;
 }
 
+
+
 bool Kahawai::DecodeAndMix(int width, int height)
 {
 	int				frameFinished = 0;
-	AVPacket		packet;
-	AVPacket		iFramePacket;
+	AVPacket		_Packet;
 
 	if(_streamFinished)
 	{
@@ -721,53 +875,37 @@ bool Kahawai::DecodeAndMix(int width, int height)
 		// Close the codec
 		avcodec_close(_pCodecCtx);
 		// Close the video file
-		av_close_input_file(_pFormatCtx);
+		avformat_close_input(&_pFormatCtx);
 		return false;
-	}
-
-
-	if(_decodedServerFrames % _iFps == 0)
-	{
-		_decodedServerFrames++;
-
-		//now should do the whole
-		if( av_read_frame(_pFormatCtx, &iFramePacket) >= 0)
-		{
-			// Is this a packet from the video stream?
-			if (packet.stream_index == FIRST_VIDEO_STREAM) 
-			{
-				// Decode video frame
-				avcodec_decode_video2(_pCodecCtx, _pFrame, &frameFinished, &packet);
-				// Did we get a video frame?
-				if (frameFinished) 
-				{
-				}
-			}
-		}
 	}
 
 	// Read frames 
 	while(!frameFinished)
 	{
-		if (av_read_frame(_pFormatCtx, &packet) >= 0) 
+		if (av_read_frame(_pFormatCtx, &_Packet) >= 0) 
 		{
 			// Is this a packet from the video stream?
-			if (packet.stream_index == FIRST_VIDEO_STREAM) 
+			if (_Packet.stream_index == FIRST_VIDEO_STREAM) 
 			{
 				// Decode video frame
-				avcodec_decode_video2(_pCodecCtx, _pFrame, &frameFinished, &packet);
+				avcodec_decode_video2(_pCodecCtx, _pFrame, &frameFinished, &_Packet);
 				// Did we get a video frame?
 				if (frameFinished) 
 				{
 					CopyFrameToOverlay(_pFrame,_pYuvOverlay);
 
+					//Patch the frame
+					for (int i=0 ; i< _hiFrameSize ; i++) 
+					{
+						//_pYuvOverlay->pixels[0][i] = Patch(_pYuvOverlay->pixels[0][i],low[i]);
+					}
 
 					SDL_DisplayYUVOverlay(_pYuvOverlay, &_screenRect);
 				}
 			}
 
 			// Free the packet that was allocated by av_read_frame
-			av_free_packet(&packet);
+			av_free_packet(&_Packet);
 			//No event Polling. 
 			//When using with input forwarding to the server, add input handling loop (SDL_PollEvent)
 		}
@@ -778,7 +916,9 @@ bool Kahawai::DecodeAndMix(int width, int height)
 		}
 	}
 
+
 	return true;
+
 }
 
 void Kahawai::MapRegion()
@@ -878,15 +1018,16 @@ void Kahawai::CaptureDelta( int width, int height, int frameNumber) {
 		memcpy(_mappedBuffer,pic_in.img.plane[0],(width*height*3)/2);
 		break;
 	case Client:
-		assert(InitializeFfmpeg());
-		assert(InitializeSDL());
+		InitializeFfmpeg();
+		InitializeSDL();
 		if(!_loadedDeltaStream)
 		{
-			assert(LoadVideo(_serverIP,_serverPort,&_pFormatCtx,&_pCodecCtx,&_pFrame));
+			LoadVideo(_serverIP,_serverPort,&_pFormatCtx,&_pCodecCtx,&_pFrame);
 			_loadedDeltaStream = true;
 		}
 
 		DecodeAndShow(pic_in.img.plane[0], width, height);
+		break;
 	}
 
 	//6. Cleanup
@@ -936,8 +1077,20 @@ void Kahawai::CaptureIFrame( int width, int height, int frameNumber) {
 		EncodeServerFrames(&pic_in);
 		break;
 	case Client:
+		InitClientIFrame(); //Set up the mutex and threads to render and decode
 		//encode all as I-Frames send them to localhost socket
-		EncodeIFrames(&pic_in,frameNumber);
+		EncodeIFrames(&pic_in);
+		//The following may actually be done in a separate thread
+		InitializeFfmpeg();
+		InitializeSDL();
+		if(!_loadedDeltaStream)
+		{
+			LoadVideo("localhost",_serverPort,&_pFormatCtx,&_pCodecCtx,&_pFrame);
+			_loadedDeltaStream = true;
+		}
+
+		DecodeAndShow(pic_in.img.plane[0], width, height);
+
 		break;
 
 	}
@@ -1108,6 +1261,19 @@ int Kahawai::Sys_Milliseconds( void ) {
 	return sys_curtime; 
 }
 
+bool Kahawai::skipFrame()
+{
+	if(IsServer())
+		return false;
+
+	if(IsDelta())
+		return false;
+
+	if(IsIFrame())
+		return (_renderedFrames % _iFps!=0);
+
+	return false;
+}
 
 Kahawai kahawai;
 #endif
