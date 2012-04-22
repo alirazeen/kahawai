@@ -1,6 +1,16 @@
 #ifndef KAHAWAI_H
 #define KAHAWAI_H
 
+#ifdef _DEBUG
+#ifndef VERIFY
+#define VERIFY(f)          assert(f)
+#endif
+#else
+#ifndef VERIFY
+#define VERIFY(f)          ((void)(f))
+#endif
+#endif 
+
 //Library includes
 #include <stdint.h>
 #include <stdio.h>
@@ -49,7 +59,7 @@ extern "C" {
 const char kahawaiMaster[8] = "leader\n";
 
 #define KAHAWAI_MAP_FILE "kahawai.dat"
-#define KAHAWAI_CONFIG "kahawai.cfg"
+#define KAHAWAI_CONFIG "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Doom 3\\kahawai.cfg"
 #define FIRST_VIDEO_STREAM 0
 #define IFRAME_MUTEX "IFRAME"
 
@@ -73,6 +83,10 @@ private:
 	int _iFrameBufferSize;
 	bool _loadedPStream;
 	bool _serverSocketInitialized;
+	SRWLOCK _renderedFramesLock;
+	SRWLOCK _iFrameBufferLock;
+	CONDITION_VARIABLE _iFrameBufferCV;
+	int _lastIFrameMerged;
 
 	//Delta encoding state
 	bool _loadedDeltaStream;
@@ -118,6 +132,7 @@ private:
 	bool _socketToClientInitialized;
 	bool _sdlInitialized;
 	bool _streamFinished;
+	bool _decodeThreadInitialized;
 
 
 	//VIDEO STREAMING SERVER SOCKET
@@ -154,19 +169,20 @@ private:
 	bool InitializeSDL();
 	bool InitNetworking();
 
-	bool DecodeAndShow(byte* low,int width, int height);
+	bool DecodeAndShow(int width, int height,byte* low);
 	bool DecodeAndMix(int width, int height);
 	bool EncodeAndSend(x264_picture_t* pic_in);
 	bool EncodeIFrames(x264_picture_t* pic_in);
 	bool EncodeServerFrames(x264_picture_t* pic_in);
 
 	//I-P Frame IPC
-	static DWORD WINAPI Kahawai::StaticThreadStart(void* Param);
-
+	static DWORD WINAPI Kahawai::CrossStreamsThreadStart(void* Param);
+	static DWORD WINAPI Kahawai::DecodeThreadStart(void* Param);
 
 
 
 	DWORD CrossStreams(void);
+	bool InitDecodeThread();
 
 	bool LoadVideo(char* IP, int port, 
 		AVFormatContext**	pFormatCtx, 
