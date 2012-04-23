@@ -259,11 +259,13 @@ DWORD Kahawai::CrossStreams(void)
 			
 			while(_lastIFrameMerged >= _renderedFrames)
 			{
-				//SleepConditionVariableSRW(&_iFrameBufferCV,&_iFrameBufferLock,INFINITE,CONDITION_VARIABLE_LOCKMODE_SHARED);
+				SleepConditionVariableSRW(&_iFrameBufferCV,&_iFrameBufferLock,INFINITE,CONDITION_VARIABLE_LOCKMODE_SHARED);
 			}
 
 			send(_clientSocket,(char*) _iFrameBuffer,_iFrameBufferSize,0);//TODO: I need to rename this socket and have another one for the loop.
+#ifdef WRITE_MOVIE
 			KahawaiWriteFile("ip-test.h264",(char*) _iFrameBuffer,_iFrameBufferSize);
+#endif
 			_lastIFrameMerged++;
 
 			ReleaseSRWLockShared(&_iFrameBufferLock);
@@ -285,8 +287,9 @@ DWORD Kahawai::CrossStreams(void)
 				send(_clientSocket,(char*) _pFrameBuffer,receivedBytes-sentBytes,0);
 				sentBytes=receivedBytes;
 			}
-		
+#ifdef WRITE_MOVIE		
 			KahawaiWriteFile("ip-test.h264",(char*) _pFrameBuffer,length);
+#endif
 			_lastIFrameMerged++;
 		}
 
@@ -748,6 +751,7 @@ bool Kahawai::EncodeIFrames(x264_picture_t* pic_in)
 	//Encode the frame
 	if(_renderedFrames%_iFps==0)
 	{
+		ReleaseSRWLockShared(&_renderedFramesLock);
 
 		pic_in->i_type = X264_TYPE_IDR; //lets try with an IDR frame first
 		pic_in->i_qpplus1 = 1;
@@ -757,7 +761,7 @@ bool Kahawai::EncodeIFrames(x264_picture_t* pic_in)
 			AcquireSRWLockExclusive(&_iFrameBufferLock);
 
 			while(_lastIFrameMerged < _renderedFrames - _iFps)
-				SleepConditionVariableSRW(&_iFrameBufferCV,&_renderedFramesLock,INFINITE,0);
+				SleepConditionVariableSRW(&_iFrameBufferCV,&_iFrameBufferLock,INFINITE,0);
 
 #ifdef WRITE_MOVIE
 			KahawaiWriteFile("e:\\frames\\i-frames-%05d.h264",(char*)nals[0].p_payload, frame_size,_renderedFrames);
@@ -769,7 +773,10 @@ bool Kahawai::EncodeIFrames(x264_picture_t* pic_in)
 			ReleaseSRWLockExclusive(&_iFrameBufferLock);
 		}
 	}
-	ReleaseSRWLockShared(&_renderedFramesLock);
+	else
+	{
+		ReleaseSRWLockShared(&_renderedFramesLock);
+	}
 
 	AcquireSRWLockExclusive(&_renderedFramesLock);
 	_renderedFrames++;
@@ -1164,7 +1171,7 @@ void Kahawai::CaptureIFrame( int width, int height, int frameNumber) {
 		sws_freeContext(convertCtx);
 	}
 
-	if(IsMaster() || _renderedFrames%_iFps==0)
+	if(IsMaster() || _renderedFrames%_iFps==1)
 	{
 		x264_picture_clean(&pic_in);
 	}
