@@ -59,7 +59,7 @@ extern "C" {
 const char kahawaiMaster[8] = "leader\n";
 
 #define KAHAWAI_MAP_FILE "kahawai.dat"
-#define KAHAWAI_CONFIG "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Doom 3\\kahawai.cfg"
+#define KAHAWAI_CONFIG "kahawai.cfg"
 #define FIRST_VIDEO_STREAM 0
 #define IFRAME_MUTEX "IFRAME"
 
@@ -204,9 +204,9 @@ public:
 
 	KAHAWAI_MODE GetRole();
 
-	void OffloadVideo( int width, int height, int frameNumber);
-	void CaptureDelta( int width, int height, int frameNumber);
-	void CaptureIFrame( int width, int height, int frameNumber);
+	void OffloadVideo( int width, int height);
+	void CaptureDelta( int width, int height);
+	void CaptureIFrame( int width, int height);
 	int Sys_Milliseconds();
 	bool skipFrame();
 
