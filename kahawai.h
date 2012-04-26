@@ -211,8 +211,8 @@ public:
 	bool skipFrame();
 
 };
-
 extern Kahawai kahawai;
+VOID CaptureFrameBuffer(int width, int height, char* filename);
 
 
 #endif

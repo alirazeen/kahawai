@@ -69,7 +69,8 @@ void VerticalFlip(int width, int height, byte* pixelData, int bitsPerPixel)
 		memcpy(temp,&pixelData[y*width*bitsPerPixel],width*bitsPerPixel);
 		memcpy(&pixelData[y*width*bitsPerPixel],&pixelData[(height-y)*width*bitsPerPixel],width*bitsPerPixel);
 		memcpy(&pixelData[(height-y)*width*bitsPerPixel],temp,width*bitsPerPixel);
-	}		
+	}
+	delete[] temp;
 }
 
 
@@ -77,8 +78,7 @@ void VerticalFlip(int width, int height, byte* pixelData, int bitsPerPixel)
 /* Kahawai Class Methods                                                */
 /************************************************************************/
 Kahawai::Kahawai(void)
-{
-	_x264_initialized = false;
+{_x264_initialized = false;
 	_encoder = NULL;
 	_ffmpeg_initialized = false;
 	_socketToClientInitialized = false;
@@ -1377,4 +1377,36 @@ bool Kahawai::skipFrame()
 }
 
 Kahawai kahawai;
+
+VOID CaptureFrameBuffer(int width, int height, char* filename) 
+{
+	static int suffix = 0;
+	x264_picture_t		pic_in;
+	byte* buffer = new byte[width*height*3];
+	struct SwsContext*	convertCtx;
+	int srcstride = width * 3;
+
+	glReadBuffer( GL_FRONT );
+	glReadPixels( 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer ); 
+
+	VerticalFlip(width,height, buffer,3);
+
+	x264_picture_alloc(&pic_in, X264_CSP_I420, width, height);
+
+	convertCtx = sws_getContext(width, height, PIX_FMT_RGB24, width, height, PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+	uint8_t *src[3]= {buffer, NULL, NULL}; 
+
+	sws_scale(convertCtx, src, &srcstride, 0, height, pic_in.img.plane, pic_in.img.i_stride);
+
+	char name[100];
+	sprintf_s(name,100, filename,suffix);
+	ofstream movieOut (name, ios::out | ios::binary | ios::app);
+	movieOut.write((char*)pic_in.img.plane[0], (width*height*3)/2);
+	movieOut.close();
+	x264_picture_clean(&pic_in);
+	delete buffer;
+	suffix++;
+
+}
+
 #endif
