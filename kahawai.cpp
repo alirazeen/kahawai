@@ -1321,10 +1321,27 @@ AVDictionary** Kahawai::SetupFindStreamInfoOptions(AVFormatContext *s,
 		return opts;
 }
 
+void Kahawai::StartOffload()
+{
+	_offloading = true;
+	_renderedFrames = 0;
+
+}
+
+void Kahawai::StopOffload()
+{
+
+	_offloading = false;
+
+}
+
 
 void Kahawai::OffloadVideo(	 int width, int height)
 {
-	_offloading = true;
+	if(!_offloading)
+		_offloading = true;
+
+
 	switch(profile)
 	{
 	case DeltaEncoding:
@@ -1362,7 +1379,8 @@ int Kahawai::Sys_Milliseconds( void ) {
 	return sys_curtime; 
 }
 
-bool Kahawai::skipFrame()
+
+bool Kahawai::ShouldSkipFrame()
 {
 	if(IsServer())
 		return false;

@@ -208,7 +208,9 @@ public:
 	void CaptureDelta( int width, int height);
 	void CaptureIFrame( int width, int height);
 	int Sys_Milliseconds();
-	bool skipFrame();
+	bool ShouldSkipFrame();
+	void StartOffload();
+	void StopOffload();
 
 };
 extern Kahawai kahawai;
