@@ -34,8 +34,9 @@ Kahawai::Kahawai(void)
 	_iFrameSize = -1;
 	_iFrameTmpSize = -1;
 	_transformBuffer = NULL;
+	_transformBufferTemp = NULL;
 	_inputPicture = new x264_picture_t;
-
+	_frameInPipeLine = 0;
 }
 
 
@@ -44,11 +45,13 @@ Kahawai::~Kahawai(void)
 }
 
 
-bool Kahawai::InitializeIFrameSharing()
+bool Kahawai::InitializeSynchronization()
 {
 	InitializeCriticalSection(&_iFrameLock);
+	InitializeCriticalSection(&_captureLock);
 	InitializeConditionVariable(&_encodingCV);
 	InitializeConditionVariable(&_mergingCV);
+	InitializeConditionVariable(&_capturingCV);
 	return true;
 }
 
@@ -317,13 +320,9 @@ bool Kahawai::Init()
 		//Initialize file mapping to share low resolution image between both processes
 		result &= InitMapping((_loVideoHeight * _loVideoWidth * 3)/2); // (3/2) bits per pixel in YUV420p
 	}
-	else
-	{
-		if(IsIFrame())
-		{
-			result&=InitializeIFrameSharing();
-		}
-	}
+
+	result&=InitializeSynchronization();
+
 
 	if(IsServer() || IsIFrame())
 	{
@@ -335,12 +334,23 @@ bool Kahawai::Init()
 
 	if(IsMaster() || IsIFrame())
 	{
+		//Not all 3 are used in all the scenarios.. so there is a little bit of memory wasted here
 		_transformBuffer = new byte[3*_hiVideoWidth*_hiVideoHeight];
+		_transformBufferTemp = new byte[3*_hiVideoWidth*_hiVideoHeight];
+		_transformBufferTempCopy = new byte[3*_hiVideoWidth*_hiVideoHeight];
+		_localVideoWidth = _hiVideoWidth;
+		_localVideoHeight = _hiVideoHeight;
 	}
 	else
 	{
-		_transformBuffer = new byte[3*_loVideoWidth*_loVideoHeight];
+		_transformBuffer = new byte[3*_hiVideoWidth*_hiVideoHeight];
+		_transformBufferTemp = new byte[3*_hiVideoWidth*_hiVideoHeight];
+		_transformBufferTempCopy = new byte[3*_loVideoWidth*_loVideoHeight];
+		_localVideoWidth = _loVideoWidth;
+		_localVideoHeight = _loVideoHeight;
 	}
+
+
 
 	x264_picture_alloc(_inputPicture, X264_CSP_I420, _hiVideoWidth, _hiVideoHeight);
 	_inputPictureTemp = _inputPicture;
@@ -507,16 +517,22 @@ bool Kahawai::InitializeX264(int width, int height, int fps)
 	if(IsDelta())
 	{
 		//define compression parameters
-		x264_param_default_preset(&param, "veryfast", "zerolatency");
-		param.i_threads = 1;
-		param.b_deterministic = 1; //useful when multithreading encoding
+		x264_param_default_preset(&param, "superfast", "zerolatency");
+		//For threading
+		param.i_threads = 9;
+		//		param.b_deterministic = 0; //This may be good enough in delta, dont know if it will work with i/P frame
+		//		param.rc.i_lookahead = 0;
+		//		param.i_sync_lookahead = 0;
+		param.b_sliced_threads = 1;
+
 		param.i_width = width;
 		param.i_height = height;
 		param.i_fps_num = fps;
 		param.i_fps_den = 1;
+
 		// Intra refres:
 		param.i_keyint_max = fps;
-		param.b_intra_refresh = 1;
+		param.b_intra_refresh = 0;
 		//Rate control:
 		param.rc.i_rc_method = X264_RC_CRF;
 		param.rc.f_rf_constant = 25;
@@ -524,15 +540,20 @@ bool Kahawai::InitializeX264(int width, int height, int fps)
 		//For streaming:
 		param.b_repeat_headers = 1;
 		param.b_annexb = 1;
+
 		x264_param_apply_profile(&param, "baseline");
 		_x264_initialized = true;
 		_encoder = x264_encoder_open(&param);
 	}
 	if(IsIFrame())
 	{
-			x264_param_default_preset(&param, "veryfast", "zerolatency");
-			param.i_threads = 1;
-			param.b_deterministic = 1; //useful when multithreading encoding
+			x264_param_default_preset(&param, "superfast", "zerolatency");
+			param.i_threads = 9;
+			//		param.b_deterministic = 0;
+			//		param.rc.i_lookahead = 0;
+			//		param.i_sync_lookahead = 0;
+			param.b_sliced_threads = 1;
+
 			param.i_width = width;
 			param.i_height = height;
 			param.i_fps_num = fps;
@@ -540,7 +561,7 @@ bool Kahawai::InitializeX264(int width, int height, int fps)
 			// Intra refres:
 			param.i_keyint_max = _iFps; //maximum iFps frames in between each iFrame
 			param.i_scenecut_threshold = 0; //no scene_cut
-			param.b_intra_refresh = 1;
+			param.b_intra_refresh = 0;
 			//Rate control:
 			param.rc.i_rc_method = X264_RC_CRF;
 			param.rc.f_rf_constant = 25;
@@ -928,6 +949,38 @@ void Kahawai::MapRegion()
 
 
 //////////////////////////////////////////////////////////////////////////
+// Async Handlers
+//////////////////////////////////////////////////////////////////////////
+DWORD WINAPI Kahawai::DeltaEncodeAsync( void* Param) 
+{
+	Kahawai* This = (Kahawai*) Param;	
+
+
+	while(This->_offloading)
+	{
+		This->DeltaEncode(This->_localVideoWidth,This->_localVideoHeight);
+		This->_frameInPipeLine++;
+	}
+
+	return 0;
+}
+
+DWORD WINAPI Kahawai::IFrameEncodeAsync(void* Param) 
+{
+	Kahawai* This = (Kahawai*) Param;	
+
+
+	while(This->_offloading)
+	{
+		This->IFrameEncode(This->_localVideoWidth,This->_localVideoHeight);
+		This->_frameInPipeLine++;
+	}
+
+	return 0;
+}
+
+
+//////////////////////////////////////////////////////////////////////////
 // Main techniques entry points
 //////////////////////////////////////////////////////////////////////////
 
@@ -941,9 +994,6 @@ void Kahawai::DeltaEncode( int width, int height) {
 
 	int					pix				= width * height;
 	struct SwsContext*	convertCtx;
-
-	//1. Capture screen to buffer
-	ReadFrameBuffer( width, height, _transformBuffer);
 
 	//2. Synchronize both processes if running at the server
 	if(_role==Master)
@@ -965,27 +1015,41 @@ void Kahawai::DeltaEncode( int width, int height) {
 
 	//4. Transformed (and scale) captured screen to YUV420p at target high resolution
 	//Libswscale flips the image when converting it. Flip it in advance, to later get the correct converted image
-	VerticalFlip(width,height, _transformBuffer,3);
 
-	int srcstride = width*3; //RGB stride is just 3*width
-
-	//Allocate the x264 picture structure
-	if(!_x264_initialized)
-		InitializeX264(_hiVideoWidth,_hiVideoHeight);
-
-
-	//Convert the image to YUV420
-	if(_role==Master)
+	//Synchronization
+	EnterCriticalSection(&_captureLock);
 	{
-		convertCtx = sws_getContext(width, height, PIX_FMT_RGB24, width, height, PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
-	}
-	else
-	{	//TODO: Need to validate wheter bilinear against bicubic is worth it. (Specially at the client)
-		convertCtx = sws_getContext(_loVideoWidth, _loVideoHeight, PIX_FMT_RGB24, width, height, PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
-	}
+		while(_transformBuffer == NULL)
+		{
+			SleepConditionVariableCS(&_encodingCV,&_captureLock,INFINITE);
+		}
 
-	uint8_t *src[3]= {_transformBuffer, NULL, NULL}; 
-	sws_scale(convertCtx, src, &srcstride, 0, height, _inputPicture->img.plane, _inputPicture->img.i_stride);
+		VerticalFlip(width,height, _transformBuffer,3);
+
+		int srcstride = width*3; //RGB stride is just 3*width
+
+		//Allocate the x264 picture structure
+		if(!_x264_initialized)
+			InitializeX264(_hiVideoWidth,_hiVideoHeight);
+
+
+		//Convert the image to YUV420
+		if(_role==Master)
+		{
+			convertCtx = sws_getContext(width, height, PIX_FMT_RGB24, width, height, PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+		}
+		else
+		{	//TODO: Need to validate wheter bilinear against bicubic is worth it. (Specially at the client)
+			convertCtx = sws_getContext(_loVideoWidth, _loVideoHeight, PIX_FMT_RGB24, width, height, PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+		}
+
+		uint8_t *src[3]= {_transformBuffer, NULL, NULL}; 
+		sws_scale(convertCtx, src, &srcstride, 0, height, _inputPicture->img.plane, _inputPicture->img.i_stride);
+		_transformBuffer = NULL;
+
+	}
+	LeaveCriticalSection(&_captureLock);
+	WakeConditionVariable(&_capturingCV);
 
 	//5. Role specific 
 	switch(_role)
@@ -1128,14 +1192,57 @@ void Kahawai::StartOffload()
 {
 	_offloading = true;
 	_renderedFrames = 0;
+	DWORD ThreadID;
+	HANDLE thread;
 
+	switch(profile)
+	{
+	case DeltaEncoding:
+		CreateKahawaiThread(DeltaEncodeAsync,this);
+		break;
+	case IPFrame:
+//		if(IsServer())
+//			CreateKahawaiThread(IFrameEncodeAsync,this);
+		break;
+	}
 }
 
 void Kahawai::StopOffload()
 {
+	if(!_offloading)
+		return;
 
 	_offloading = false;
 
+}
+
+void Kahawai::LogFPS()
+{
+	offloadEndTime = timeGetTime();
+	DWORD totalTime = offloadEndTime - offloadStartTime;
+	double fps = ((_renderedFrames - 147)*1000) / totalTime;
+	char result[100];
+	int size = sprintf(result,"Average FPS:%f\nTotal Frames:%d\nTime elapsed:%d\r\t",fps,_renderedFrames-147,totalTime);
+
+	KahawaiWriteFile("KahawaiFPS.log", result,size);
+
+}
+
+void Kahawai::ReadCurrentFrame()
+{
+	ReadFrameBuffer( _localVideoWidth, _localVideoHeight, _transformBufferTemp);
+	EnterCriticalSection(&_captureLock);
+	{
+		while(_transformBuffer!=NULL)
+		{
+			SleepConditionVariableCS(&_capturingCV,&_captureLock,INFINITE);
+		}
+		
+		_transformBuffer = _transformBufferTempCopy;
+		memcpy(_transformBuffer,_transformBufferTemp,_localVideoWidth*_loVideoHeight*3);	
+	}
+	LeaveCriticalSection(&_captureLock);
+	WakeConditionVariable(&_encodingCV);
 }
 
 
@@ -1144,14 +1251,27 @@ void Kahawai::OffloadVideo(	 int width, int height)
 	if(!_offloading)
 		_offloading = true;
 
+	if(_renderedFrames == 100)
+	{
+		offloadStartTime = timeGetTime();
+	}
+
+	if(_renderedFrames == 2100)
+	{
+		LogFPS();
+	}
+
 
 	switch(profile)
 	{
 	case DeltaEncoding:
-		DeltaEncode(width,height);
+		ReadCurrentFrame();
 		break;
 	case IPFrame:
-		IFrameEncode(width,height);
+//		if(IsMaster())
+//			ReadCurrentFrame();
+//		else
+			IFrameEncode(width,height);
 		break;
 	}
 

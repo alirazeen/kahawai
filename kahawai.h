@@ -83,9 +83,14 @@ class Kahawai
 private:
 
 
+	//benchmark counters
+	DWORD offloadEndTime;
+	DWORD offloadStartTime;
+
 	//cached buffers
 	byte*				_transformBuffer;
 	byte*				_transformBufferTemp;
+	byte*				_transformBufferTempCopy;
 	x264_picture_t*		_inputPicture;
 	x264_picture_t*		_inputPictureTemp;
 
@@ -106,11 +111,14 @@ private:
 	bool _serverSocketInitialized;
 
 	//I-Frame client locks
+	CRITICAL_SECTION _captureLock;
 	CRITICAL_SECTION _iFrameLock;
 	CONDITION_VARIABLE _encodingCV;
 	CONDITION_VARIABLE _mergingCV;
+	CONDITION_VARIABLE _capturingCV;
 
 	int _lastIFrameMerged;
+	int _frameInPipeLine;
 
 	//Delta encoding state
 	bool _loadedDeltaStream;
@@ -143,6 +151,8 @@ private:
 	int _hiVideoWidth;
 	int _iFrameSkip;
 	int _hiFrameSize;
+	int _localVideoWidth;
+	int _localVideoHeight;
 
 	//NETWORK SETTINGS
 	int _serverPort;
@@ -188,7 +198,7 @@ private:
 
 	bool InitializeX264(int width, int height, int fps=60);
 	bool InitializeFfmpeg();
-	bool InitializeIFrameSharing();
+	bool InitializeSynchronization();
 	bool InitializeSDL();
 	bool InitNetworking();
 
@@ -201,15 +211,19 @@ private:
 	//I-P Frame IPC
 	static DWORD WINAPI Kahawai::CrossStreamsThreadStart(void* Param);
 	static DWORD WINAPI Kahawai::DecodeThreadStart(void* Param);
-
-
-
+	static DWORD WINAPI Kahawai::IFrameEncodeAsync( void* Param);
+	static DWORD WINAPI Kahawai::DeltaEncodeAsync( void* Param);
+	
 	DWORD CrossStreams(void);
+	void ReadCurrentFrame();
 
 	bool LoadVideo(char* IP, int port, 
 		AVFormatContext**	pFormatCtx, 
 		AVCodecContext**	pCodecCtx, 
 		AVFrame**			pFrame);
+
+	//benchmark logging
+	void LogFPS();
 
 public:
 	Kahawai(void);
