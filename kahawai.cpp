@@ -9,70 +9,6 @@ using namespace std;
 #include<string>
 
 
-/************************************************************************/
-/* General Kahawai Utilities                                            */ 
-/************************************************************************/
-
-void KahawaiWriteFile(const char* filename, char* content, int length, int suffix = 0)
-{
-	char name[100];
-	sprintf_s(name,100, filename,suffix);
-	ofstream movieOut (name, ios::out | ios::binary | ios::app);
-	movieOut.write(content, length);
-	movieOut.close();
-}
-
-
-//////////////////////////////////////////////////////////////////////////
-// Basic Delta encoding transformation
-//////////////////////////////////////////////////////////////////////////
-byte Delta(byte hi, byte lo)
-{
-	int resultPixel = ((hi - lo) / 2) + 127;
-
-	if (resultPixel > 255)
-		resultPixel = 255;
-
-	if (resultPixel < 0)
-		resultPixel = 0;
-
-	return (byte)resultPixel;
-}
-
-//////////////////////////////////////////////////////////////////////////
-// Basic Patch decoding transformation
-//////////////////////////////////////////////////////////////////////////
-byte Patch(byte delta, byte lo)
-{
-	int resultPixel = (2 * (delta - 127)) + lo;
-
-	if (resultPixel > 255)
-		resultPixel = 255;
-
-	if (resultPixel < 0)
-		resultPixel = 0;
-
-	return (byte)resultPixel;
-}
-
-//////////////////////////////////////////////////////////////////////////
-// Flips vertically a bitmap
-//////////////////////////////////////////////////////////////////////////
-void VerticalFlip(int width, int height, byte* pixelData, int bitsPerPixel)
-{
-	byte* temp = new byte[width*bitsPerPixel];
-	height--; //remember height array ends at height-1
-
-
-	for (int y = 0; y < (height+1)/2; y++) 
-	{
-		memcpy(temp,&pixelData[y*width*bitsPerPixel],width*bitsPerPixel);
-		memcpy(&pixelData[y*width*bitsPerPixel],&pixelData[(height-y)*width*bitsPerPixel],width*bitsPerPixel);
-		memcpy(&pixelData[(height-y)*width*bitsPerPixel],temp,width*bitsPerPixel);
-	}
-	delete[] temp;
-}
-
 
 /************************************************************************/
 /* Kahawai Class Methods                                                */
@@ -93,6 +29,13 @@ Kahawai::Kahawai(void)
 	_loadedDeltaStream = false;
 	_lastIFrameMerged = 0;
 	_decodeThreadInitialized = false;
+	_iFrame=NULL;
+	_iFrameTmp=NULL;
+	_iFrameSize = -1;
+	_iFrameTmpSize = -1;
+	_transformBuffer = NULL;
+	_inputPicture = new x264_picture_t;
+
 }
 
 
@@ -103,9 +46,9 @@ Kahawai::~Kahawai(void)
 
 bool Kahawai::InitializeIFrameSharing()
 {
-	InitializeSRWLock(&_renderedFramesLock);
-	InitializeSRWLock(&_iFrameBufferLock);
-	InitializeConditionVariable(&_iFrameBufferCV);
+	InitializeCriticalSection(&_iFrameLock);
+	InitializeConditionVariable(&_encodingCV);
+	InitializeConditionVariable(&_mergingCV);
 	return true;
 }
 
@@ -183,102 +126,56 @@ bool Kahawai::InitMapping(int size)
 		_role = Slave;
 	}
 
-
 	UnmapViewOfFile(b);
 	ReleaseMutex(_mutex);
 
 	return true;
 }
 
-bool Kahawai::InitClientIFrame()
-{
-	if(_crossStreamInitialized)
-		return true;
-
-
-	_crossStreamInitialized = true;
-
-	DWORD ThreadID;
-	HANDLE thread = CreateThread(NULL,0,CrossStreamsThreadStart,(void*) this, 0, &ThreadID);
-
-	if(thread==NULL)
-		return false;
-
-	return true;
-}
-
-bool Kahawai::InitDecodeThread()
-{
-	if(_decodeThreadInitialized)
-		return true;
-
-	DWORD ThreadID;
-	HANDLE thread = CreateThread(NULL,0,DecodeThreadStart,(void*) this, 0, &ThreadID);
-	
-	if(thread==NULL)
-		return false;
-
-	_decodeThreadInitialized = true;
-}
-
-
-DWORD WINAPI Kahawai::DecodeThreadStart(void* Param)
-{
-	Kahawai* This = (Kahawai*) Param;	
-	while(This->DecodeAndShow(This->_hiVideoWidth,This->_hiVideoHeight,NULL));
-	return 0;
-}
-
-
-
-DWORD WINAPI Kahawai::CrossStreamsThreadStart(void* Param)
-{
-	Kahawai* This = (Kahawai*) Param;
-	return This->CrossStreams();
-}
 
 DWORD Kahawai::CrossStreams(void)
 {
 	bool status = true;
-
 	int length;
+
+	byte* tmpFrame;
+	int tmpSize;
 
 	VERIFY(InitServerSocket());
 
-	VERIFY(InitSocketToClient());	//init a socket that connects to the loop serversocket
 
 
 	while(!_streamFinished)
 	{
-		AcquireSRWLockShared(&_renderedFramesLock);
 
 		if(_lastIFrameMerged%_iFps==0) 
 		{
-			ReleaseSRWLockShared(&_renderedFramesLock);
-
-			AcquireSRWLockShared(&_iFrameBufferLock);
-			
-			while(_lastIFrameMerged >= _renderedFrames)
+			EnterCriticalSection(&_iFrameLock);
 			{
-				SleepConditionVariableSRW(&_iFrameBufferCV,&_iFrameBufferLock,INFINITE,CONDITION_VARIABLE_LOCKMODE_SHARED);
+				//Wait while there is no I-Frame produced
+				while(_iFrame==NULL)
+					SleepConditionVariableCS(&_mergingCV,&_iFrameLock,INFINITE);
+				tmpFrame = _iFrame;
+				tmpSize = _iFrameSize;
+				_iFrame = NULL;
+				_iFrameSize  = -1;
 			}
+			LeaveCriticalSection(&_iFrameLock);
+			WakeConditionVariable(&_encodingCV);
 
-			VERIFY(send(_clientSocket,(char*) _iFrameBuffer,_iFrameBufferSize,0)!=SOCKET_ERROR);//TODO: I need to rename this socket and have another one for the loop.
+			VERIFY(InitSocketToClient());
+			VERIFY(send(_clientSocket,(char*) tmpFrame,tmpSize,0)!=SOCKET_ERROR);
+
 #ifdef WRITE_MOVIE
-			KahawaiWriteFile("e:\\frames\\ip-test.h264",(char*) _iFrameBuffer,_iFrameBufferSize);
-			KahawaiWriteFile("e:\\frames\\i-frames-%05d.h264",(char*) _iFrameBuffer,_iFrameBufferSize,_lastIFrameMerged);
+			KahawaiWriteFile("e:\\frames\\ip-test.h264",(char*) tmpFrame,tmpSize);
+			KahawaiWriteFile("e:\\frames\\i-frames-%05d.h264",(char*) tmpFrame,tmpSize,_lastIFrameMerged);
 
 #endif
 			_lastIFrameMerged++;
 
-			ReleaseSRWLockShared(&_iFrameBufferLock);
-
-			WakeConditionVariable(&_iFrameBufferCV);
-
 		}
 		else
 		{
-			ReleaseSRWLockShared(&_renderedFramesLock);
 			//Here we receive from the loop socket the PPPP frames
 			if(recv(_serverSocket,(char*)&length,4,0)==SOCKET_ERROR)
 			{
@@ -293,18 +190,20 @@ DWORD Kahawai::CrossStreams(void)
 			while(receivedBytes< length)
 			{
 				int burst = 0;
-				burst = recv(_serverSocket,(char*)_pFrameBuffer,length,0);
+				burst = recv(_serverSocket,(char*)_PFrame,length,0);
 				VERIFY(burst!=SOCKET_ERROR);
 				int sent=0;
+
+				VERIFY(InitSocketToClient());
 				while(sent < burst)
 				{
-					sent+=send(_clientSocket,(char*) _pFrameBuffer,burst-sent,0);
+					sent+=send(_clientSocket,(char*) _PFrame,burst-sent,0);
 				}
 				receivedBytes+=burst;
 			}
 #ifdef WRITE_MOVIE		
-			KahawaiWriteFile("e:\\frames\\ip-test.h264",(char*) _pFrameBuffer,length);
-			KahawaiWriteFile("e:\\frames\\p-frames-%05d.h264",(char*) _pFrameBuffer,length,_lastIFrameMerged);
+			KahawaiWriteFile("e:\\frames\\ip-test.h264",(char*) _PFrame,length);
+			KahawaiWriteFile("e:\\frames\\p-frames-%05d.h264",(char*) _PFrame,length,_lastIFrameMerged);
 #endif
 			_lastIFrameMerged++;
 		}
@@ -340,6 +239,7 @@ bool Kahawai::Init()
 	if(!server==1)
 	{
 		_role = Client;
+		InitializeFfmpeg(); //client will always need to decode
 	}
 	else //Otherwise is server, and can be either master or slave process. Determine through mapping
 	{
@@ -402,8 +302,8 @@ bool Kahawai::Init()
 	if(IsClient() && IsIFrame())
 	{
 		_timeStep = 1000 / _iFps;
-		_iFrameBuffer = new byte[_loVideoHeight * _loVideoWidth * 3]; //twice the size of the frame should be enough
-		_pFrameBuffer = new byte[_loVideoHeight * _loVideoWidth * 3 * ((60 / _iFps) +1)]; //twice the size of the inter I-frames should be enough
+		_iFrameTmp = new byte[_hiVideoHeight * _hiVideoWidth * 3]; //twice the size of the frame should be enough
+		_PFrame = new byte[_hiVideoHeight * _hiVideoWidth * 3 * ((60 / _iFps) +1)]; //twice the size of the inter I-frames should be enough
 	}
 	else
 	{
@@ -424,6 +324,26 @@ bool Kahawai::Init()
 			result&=InitializeIFrameSharing();
 		}
 	}
+
+	if(IsServer() || IsIFrame())
+	{
+		//Allocate the x264 picture structure
+		if(!_x264_initialized)
+			VERIFY(InitializeX264(_hiVideoWidth,_hiVideoHeight));
+
+	}
+
+	if(IsMaster() || IsIFrame())
+	{
+		_transformBuffer = new byte[3*_hiVideoWidth*_hiVideoHeight];
+	}
+	else
+	{
+		_transformBuffer = new byte[3*_loVideoWidth*_loVideoHeight];
+	}
+
+	x264_picture_alloc(_inputPicture, X264_CSP_I420, _hiVideoWidth, _hiVideoHeight);
+	_inputPictureTemp = _inputPicture;
 
 	kahawaiiConfigFile.close();
 	return result;
@@ -730,14 +650,15 @@ bool Kahawai::InitializeFfmpeg()
 	return true;
 }
 
-bool Kahawai::EncodeAndSend(x264_picture_t* pic_in)
+//DeltaEncoding Only
+bool Kahawai::EncodeAndSend()
 {
 	x264_picture_t		pic_out;
 	x264_nal_t*			nals;
 	int					i_nals;
 
 	//Encode the frame
-	int frame_size = x264_encoder_encode(_encoder, &nals, &i_nals, pic_in, &pic_out);
+	int frame_size = x264_encoder_encode(_encoder, &nals, &i_nals, _inputPicture, &pic_out);
 
 	//write to TCP socket
 	if (frame_size >= 0)
@@ -752,58 +673,32 @@ bool Kahawai::EncodeAndSend(x264_picture_t* pic_in)
 	return true;
 
 }
-
-bool Kahawai::EncodeIFrames(x264_picture_t* pic_in)
+//Iframe encoding Only (client)
+bool Kahawai::EncodeIFrames()
 {
 	x264_picture_t		pic_out;
 	x264_nal_t*			nals;
 	int					i_nals;
-	HANDLE				mutex;
 
-
-
-	AcquireSRWLockShared(&_renderedFramesLock);
+	if(_inputPicture==NULL)
+		return true;
 
 	//Encode the frame
-	if(_renderedFrames%_iFps==0)
+	_inputPicture->i_type = X264_TYPE_IDR; //lets try with an IDR frame first
+	_inputPicture->i_qpplus1 = 1;
+	int frame_size = x264_encoder_encode(_encoder, &nals, &i_nals, _inputPicture, &pic_out);
+	if (frame_size >= 0)
 	{
-		ReleaseSRWLockShared(&_renderedFramesLock);
-
-		pic_in->i_type = X264_TYPE_IDR; //lets try with an IDR frame first
-		pic_in->i_qpplus1 = 1;
-		int frame_size = x264_encoder_encode(_encoder, &nals, &i_nals, pic_in, &pic_out);
-		if (frame_size >= 0)
-		{
-			AcquireSRWLockExclusive(&_iFrameBufferLock);
-
-			while(_lastIFrameMerged < _renderedFrames - _iFps)
-				SleepConditionVariableSRW(&_iFrameBufferCV,&_iFrameBufferLock,INFINITE,0);
-
-			memcpy(_iFrameBuffer,nals[0].p_payload, frame_size);
-			_iFrameBufferSize = frame_size;
-
-
-			ReleaseSRWLockExclusive(&_iFrameBufferLock);
-		}
+		memcpy(_iFrameTmp,nals[0].p_payload, frame_size);
+		_iFrameTmpSize = frame_size;
 	}
-	else
-	{
-		ReleaseSRWLockShared(&_renderedFramesLock);
-	}
-
-	AcquireSRWLockExclusive(&_renderedFramesLock);
-	_renderedFrames++;
-	ReleaseSRWLockExclusive(&_renderedFramesLock);
-
-	WakeConditionVariable(&_iFrameBufferCV);
-
 
 	return true;
 
 }
 
-
-bool Kahawai::EncodeServerFrames(x264_picture_t* pic_in)
+//Iframe encoding only (server)
+bool Kahawai::EncodeServerFrames()
 {
 	x264_picture_t		pic_out;
 	x264_nal_t*			nals;
@@ -814,23 +709,23 @@ bool Kahawai::EncodeServerFrames(x264_picture_t* pic_in)
 
 	if(_renderedFrames%_iFps==0) //is it time to encode an I-Frame
 	{
-		pic_in->i_type = X264_TYPE_IDR; //lets try with an IDR frame first
-		pic_in->i_qpplus1 = 1;
+		_inputPicture->i_type = X264_TYPE_IDR; //lets try with an IDR frame first
+		_inputPicture->i_qpplus1 = 1;
 #ifdef WRITE_MOVIE
 		sprintf_s(name,100,"e:\\frames-server\\si-frames-%05d.h264",_renderedFrames);
 #endif
 	}
 	else
 	{
-		pic_in->i_type = X264_TYPE_P; //otherwise lets encode it as a P-Frame		
-		pic_in->i_qpplus1 = X264_QP_AUTO;
+		_inputPicture->i_type = X264_TYPE_P; //otherwise lets encode it as a P-Frame		
+		_inputPicture->i_qpplus1 = X264_QP_AUTO;
 #ifdef WRITE_MOVIE
 		sprintf_s(name,100,"e:\\frames-server\\p-frames-%05d.h264",_renderedFrames);
 #endif
 	}
 
 	//Encode the frame
-	int frame_size = x264_encoder_encode(_encoder, &nals, &i_nals, pic_in, &pic_out);
+	int frame_size = x264_encoder_encode(_encoder, &nals, &i_nals, _inputPicture, &pic_out);
 
 	if(_renderedFrames%_iFps!=0) //We send only the P-frames
 	{
@@ -846,8 +741,6 @@ bool Kahawai::EncodeServerFrames(x264_picture_t* pic_in)
 	KahawaiWriteFile(name,(char*)nals[0].p_payload, frame_size);
 	KahawaiWriteFile("e:\\frames-server\\ip-test.h264",(char*)nals[0].p_payload, frame_size);
 #endif
-
-	_renderedFrames++;
 	return true;
 
 }
@@ -889,6 +782,8 @@ bool Kahawai::DecodeAndShow(int width, int height,byte* low=NULL)
 	AVPacket		_Packet;
 	static int			decodedFrame;
 
+	InitializeFfmpeg();
+
 	if(_streamFinished)
 	{
 		// Free the YUV frame
@@ -909,11 +804,11 @@ bool Kahawai::DecodeAndShow(int width, int height,byte* low=NULL)
 			if (_Packet.stream_index == FIRST_VIDEO_STREAM) 
 			{
 				// Decode video frame
-				VERIFY(avcodec_decode_video2(_pCodecCtx, _pFrame, &frameFinished, &_Packet)>0);
+				VERIFY(avcodec_decode_video2(_pCodecCtx, _pAVFrame, &frameFinished, &_Packet)>0);
 				// Did we get a video frame?
 				if (frameFinished) 
 				{
-					CopyFrameToOverlay(_pFrame,_pYuvOverlay);
+					CopyFrameToOverlay(_pAVFrame,_pYuvOverlay);
 
 					//Patch the frame
 					if(IsDelta())
@@ -975,11 +870,11 @@ bool Kahawai::DecodeAndMix(int width, int height)
 			if (_Packet.stream_index == FIRST_VIDEO_STREAM) 
 			{
 				// Decode video frame
-				avcodec_decode_video2(_pCodecCtx, _pFrame, &frameFinished, &_Packet);
+				avcodec_decode_video2(_pCodecCtx, _pAVFrame, &frameFinished, &_Packet);
 				// Did we get a video frame?
 				if (frameFinished) 
 				{
-					CopyFrameToOverlay(_pFrame,_pYuvOverlay);
+					CopyFrameToOverlay(_pAVFrame,_pYuvOverlay);
 
 					//Patch the frame
 					for (int i=0 ; i< _hiFrameSize ; i++) 
@@ -1031,20 +926,24 @@ void Kahawai::MapRegion()
 	}
 }
 
+
+//////////////////////////////////////////////////////////////////////////
+// Main techniques entry points
+//////////////////////////////////////////////////////////////////////////
+
+
 /*
 ================== 
-CaptureDelta
+DeltaEncode
 ================== 
 */  
-void Kahawai::CaptureDelta( int width, int height) {
+void Kahawai::DeltaEncode( int width, int height) {
 
 	int					pix				= width * height;
-	byte*				buffer			= new byte[3*pix];
 	struct SwsContext*	convertCtx;
-	x264_picture_t		pic_in;
 
 	//1. Capture screen to buffer
-	ReadFrameBuffer( width, height, buffer);
+	ReadFrameBuffer( width, height, _transformBuffer);
 
 	//2. Synchronize both processes if running at the server
 	if(_role==Master)
@@ -1066,7 +965,7 @@ void Kahawai::CaptureDelta( int width, int height) {
 
 	//4. Transformed (and scale) captured screen to YUV420p at target high resolution
 	//Libswscale flips the image when converting it. Flip it in advance, to later get the correct converted image
-	VerticalFlip(width,height, buffer,3);
+	VerticalFlip(width,height, _transformBuffer,3);
 
 	int srcstride = width*3; //RGB stride is just 3*width
 
@@ -1074,7 +973,6 @@ void Kahawai::CaptureDelta( int width, int height) {
 	if(!_x264_initialized)
 		InitializeX264(_hiVideoWidth,_hiVideoHeight);
 
-	x264_picture_alloc(&pic_in, X264_CSP_I420, _hiVideoWidth, _hiVideoHeight);
 
 	//Convert the image to YUV420
 	if(_role==Master)
@@ -1086,8 +984,8 @@ void Kahawai::CaptureDelta( int width, int height) {
 		convertCtx = sws_getContext(_loVideoWidth, _loVideoHeight, PIX_FMT_RGB24, width, height, PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 	}
 
-	uint8_t *src[3]= {buffer, NULL, NULL}; 
-	sws_scale(convertCtx, src, &srcstride, 0, height, pic_in.img.plane, pic_in.img.i_stride);
+	uint8_t *src[3]= {_transformBuffer, NULL, NULL}; 
+	sws_scale(convertCtx, src, &srcstride, 0, height, _inputPicture->img.plane, _inputPicture->img.i_stride);
 
 	//5. Role specific 
 	switch(_role)
@@ -1096,24 +994,24 @@ void Kahawai::CaptureDelta( int width, int height) {
 		//Apply delta to each byte of the image
 		for (int i=0 ; i<_hiFrameSize ; i++) 
 		{
-			pic_in.img.plane[0][i] = Delta(pic_in.img.plane[0][i],_mappedBuffer[i]);
+			_inputPicture->img.plane[0][i] = Delta(_inputPicture->img.plane[0][i],_mappedBuffer[i]);
 		}
-		EncodeAndSend(&pic_in);
+		EncodeAndSend();
 		break;
 	case Slave:
 		//write to mapped file
-		memcpy(_mappedBuffer,pic_in.img.plane[0],(width*height*3)/2);
+		memcpy(_mappedBuffer,_inputPicture->img.plane[0],(width*height*3)/2);
 		break;
 	case Client:
 		VERIFY(InitializeFfmpeg());
 		VERIFY(InitializeSDL());
 		if(!_loadedDeltaStream)
 		{
-			LoadVideo(_serverIP,_serverPort,&_pFormatCtx,&_pCodecCtx,&_pFrame);
+			LoadVideo(_serverIP,_serverPort,&_pFormatCtx,&_pCodecCtx,&_pAVFrame);
 			_loadedDeltaStream = true;
 		}
 
-		DecodeAndShow(width, height,pic_in.img.plane[0]);
+		DecodeAndShow(width, height,_inputPicture->img.plane[0]);
 		break;
 	}
 
@@ -1123,45 +1021,43 @@ void Kahawai::CaptureDelta( int width, int height) {
 		sws_freeContext(convertCtx);
 	}
 
-	x264_picture_clean(&pic_in);
-	delete buffer;
 
 }
 
-void Kahawai::CaptureIFrame( int width, int height) {
+/*
+================== 
+IFrameEncode
+================== 
+*/  
+
+void Kahawai::IFrameEncode( int width, int height) {
 
 	int					pix				= width * height;
-	byte*				buffer			= new byte[3*pix];
 	struct SwsContext*	convertCtx;
-	x264_picture_t		pic_in;
 
 
-	if(IsMaster() || _renderedFrames%_iFps==0)
+	if(IsMaster() || _renderedFrames % _iFps == 0)
 	{
 		//1. Capture screen to buffer
-		ReadFrameBuffer( width, height, buffer);
+		ReadFrameBuffer( width, height, _transformBuffer);
 
 
 		//2. Transformed (and scale) captured screen to YUV420p
 		//Libswscale flips the image when converting it. Flip it in advance, to later get the correct converted image
-		VerticalFlip(width,height, buffer,3);
+		VerticalFlip(width,height, _transformBuffer,3);
 
 		int srcstride = width*3; //RGB stride is just 3*width
 
-		//Allocate the x264 picture structure
-		if(!_x264_initialized)
-			VERIFY(InitializeX264(_hiVideoWidth,_hiVideoHeight));
-
-		x264_picture_alloc(&pic_in, X264_CSP_I420, _hiVideoWidth, _hiVideoHeight);
+		_inputPicture = _inputPictureTemp;
 
 		//Convert the image to YUV420
 		convertCtx = sws_getContext(width, height, PIX_FMT_RGB24, width, height, PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 
-		uint8_t *src[3]= {buffer, NULL, NULL}; 
-		sws_scale(convertCtx, src, &srcstride, 0, height, pic_in.img.plane, pic_in.img.i_stride);
+		uint8_t *src[3]= {_transformBuffer, NULL, NULL}; 
+		sws_scale(convertCtx, src, &srcstride, 0, height, _inputPicture->img.plane, _inputPicture->img.i_stride);
 
 #ifdef WRITE_SOURCE_FRAME
-		KahawaiWriteFile("e:\\frames-server\\yuv\\frame%04d.yuv",(char*)pic_in.img.plane[0],(width*height*3)/2,_renderedFrames);
+		KahawaiWriteFile("e:\\frames-server\\yuv\\frame%04d.yuv",(char*)_inputPicture->img.plane[0],(width*height*3)/2,_renderedFrames);
 #endif
 
 	}
@@ -1170,23 +1066,43 @@ void Kahawai::CaptureIFrame( int width, int height) {
 	switch(_role)
 	{
 	case Master:
-		EncodeServerFrames(&pic_in);
+		EncodeServerFrames();
 		break;
 	case Client:
-		VERIFY(InitClientIFrame()); //Set up the mutex and threads to render and decode
+		if(!_crossStreamInitialized)
+			_crossStreamInitialized = CreateKahawaiThread(CrossStreamsThreadStart,this); //Set up the mutex and threads to render and decode
 		//encode all as I-Frames send them to localhost socket
-		VERIFY(EncodeIFrames(&pic_in));
-		//The following may actually be done in a separate thread
-		InitializeFfmpeg();
+
+		VERIFY(EncodeIFrames());
+
+		EnterCriticalSection(&_iFrameLock);
+		{
+			while(_iFrame!=NULL)
+			{
+				SleepConditionVariableCS(&_encodingCV,&_iFrameLock, INFINITE);
+			}
+			if(_inputPicture!=NULL)
+			{
+				_iFrame = _iFrameTmp;
+				_iFrameSize = _iFrameTmpSize;
+				_inputPicture = NULL;
+
+			}
+
+		}
+		LeaveCriticalSection(&_iFrameLock);
+		WakeConditionVariable(&_mergingCV);
+
+		//The following initialization only happens once
 		InitializeSDL();
 		if(!_loadedDeltaStream)
 		{
-			LoadVideo("localhost",_serverPort+1,&_pFormatCtx,&_pCodecCtx,&_pFrame);
+			LoadVideo("localhost",_serverPort+1,&_pFormatCtx,&_pCodecCtx,&_pAVFrame);
 			_loadedDeltaStream = true;
 		}
 
-		VERIFY(InitDecodeThread());
-		//VERIFY(DecodeAndShow(width, height,pic_in.img.plane[0]));
+		if(!_decodeThreadInitialized)
+			_decodeThreadInitialized = CreateKahawaiThread(DecodeThreadStart,this);
 
 		break;
 
@@ -1199,128 +1115,15 @@ void Kahawai::CaptureIFrame( int width, int height) {
 		sws_freeContext(convertCtx);
 	}
 
-	if(IsMaster() || _renderedFrames%_iFps==1)
-	{
-		x264_picture_clean(&pic_in);
-	}
-
-	delete buffer;
 
 }
 
 
-//Public Accessors
-
-bool Kahawai::IsMaster()
-{
-	return _role == Master;
-}
-
-bool Kahawai::IsSlave()
-{
-	return _role == Slave;
-}
-
-bool Kahawai::IsClient()
-{
-	return _role == Client;
-}
-
-bool Kahawai::IsServer()
-{
-	return _role != Client;
-}
-
-KAHAWAI_MODE Kahawai::GetRole()
-{
-	return _role;
-}
-
-bool Kahawai::IsDelta()
-{
-	return profile == DeltaEncoding;
-}
-
-bool Kahawai::IsIFrame()
-{
-	return profile == IPFrame;
-}
-
-ENCODING_PROFILE Kahawai::GetMode()
-{
-	return profile;
-}
-
-bool Kahawai::IsOffloading()
-{
-	return _offloading;
-}
 
 
-AVDictionary* Kahawai::FilterCodecOptions(AVDictionary *opts, enum CodecID codec_id,
-	int encoder) {
-		AVCodecContext*		_avcodec_opts[AVMEDIA_TYPE_NB];
-		AVDictionary *ret = NULL;
-		AVDictionaryEntry *t = NULL;
-		AVCodec *codec =
-			encoder ?
-			avcodec_find_encoder(codec_id) :
-		avcodec_find_decoder(codec_id);
-		int flags =
-			encoder ? AV_OPT_FLAG_ENCODING_PARAM : AV_OPT_FLAG_DECODING_PARAM;
-		char prefix = 0;
-
-		if (!codec)
-			return NULL;
-
-		switch (codec->type) {
-		case AVMEDIA_TYPE_VIDEO:
-			prefix = 'v';
-			flags |= AV_OPT_FLAG_VIDEO_PARAM;
-			break;
-		case AVMEDIA_TYPE_AUDIO:
-			prefix = 'a';
-			flags |= AV_OPT_FLAG_AUDIO_PARAM;
-			break;
-		case AVMEDIA_TYPE_SUBTITLE:
-			prefix = 's';
-			flags |= AV_OPT_FLAG_SUBTITLE_PARAM;
-			break;
-		default:
-			break;
-		}
-
-		while (t = av_dict_get(opts, "", t, AV_DICT_IGNORE_SUFFIX)) {
-			if (av_opt_find(_avcodec_opts[0], t->key, NULL, flags, 0)
-				|| (codec && codec->priv_class
-				&& av_opt_find(&codec->priv_class, t->key, NULL, flags,
-				0)))
-				av_dict_set(&ret, t->key, t->value, 0);
-			else if (t->key[0] == prefix
-				&& av_opt_find(_avcodec_opts[0], t->key + 1, NULL, flags, 0))
-				av_dict_set(&ret, t->key + 1, t->value, 0);
-		}
-		return ret;
-}
-
-AVDictionary** Kahawai::SetupFindStreamInfoOptions(AVFormatContext *s,
-	AVDictionary *codec_opts) {
-		AVDictionary **opts;
-
-		if (!s->nb_streams)
-			return NULL;
-		opts = (AVDictionary**)av_mallocz(s->nb_streams * sizeof(*opts));
-		if (!opts) {
-			av_log(NULL, AV_LOG_ERROR,
-				"Could not alloc memory for stream options.\n");
-			return NULL;
-		}
-		for (unsigned int i = 0; i < s->nb_streams; i++)
-			opts[i] = FilterCodecOptions(codec_opts, s->streams[i]->codec->codec_id,
-			0);
-		return opts;
-}
-
+//////////////////////////////////////////////////////////////////////////
+// Offload Public Interface
+//////////////////////////////////////////////////////////////////////////
 void Kahawai::StartOffload()
 {
 	_offloading = true;
@@ -1345,15 +1148,23 @@ void Kahawai::OffloadVideo(	 int width, int height)
 	switch(profile)
 	{
 	case DeltaEncoding:
-		CaptureDelta(width,height);
-		_renderedFrames++;
+		DeltaEncode(width,height);
 		break;
 	case IPFrame:
-		CaptureIFrame(width,height);
+		IFrameEncode(width,height);
 		break;
 	}
+
+	_renderedFrames++;
+
 	return;
 }
+
+
+
+//////////////////////////////////////////////////////////////////////////
+// Time Control
+//////////////////////////////////////////////////////////////////////////
 
 int Kahawai::Sys_Milliseconds( void ) {
 	int sys_curtime;
@@ -1395,36 +1206,5 @@ bool Kahawai::ShouldSkipFrame()
 }
 
 Kahawai kahawai;
-
-VOID CaptureFrameBuffer(int width, int height, char* filename) 
-{
-	static int suffix = 0;
-	x264_picture_t		pic_in;
-	byte* buffer = new byte[width*height*3];
-	struct SwsContext*	convertCtx;
-	int srcstride = width * 3;
-
-	glReadBuffer( GL_FRONT );
-	glReadPixels( 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer ); 
-
-	VerticalFlip(width,height, buffer,3);
-
-	x264_picture_alloc(&pic_in, X264_CSP_I420, width, height);
-
-	convertCtx = sws_getContext(width, height, PIX_FMT_RGB24, width, height, PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
-	uint8_t *src[3]= {buffer, NULL, NULL}; 
-
-	sws_scale(convertCtx, src, &srcstride, 0, height, pic_in.img.plane, pic_in.img.i_stride);
-
-	char name[100];
-	sprintf_s(name,100, filename,suffix);
-	ofstream movieOut (name, ios::out | ios::binary | ios::app);
-	movieOut.write((char*)pic_in.img.plane[0], (width*height*3)/2);
-	movieOut.close();
-	x264_picture_clean(&pic_in);
-	delete buffer;
-	suffix++;
-
-}
 
 #endif

@@ -54,6 +54,17 @@ extern "C" {
 
 #endif
 
+class Kahawai;
+
+//General purpose functions
+
+void KahawaiWriteFile(const char* filename, char* content, int length, int suffix = 0);
+byte Delta(byte hi, byte lo);
+byte Patch(byte delta, byte lo);
+void VerticalFlip(int width, int height, byte* pixelData, int bitsPerPixel);
+VOID CaptureFrameBuffer(int width, int height, char* filename);
+bool CreateKahawaiThread(LPTHREAD_START_ROUTINE function, Kahawai* instance);
+
 //Defines, enums and constants
 
 const char kahawaiMaster[8] = "leader\n";
@@ -71,6 +82,14 @@ class Kahawai
 {
 private:
 
+
+	//cached buffers
+	byte*				_transformBuffer;
+	byte*				_transformBufferTemp;
+	x264_picture_t*		_inputPicture;
+	x264_picture_t*		_inputPictureTemp;
+
+
 	//Execution mode
 
 	ENCODING_PROFILE profile;
@@ -78,14 +97,19 @@ private:
 	//I-Frame encoding state
 	int _iFps;
 	bool _crossStreamInitialized;
-	byte* _iFrameBuffer;
-	byte* _pFrameBuffer;
-	int _iFrameBufferSize;
+	byte* _iFrame;
+	byte* _iFrameTmp;
+	byte* _PFrame;
+	int _iFrameSize;
+	int _iFrameTmpSize;
 	bool _loadedPStream;
 	bool _serverSocketInitialized;
-	SRWLOCK _renderedFramesLock;
-	SRWLOCK _iFrameBufferLock;
-	CONDITION_VARIABLE _iFrameBufferCV;
+
+	//I-Frame client locks
+	CRITICAL_SECTION _iFrameLock;
+	CONDITION_VARIABLE _encodingCV;
+	CONDITION_VARIABLE _mergingCV;
+
 	int _lastIFrameMerged;
 
 	//Delta encoding state
@@ -142,7 +166,7 @@ private:
 	//FFMPEG State
 	AVFormatContext*	_pFormatCtx;
 	AVCodecContext*		_pCodecCtx;
-	AVFrame*			_pFrame;
+	AVFrame*			_pAVFrame;
 	AVDictionary**		opts;
 
 	//SDL Video player settings
@@ -156,7 +180,6 @@ private:
 	AVDictionary **SetupFindStreamInfoOptions(AVFormatContext *s,
 		AVDictionary *pCodec_opts);
 
-	bool InitClientIFrame();
 	bool InitMapping(int size);
 	void MapRegion();
 	void ReadFrameBuffer( int width, int height, byte *buffer);
@@ -171,9 +194,9 @@ private:
 
 	bool DecodeAndShow(int width, int height,byte* low);
 	bool DecodeAndMix(int width, int height);
-	bool EncodeAndSend(x264_picture_t* pic_in);
-	bool EncodeIFrames(x264_picture_t* pic_in);
-	bool EncodeServerFrames(x264_picture_t* pic_in);
+	bool EncodeAndSend();
+	bool EncodeIFrames();
+	bool EncodeServerFrames();
 
 	//I-P Frame IPC
 	static DWORD WINAPI Kahawai::CrossStreamsThreadStart(void* Param);
@@ -182,7 +205,6 @@ private:
 
 
 	DWORD CrossStreams(void);
-	bool InitDecodeThread();
 
 	bool LoadVideo(char* IP, int port, 
 		AVFormatContext**	pFormatCtx, 
@@ -205,8 +227,8 @@ public:
 	KAHAWAI_MODE GetRole();
 
 	void OffloadVideo( int width, int height);
-	void CaptureDelta( int width, int height);
-	void CaptureIFrame( int width, int height);
+	void DeltaEncode( int width, int height);
+	void IFrameEncode( int width, int height);
 	int Sys_Milliseconds();
 	bool ShouldSkipFrame();
 	void StartOffload();
