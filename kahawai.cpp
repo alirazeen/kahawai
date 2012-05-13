@@ -565,7 +565,7 @@ bool Kahawai::InitializeX264(int width, int height, int fps)
 			//Rate control:
 			param.rc.i_rc_method = X264_RC_CRF;
 			param.rc.f_rf_constant = 25;
-			param.rc.f_rf_constant_max = 35;
+			param.rc.f_rf_constant_max =35;
 			//For streaming:
 			param.b_repeat_headers = 1;
 			param.b_annexb = 1;
@@ -1047,6 +1047,11 @@ void Kahawai::DeltaEncode( int width, int height) {
 		sws_scale(convertCtx, src, &srcstride, 0, height, _inputPicture->img.plane, _inputPicture->img.i_stride);
 		_transformBuffer = NULL;
 
+#ifdef WRITE_SOURCE_FRAME
+		if(IsMaster())
+			KahawaiWriteFile("e:\\frames-server\\yuv\\frame%04d.yuv",(char*)_inputPicture->img.plane[0],(width*height*3)/2,_renderedFrames);
+#endif
+
 	}
 	LeaveCriticalSection(&_captureLock);
 	WakeConditionVariable(&_capturingCV);
@@ -1256,8 +1261,9 @@ void Kahawai::OffloadVideo(	 int width, int height)
 		offloadStartTime = timeGetTime();
 	}
 
-	if(_renderedFrames == 2100)
+	if(_renderedFrames == 600)
 	{
+		exit(0);
 		LogFPS();
 	}
 

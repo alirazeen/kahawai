@@ -82,6 +82,8 @@ class Kahawai
 {
 private:
 
+	int _preset;
+	int _crf;
 
 	//benchmark counters
 	DWORD offloadEndTime;
