@@ -1,3 +1,6 @@
+#include<iostream> //Include just so VStudio doesn't complain (when compiling in "original" mode)
+#ifdef KAHAWAI
+
 /*
  * World's Smallest h.264 Encoder, by Ben Mesander.
  *
@@ -130,3 +133,4 @@ uint8_t* basicEncode(uint8_t *const dst[])
 	return 0;
 
 }
+#endif
