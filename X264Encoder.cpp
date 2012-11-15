@@ -73,7 +73,7 @@ X264Encoder::~X264Encoder(void)
  * @param base (Optional) the second operand to the operator function
  * @return a x264_nal_t representing the Network Allocation Unit for the compressed frame
  */
-int X264Encoder::Encode(void* pictureIn, void* pictureOut, transform apply, byte* base)
+int X264Encoder::Encode(void* pictureIn, void** pictureOut, transform apply, byte* base)
 {
 	x264_picture_t		pic_out;
 	x264_nal_t*			nals;
@@ -94,7 +94,7 @@ int X264Encoder::Encode(void* pictureIn, void* pictureOut, transform apply, byte
 	//Encode the frame
 	int frame_size = x264_encoder_encode(_encoder, &nals, &i_nals, inputPicture, &pic_out);
 
-	pictureOut = nals[0].p_payload;
+	*pictureOut = nals[0].p_payload;
 
 	return frame_size;
 }

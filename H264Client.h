@@ -13,5 +13,8 @@ protected:
 	bool		Decode();
 	bool		Show();	
 
+	bool		StopOffload();
+	int			GetFirstInputFrame();
+
 };
 

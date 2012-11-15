@@ -21,6 +21,10 @@ protected:
 	bool Transform(int width, int height);
 	bool Decode();
 	bool Show();
+
+	//Input Handling Profile
+	int	GetFirstInputFrame();
+
 };
 
 byte Patch(byte delta, byte lo);

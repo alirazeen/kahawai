@@ -9,7 +9,11 @@ using namespace std;
 #include<fstream>
 #include<string>
 
-
+#ifdef WIN32
+#define LOG_RETURN "\r\n"
+#else
+#define LOG_RETURN "\n"
+#endif
 
 
 /************************************************************************/
@@ -28,8 +32,17 @@ void KahawaiLog(char* content, KahawaiLogLevel errorLevel)
 	if(errorLevel >= minLevel)
 	{
 		KahawaiWriteFile(KAHAWAI_LOG_FILE,content,strlen(content));
+		KahawaiWriteFile(KAHAWAI_LOG_FILE,LOG_RETURN,strlen(LOG_RETURN));
 
 	}
+}
+
+void KahawaiSaveFrame(const char* subfolder, int serialId, char* data, int width, int height)
+{
+	char savePath[250];
+	sprintf_s(savePath,"%s%s\\frame%04d.yuv",g_resultsPath,subfolder, serialId);
+	KahawaiWriteFile(savePath,data,YUV420pBitsPerPixel(width,height));
+
 }
 
 void KahawaiWriteFile(const char* filename, char* content, int length, int suffix)

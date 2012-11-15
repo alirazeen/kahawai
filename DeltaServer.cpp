@@ -100,11 +100,11 @@ int DeltaServer::Encode(void** compressedFrame)
 {
 	if(_master)
 	{
-		return _encoder->Encode(_transformPicture,*compressedFrame,Delta, _mappedBuffer);
+		return _encoder->Encode(_transformPicture,compressedFrame,Delta, _mappedBuffer);
 	}
 	else
 	{
-		compressedFrame = (void**) &_transformPicture;
+		*compressedFrame =  &_transformPicture;
 		return YUV420pBitsPerPixel(_width,_height);
 	}
 }
@@ -127,7 +127,7 @@ bool DeltaServer::Send(void** compressedFrame, int frameSize)
 		memcpy(_mappedBuffer,compressedFrame,frameSize);
 	}
 
-	return false;
+	return true;
 }
 
 

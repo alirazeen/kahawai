@@ -12,7 +12,7 @@ ConfigReader::ConfigReader(void)
 ConfigReader::ConfigReader(char* fileName)
 {
 	_config = new pugi::xml_document();
-	pugi::xml_parse_result result = _config->load_file("kahawai.xml");
+	pugi::xml_parse_result result = _config->load_file(fileName);
 	if(!result)
 	{
 		KahawaiLog("FATAL: Unable to read config file: kahawai.xml",KahawaiError);

@@ -24,7 +24,7 @@ protected:
 	void OffloadAsync();
 
 	//Input delay profile
-	virtual int			GetFirstInputFrame(); //returns the number of the first frame to receive input
+	virtual int			GetFirstInputFrame()=0; //returns the number of the first frame to receive input
 	void				PingServer();
 	void				ProfileGraphics();
 

@@ -8,7 +8,7 @@
  */
 void KahawaiServer::OffloadAsync()
 {
-	void** compressedFrame = new void*;
+	void* compressedFrame = NULL;
 
 
 	//////////////////////////////////////////////////////////////////////////
@@ -17,11 +17,13 @@ void KahawaiServer::OffloadAsync()
 	while(_offloading)
 	{
 
-						Transform(_width,_height);
-		int frameSize = Encode(compressedFrame);
-						Send(compressedFrame,frameSize);
+		_offloading	 &=	Transform(_width,_height);
+		int frameSize = Encode(&compressedFrame);
+		_offloading	 &=	Send(&compressedFrame,frameSize);
 	}
-	//////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////
+
+	KahawaiLog("Finished Offloading", KahawaiDebug);
 }
 
 bool KahawaiServer::Initialize()
@@ -44,7 +46,7 @@ bool KahawaiServer::Initialize()
 	}
 	else
 	{
-		KahawaiLog("Invalid ConfiguratioN:Unsupported Encoder", KahawaiError);
+		KahawaiLog("Invalid Configuration:Unsupported Encoder", KahawaiError);
 		return false;
 	}
 
@@ -109,7 +111,7 @@ SOCKET KahawaiServer::CreateSocketToClient(int host_port)
 	sockaddr_in sadr;
 	int	addr_size = sizeof(SOCKADDR);
 
-	return accept( hsock, (SOCKADDR*)&sadr, &addr_size);
+			return accept( hsock, (SOCKADDR*)&sadr, &addr_size);
 
 }
 

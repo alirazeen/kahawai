@@ -1,4 +1,3 @@
-
 using namespace std;
 #include"kahawaiBase.h"
 #ifdef KAHAWAI
@@ -47,7 +46,7 @@ bool Kahawai::Offload()
 
 #if _DEBUG
 	
-	if(_renderedFrames == 600)
+	if(_renderedFrames == 6000)
 	{
 		LogFPS();
 		return false;
@@ -80,6 +79,8 @@ Kahawai* Kahawai::LoadFromFile()
 	char valueBuffer[15];
 	ENCODING_MODE encodingMode;
 	boolean server;
+
+	KahawaiLog("Loading Kahawai instance", KahawaiDebug);
 
 	ConfigReader* reader = new ConfigReader(KAHAWAI_CONFIG);
 	
@@ -186,6 +187,7 @@ bool Kahawai::ShouldSkip()
 bool Kahawai::StopOffload()
 {
 	_offloading = false;
+	KahawaiLog("Offload stopped gracefully", KahawaiDebug);
 	return true;
 }
 

@@ -100,9 +100,7 @@ bool FFMpegDecoder::Decode(transform apply, byte* patch)
 
 #ifdef WRITE_DECODED_FRAMES
 					//writes the raw yuv file to disc as well
-					char savePath[250];
-					sprintf_s(savePath,"%sdecoded\\frame%04d.yuv",g_resultsPath,decodedFrame);
-					KahawaiWriteFile(savePath,(char*)_pYuvOverlay->pixels[0],(_width*_height*3)/2);
+					KahawaiSaveFrame("decoded", decodedFrame, _pYuvOverlay->pixels[0], _width,_height);
 #endif 
 
 					SDL_DisplayYUVOverlay(_pYuvOverlay, &_screenRect);
@@ -206,6 +204,8 @@ bool FFMpegDecoder::LoadVideoStream()
 	// Allocate video frame
 	_pAVFrame = avcodec_alloc_frame();
 
+	_loaded = true;
+
 	return true;
 
 }
@@ -234,6 +234,13 @@ bool FFMpegDecoder::InitializeSDL(int width, int height)
 		height,
 		SDL_IYUV_OVERLAY,
 		_pScreen);
+
+	//RECT describing the size of the SDL Player
+	_screenRect.x = 0;
+	_screenRect.y = 0;
+	_screenRect.w = width;
+	_screenRect.h = height;
+
 
 	return true;
 }

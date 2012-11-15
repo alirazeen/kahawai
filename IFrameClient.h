@@ -15,9 +15,14 @@ protected:
 	bool		Decode();
 	bool		Show();
 
+	//Input Handling Profile
+	int			GetFirstInputFrame();
+
 	//Components
 	IFrameClientDecoder* _decoderComponent;
 	IFrameClientEncoder* _encoderComponent;
+
+
 
 };
 

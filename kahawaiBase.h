@@ -35,8 +35,6 @@ bool CreateKahawaiThread(LPTHREAD_START_ROUTINE function, Kahawai* instance);
 //Typedef for delta/patch form functions
 typedef byte (*transform)(byte apply,byte patch);
 
-//MACRO to obtain the size of a bitmap in YUV420p given its resolution
-#define YUV420pBitsPerPixel(W, H) (((W*H)*3)/2)
 
 #define KAHAWAI_MAP_FILE "kahawai.dat"
 #define FIRST_VIDEO_STREAM 0

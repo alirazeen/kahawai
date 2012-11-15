@@ -49,4 +49,17 @@ bool H264Client::Show()
 {
 	return _decoder->Show();
 }
+
+int H264Client::GetFirstInputFrame()
+{
+	//Need to implement this method
+	throw 1;
+	return 0;
+}
+
+bool H264Client::StopOffload()
+{
+	//Offload stops naturally when the server stops sending data
+	return true;
+}
 #endif

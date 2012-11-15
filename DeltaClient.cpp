@@ -89,4 +89,12 @@ bool DeltaClient::Show()
 {
 	return _decoder->Show();
 }
+
+int DeltaClient::GetFirstInputFrame()
+{
+	//Need to implement this method
+	throw 1;
+	return 0;
+}
+
 #endif
