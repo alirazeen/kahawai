@@ -37,11 +37,20 @@ void KahawaiLog(char* content, KahawaiLogLevel errorLevel)
 	}
 }
 
-void KahawaiSaveFrame(const char* subfolder, int serialId, char* data, int width, int height)
+
+void KahawaiSaveYUVFrame(const char* subfolder, int serialId, char* data, int width, int height)
 {
 	char savePath[250];
-	sprintf_s(savePath,"%s%s\\frame%04d.yuv",g_resultsPath,subfolder, serialId);
+	sprintf_s(savePath,"%s\\%s\\frame%04d.yuv",g_resultsPath,subfolder, serialId);
 	KahawaiWriteFile(savePath,data,YUV420pBitsPerPixel(width,height));
+
+}
+
+void KahawaiSaveVideoFrame(const char* subfolder, char* fileName, char* data, int frame_size)
+{
+	char savePath[250];
+	sprintf_s(savePath,"%s\\%s\\%s",g_resultsPath,subfolder, fileName);
+	KahawaiWriteFile(savePath,data,frame_size);
 
 }
 

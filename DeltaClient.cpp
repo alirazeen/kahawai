@@ -82,6 +82,10 @@ bool DeltaClient::Transform(int width, int height)
 
 bool DeltaClient::Decode()
 {	
+#ifdef WRITE_SOURCE_FRAME
+	KahawaiSaveYUVFrame("source",_renderedFrames,(char*)_transformPicture->img.plane[0],_clientWidth,_clientHeight);
+#endif
+
 	return _decoder->Decode(Patch,_transformPicture->img.plane[0]);
 }
 

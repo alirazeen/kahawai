@@ -104,7 +104,7 @@ int DeltaServer::Encode(void** compressedFrame)
 	}
 	else
 	{
-		*compressedFrame =  &_transformPicture;
+		*compressedFrame =  _transformPicture->img.plane[0];
 		return YUV420pBitsPerPixel(_width,_height);
 	}
 }
@@ -119,12 +119,13 @@ bool DeltaServer::Send(void** compressedFrame, int frameSize)
 			KahawaiLog("Unable to send frame to client", KahawaiError);
 			return false;
 		}
+		KahawaiSaveVideoFrame("transferred","deltaMovie.h264",(char*)*compressedFrame,frameSize);
 
 	}
 	else //Slave
 	{
 		//Copy the low fidelity capture to shared memory
-		memcpy(_mappedBuffer,compressedFrame,frameSize);
+		memcpy(_mappedBuffer,(char*) *compressedFrame,frameSize);
 	}
 
 	return true;

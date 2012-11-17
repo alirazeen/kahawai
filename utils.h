@@ -14,7 +14,8 @@ enum KahawaiLogLevel { KahawaiDebug=0, KahawaiError=1 };
 void CaptureFrameBuffer(int width, int height, char* filename);
 void KahawaiLog(char* content, KahawaiLogLevel errorLevel);
 void KahawaiWriteFile(const char* filename, char* content, int length, int suffix = 0);
-void KahawaiSaveFrame(const char* subfolder, int serialId, char* data, int width, int height);
+void KahawaiSaveVideoFrame(const char* subfolder, char* fileName, char* data, int frame_size);
+void KahawaiSaveYUVFrame(const char* subfolder, int serialId, char* data, int width, int height);
 void VerticalFlip(int width, int height, byte* pixelData, int bitsPerPixel);
 void CaptureFrameBuffer(int width, int height, char* filename);
 

@@ -6,7 +6,8 @@
 
 
 FFMpegDecoder::FFMpegDecoder(char* URL, int width, int height)
-	:_width(width),
+	:VideoDecoder(),
+	_width(width),
 	_height(height),
 	_streamFinished(false),
 	_loaded(false),
@@ -47,7 +48,6 @@ bool FFMpegDecoder::Decode(transform apply, byte* patch)
 {
 	int				frameFinished = 0;
 	AVPacket		_Packet;
-	static int			decodedFrame;
 
 
 	if(!_loaded)
@@ -95,16 +95,17 @@ bool FFMpegDecoder::Decode(transform apply, byte* patch)
 						for (int i=0 ; i< _y420pFrameSize ; i++) 
 						{
 							_pYuvOverlay->pixels[0][i] = apply(_pYuvOverlay->pixels[0][i],patch[i]);
+							//_pYuvOverlay->pixels[0][i] = patch[i];
 						}
 					}
 
 #ifdef WRITE_DECODED_FRAMES
 					//writes the raw yuv file to disc as well
-					KahawaiSaveFrame("decoded", decodedFrame, _pYuvOverlay->pixels[0], _width,_height);
+					KahawaiSaveYUVFrame("decoded", _displayedFrames, (char*)_pYuvOverlay->pixels[0], _width,_height);
 #endif 
 
 					SDL_DisplayYUVOverlay(_pYuvOverlay, &_screenRect);
-					decodedFrame++;
+					_displayedFrames++;
 				}
 			}
 

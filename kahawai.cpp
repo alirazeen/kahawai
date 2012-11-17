@@ -310,7 +310,7 @@ bool Kahawai::Initialize()
 	char technique[15];
 	_configReader->ReadProperty(CONFIG_OFFLOAD,CONFIG_TECHNIQUE,technique);
 
-	sprintf_s(g_resultsPath,"e:\\benchmarks\\%s\\%s\\Low\\%s\\%d\\",_demoFile, technique,x264_preset_names[preset],crf);
+	sprintf_s(g_resultsPath,"%s\\%s\\%s\\Low\\%s\\%d",g_resultsPath,_demoFile, technique,x264_preset_names[preset],crf);
 #endif
 
 	//Structure used in all derived classes mostly for libsws colorspace
@@ -511,6 +511,7 @@ char* Kahawai::GetDemoFile()
 	return _demoFile;
 }
 
-
 Kahawai* kahawai;
+char				g_resultsPath[200]; //Path to save the captured frames
+
 #endif

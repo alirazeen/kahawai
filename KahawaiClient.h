@@ -27,6 +27,7 @@ protected:
 	virtual int			GetFirstInputFrame()=0; //returns the number of the first frame to receive input
 	void				PingServer();
 	void				ProfileGraphics();
+	int					GetDisplayedFrames();
 
 public:
 	KahawaiClient(void);

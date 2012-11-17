@@ -65,6 +65,11 @@ bool KahawaiClient::IsHD()
 	return false;
 }
 
+int KahawaiClient::GetDisplayedFrames()
+{
+	return _decoder->GetDisplayedFrames();
+}
+
 
 KahawaiClient::KahawaiClient(void)
 	:Kahawai(),

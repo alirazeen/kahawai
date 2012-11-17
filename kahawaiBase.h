@@ -26,7 +26,7 @@ class Kahawai;
 const char kahawaiMaster[8] = "leader\n";
 
 //debugging and storing of frames
-static char				g_resultsPath[200]; //Path to save the captured frames
+extern char				g_resultsPath[200]; //Path to save the captured frames
 
 
 //Kahawai special helper routines

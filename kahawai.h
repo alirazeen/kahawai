@@ -61,7 +61,7 @@ protected:
 	//Accessors
 	int					GetHeight();
 	int					GetWidth();
-
+	int					GetDisplayedFrames();
 	//Instrumentation
 	void				LogFPS();
 
