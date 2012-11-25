@@ -6,7 +6,6 @@
 #include "FFMpegDecoder.h"
 #include "MediaFoundationDecoder.h"
 
-
 bool KahawaiClient::Initialize()
 {
 	if(!Kahawai::Initialize())
@@ -35,6 +34,13 @@ bool KahawaiClient::Initialize()
 		_decoder = new MediaFoundationDecoder();
 	}
 
+	//Config the decoder to save (or not) the decoded frames
+	_decoder->EnableFrameLogging(_saveCaptures);
+
+	//Initialize input handler
+	_inputHandler = new InputHandlerClient(_serverIP,_serverPort+1,_gameName);
+
+
 	return true;
 }
 
@@ -45,6 +51,15 @@ bool KahawaiClient::Initialize()
  */
 void KahawaiClient::OffloadAsync()
 {
+	//Connect input handler to server
+#ifdef HANDLE_INPUT
+	if(!_inputHandler->Connect())
+	{
+		KahawaiLog("Unable to start input handler", KahawaiError);
+		_offloading = false;
+		return;
+	}
+#endif
 	//////////////////////////////////////////////////////////////////////////
 	//Kahawai Client LifeCyle
 	//////////////////////////////////////////////////////////////////////////
@@ -58,6 +73,29 @@ void KahawaiClient::OffloadAsync()
 	/////////////////////////////////////////////////////////////////////////
 
 	KahawaiLog("Offload finished.\n", KahawaiDebug);
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+//INPUT Handling
+//////////////////////////////////////////////////////////////////////////
+
+
+void* KahawaiClient::HandleInput(void* inputCommand)
+{
+	_localInputQueue.push(inputCommand);
+	_inputHandler->SendCommand(inputCommand);
+
+	if(!ShouldHandleInput())
+	{
+		return _inputHandler->GetEmptyCommand();
+	}
+	else
+	{
+		void* command = _localInputQueue.front();
+		_localInputQueue.pop();
+		return command;
+	}	
 }
 
 bool KahawaiClient::IsHD()
@@ -75,10 +113,9 @@ KahawaiClient::KahawaiClient(void)
 	:Kahawai(),
 	_decoder(0)
 {
-	strncpy(_serverIP,KAHAWAI_LOCALHOST,sizeof(KAHAWAI_LOCALHOST));
+	strncpy_s(_serverIP,KAHAWAI_LOCALHOST,sizeof(KAHAWAI_LOCALHOST));
 
 }
-
 
 KahawaiClient::~KahawaiClient(void)
 {
@@ -86,6 +123,12 @@ KahawaiClient::~KahawaiClient(void)
 		delete _decoder;
 
 	_decoder=NULL;
+
+	if(_inputHandler!=NULL)
+		delete _inputHandler;
+
+	_inputHandler = NULL;
 }
+
 
 #endif

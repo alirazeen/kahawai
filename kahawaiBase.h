@@ -30,10 +30,10 @@ extern char				g_resultsPath[200]; //Path to save the captured frames
 
 
 //Kahawai special helper routines
-bool CreateKahawaiThread(LPTHREAD_START_ROUTINE function, Kahawai* instance);
+bool CreateKahawaiThread(LPTHREAD_START_ROUTINE function, void* instance);
 
 //Typedef for delta/patch form functions
-typedef byte (*transform)(byte apply,byte patch);
+typedef byte (*kahawaiTransform)(byte apply,byte patch);
 
 
 #define KAHAWAI_MAP_FILE "kahawai.dat"

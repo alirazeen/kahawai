@@ -20,5 +20,6 @@ public:
 	~ConfigReader(void);
 	int ReadProperty(char* section, char* attribute, char* buffer);
 	int ReadIntegerValue(char* section, char* attribute);
+	bool ReadBooleanValue(char* section, char* attribute);
 };
 

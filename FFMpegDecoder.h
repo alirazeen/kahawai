@@ -1,7 +1,7 @@
 #pragma once
 #include "videodecoder.h"
 
-#define MAX_ATTEMPTS 10
+#define MAX_ATTEMPTS 100
 
 //SDL Imports
 #include <SDL.h>
@@ -24,7 +24,7 @@ class FFMpegDecoder :
 public:
 	FFMpegDecoder(char* URL, int width, int height);
 	~FFMpegDecoder(void);
-	bool Decode(transform apply = 0, byte* patch = 0); 
+	bool Decode(kahawaiTransform apply = 0, byte* patch = 0); 
 	bool Show(); 
 	AVDictionary* FilterCodecOptions(AVDictionary *opts, enum CodecID codec_id,	int encoder);
 	AVDictionary** SetupFindStreamInfoOptions(AVFormatContext *s, AVDictionary *codec_opts);

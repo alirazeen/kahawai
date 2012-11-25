@@ -49,6 +49,22 @@ bool H264Server::Send(void** compressedFrame,int frameSize)
 
 	return true;
 }
+//////////////////////////////////////////////////////////////////////////
+//Input Handling (NO OP)
+//////////////////////////////////////////////////////////////////////////
+void* H264Server::HandleInput(void* input)
+{
+	//H264 version doesn't handle input as just sends video
+	return input;
+}
+
+int H264Server::GetFirstInputFrame()
+{
+	//No OP. H264 doesnt handle input
+	return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////
 
 H264Server::H264Server(void)
 	:KahawaiServer()

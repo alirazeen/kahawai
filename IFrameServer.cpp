@@ -24,4 +24,21 @@ bool IFrameServer::Send(void** compressedFrame, int frameSize)
 	return true;
 }
 
+//////////////////////////////////////////////////////////////////////////
+//Input Handling
+//////////////////////////////////////////////////////////////////////////
+void* IFrameServer::HandleInput(void* input)
+{
+	throw 1;
+	return input;
+}
+
+
+int IFrameServer::GetFirstInputFrame()
+{
+	throw 1;
+	return 0;
+}
+
+
 #endif

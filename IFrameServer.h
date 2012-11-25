@@ -13,5 +13,9 @@ protected:
 	int		Encode(void** compressedFrame);
 	bool	Send(void** compressedFrame, int frameSize);
 
+	//Input Handling (NO OP)
+	void*	HandleInput(void* input);
+	int		GetFirstInputFrame();
+
 };
 

@@ -1,26 +1,35 @@
-#pragma once
+	#pragma once
 #include "kahawai.h"
 #include "ConfigReader.h"
 #include "VideoEncoder.h"
+#include "InputHandlerServer.h"
 
 class KahawaiServer :
 	public Kahawai
 {
 protected:
+	//////////////////////////////////////////////////////////////////////////
+	// Server Public Interface
+	//////////////////////////////////////////////////////////////////////////
+
 	//Kahawai Lifecycle / Pipeline
-	bool Initialize();
-	virtual int Encode(void** compressedFrame)=0;
-	virtual bool Send(void** compressedFrame,int frameSize)=0;
+	virtual int			Encode(void** transformedFrame)=0; 
+	virtual bool		Send(void** compressedFrame,int frameSize)=0;
 
-	//Networking
-	SOCKET CreateSocketToClient(int host_port);
+	//////////////////////////////////////////////////////////////////////////
+	// Server Concrete Methods
+	//////////////////////////////////////////////////////////////////////////
 
+	bool				Initialize();
+	//Input Handling
+	void*				HandleInput(void*);
+	int					GetDisplayedFrames();
 
 	//Asynchronous entry point
-	void		OffloadAsync();
+	void				OffloadAsync();
 
 	//Game Fidelity Configuration
-	bool IsHD();
+	bool				IsHD();
 
 
 	//////////////////////////////////////////////////////////////////////////
@@ -28,13 +37,14 @@ protected:
 	//////////////////////////////////////////////////////////////////////////
 
 	//Encoding
-	VideoEncoder* _encoder;
-	static const int _fps = TARGET_FPS; 
+	VideoEncoder*		_encoder;
+	static const int	_fps = TARGET_FPS; 
 	int _crf;
 	int _preset;
 
 	//Client-server communication
-	SOCKET _socketToClient;
+	SOCKET				_socketToClient;
+	InputHandlerServer* _inputHandler;
 
 public:
 	KahawaiServer(void);

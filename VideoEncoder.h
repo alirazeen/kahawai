@@ -11,6 +11,6 @@ public:
 	 * @param pictureOut the encoded result
 	 * @return the size in bytes of pictureOut. Zero or less on error
 	 */
-	virtual int Encode(void* pictureIn, void** pictureOut, transform apply = 0, byte* base = 0) = 0; 
+	virtual int Encode(void* pictureIn, void** pictureOut, kahawaiTransform apply = 0, byte* base = 0) = 0; 
 };
 

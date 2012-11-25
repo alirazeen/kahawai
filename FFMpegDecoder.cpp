@@ -44,7 +44,7 @@ FFMpegDecoder::~FFMpegDecoder(void)
  * @param	patch	the parameter to the transformation function
  * @return	true if the decoding was successful
  */
-bool FFMpegDecoder::Decode(transform apply, byte* patch)
+bool FFMpegDecoder::Decode(kahawaiTransform apply, byte* patch)
 {
 	int				frameFinished = 0;
 	AVPacket		_Packet;
@@ -99,10 +99,8 @@ bool FFMpegDecoder::Decode(transform apply, byte* patch)
 						}
 					}
 
-#ifdef WRITE_DECODED_FRAMES
-					//writes the raw yuv file to disc as well
-					KahawaiSaveYUVFrame("decoded", _displayedFrames, (char*)_pYuvOverlay->pixels[0], _width,_height);
-#endif 
+					//writes the raw yuv file to disc if frame logging is enabled
+					LogYUVFrame(_saveFrames,"decoded", _displayedFrames, (char*)_pYuvOverlay->pixels[0], _width,_height);
 
 					SDL_DisplayYUVOverlay(_pYuvOverlay, &_screenRect);
 					_displayedFrames++;
@@ -177,6 +175,9 @@ bool FFMpegDecoder::LoadVideoStream()
 	for(int attempts = 0; attempts < MAX_ATTEMPTS && opened!=0; attempts++)
 	{
 		opened = avformat_open_input(&_pFormatCtx, _URL, NULL, NULL);
+#ifdef WIN32
+		Sleep(1000);
+#endif
 	}
 
 	if(opened!=0)

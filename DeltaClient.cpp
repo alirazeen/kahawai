@@ -82,9 +82,7 @@ bool DeltaClient::Transform(int width, int height)
 
 bool DeltaClient::Decode()
 {	
-#ifdef WRITE_SOURCE_FRAME
-	KahawaiSaveYUVFrame("source",_renderedFrames,(char*)_transformPicture->img.plane[0],_clientWidth,_clientHeight);
-#endif
+	LogYUVFrame(_saveCaptures,"low",_renderedFrames,(char*)_transformPicture->img.plane[0],_clientWidth,_clientHeight);
 
 	return _decoder->Decode(Patch,_transformPicture->img.plane[0]);
 }
@@ -94,11 +92,19 @@ bool DeltaClient::Show()
 	return _decoder->Show();
 }
 
+
+//Input Handling
+
+/**
+ * Returns the first frame that should receive user's input
+ * due to offloading delay effect
+ * @return the first frame that should receive input
+ */
 int DeltaClient::GetFirstInputFrame()
 {
-	//Need to implement this method
-	throw 1;
-	return 0;
+	//TODO: Need to give a real value based on profiling
+	return 3;
 }
+
 
 #endif

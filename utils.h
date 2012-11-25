@@ -3,9 +3,19 @@
 
 typedef unsigned char byte;
 
+#include "Networking.h"
 
 //MACRO to obtain the size of a bitmap in YUV420p given its resolution
 #define YUV420pBitsPerPixel(W, H) (((W*H)*3)/2)
+
+//MACRO TO SAVE CAPTURES ONLY IN DEBUG MODE
+#ifdef _DEBUG
+#define LogVideoFrame(condition,subfolder,fileName,data,frame_size) if(condition)KahawaiSaveVideoFrame(subfolder,fileName,data,frame_size);
+#define LogYUVFrame(condition,subfolder,serialId,data,width,height) if(condition)KahawaiSaveYUVFrame(subfolder,serialId,data,width,height)
+#else
+#define LogVideoFrame(subfolder,fileName,data,frame_size)
+#define LogYUVFrame(subfolder,serialId,data,width,height)
+#endif
 
 //Kahawai Log
 #define KAHAWAI_LOG_FILE "kahawai.log"

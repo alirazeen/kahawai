@@ -73,7 +73,7 @@ X264Encoder::~X264Encoder(void)
  * @param base (Optional) the second operand to the operator function
  * @return a x264_nal_t representing the Network Allocation Unit for the compressed frame
  */
-int X264Encoder::Encode(void* pictureIn, void** pictureOut, transform apply, byte* base)
+int X264Encoder::Encode(void* pictureIn, void** pictureOut, kahawaiTransform apply, byte* base)
 {
 	x264_picture_t		pic_out;
 	x264_nal_t*			nals;

@@ -9,22 +9,21 @@ public:
 
 protected:
 	//Low fidelity resolution
-	int _clientWidth;
-	int _clientHeight;
+	int			_clientWidth;
+	int			_clientHeight;
 
 
-	bool Offload(uint8_t* frameBuffer);
-	bool Initialize();
+	bool		Offload(uint8_t* frameBuffer);
+	bool		Initialize();
 
 	//Kahawai Lifecycle
-	bool Capture(int width, int height);
-	bool Transform(int width, int height);
-	bool Decode();
-	bool Show();
+	bool		Capture(int width, int height);
+	bool		Transform(int width, int height);
+	bool		Decode();
+	bool		Show();
 
 	//Input Handling Profile
-	int	GetFirstInputFrame();
-
+	int			GetFirstInputFrame();
 };
 
 byte Patch(byte delta, byte lo);

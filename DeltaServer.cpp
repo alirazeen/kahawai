@@ -47,6 +47,10 @@ bool DeltaServer::Initialize()
 	//Initialize encoder
 	_encoder = new X264Encoder(_height,_width,_fps,_crf,_preset);
 
+	//Initialize input handler
+	_inputHandler = new InputHandlerServer(_serverPort+1, _gameName);
+
+
 	if(!_master)
 	{	//Re-Initialize sws scaling context if slave
 		delete[] _sourceFrame;
@@ -65,15 +69,24 @@ bool DeltaServer::Initialize()
 void DeltaServer::OffloadAsync()
 {
 	//First perform final initialization step
-	//Create socket to client (if master)
+	//Create socket and input connection to client (if master)
 	if(_master)
+	{
+		bool connection = true;
+
+#ifdef HANDLE_INPUT
+		connection = _inputHandler->Connect();
+#endif
 		_socketToClient = CreateSocketToClient(_serverPort);
 
-	if(_socketToClient==INVALID_SOCKET)
-	{
-		KahawaiLog("Unable to create connection to client", KahawaiError);
-		return;
+		if(_socketToClient==INVALID_SOCKET || !connection)
+		{
+			KahawaiLog("Unable to create connection to client", KahawaiError);
+			return;
+		}
+
 	}
+
 
 	KahawaiServer::OffloadAsync();
 
@@ -91,24 +104,47 @@ void DeltaServer::OffloadAsync()
 bool DeltaServer::Transform(int width, int height)
 {
 	//Synchronize both processes
-	SyncCopies();
+	//SyncCopies();
 	return KahawaiServer::Transform(_width, _height);
 }
 
-
-int DeltaServer::Encode(void** compressedFrame)
+/**
+ * The master combines the low definition from the slave with its own 
+ * and encodes it
+ * The slaves writes its low definition version to shared memory
+ * @param transformedFrame a pointer to the transformedFrame
+ * @see KahawaiServer::Encode
+ * @return
+ */
+int DeltaServer::Encode(void** transformedFrame)
 {
 	if(_master)
 	{
-		return _encoder->Encode(_transformPicture,compressedFrame,Delta, _mappedBuffer);
+		int result = 0;
+
+		LogYUVFrame(_renderedFrames,"source",_renderedFrames,(char*)_transformPicture->img.plane[0],_width,_height);
+	
+		//Wait for the slave copy to finish writing the low quality version to shared memory
+		WaitForSingleObject(_masterBarrier, INFINITE);
+			result = _encoder->Encode(_transformPicture,transformedFrame,Delta, _mappedBuffer);
+		SetEvent(_slaveBarrier);
+
+		return result;
 	}
 	else
 	{
-		*compressedFrame =  _transformPicture->img.plane[0];
+		*transformedFrame =  _transformPicture->img.plane[0];
 		return YUV420pBitsPerPixel(_width,_height);
 	}
 }
 
+/**
+ * Sends the encoded frame to the client 
+ * @param compressed frame, a pointer to the compressedFrame array
+ * @param frameSize the size of the array
+ * @see KahawaiServer::Send
+ * @return true if the operation succeeded, false otherwise
+ */
 bool DeltaServer::Send(void** compressedFrame, int frameSize)
 {
 	if(_master)
@@ -119,13 +155,15 @@ bool DeltaServer::Send(void** compressedFrame, int frameSize)
 			KahawaiLog("Unable to send frame to client", KahawaiError);
 			return false;
 		}
-		KahawaiSaveVideoFrame("transferred","deltaMovie.h264",(char*)*compressedFrame,frameSize);
-
+		LogVideoFrame(_saveCaptures,"transferred","deltaMovie.h264",(char*)*compressedFrame,frameSize);
 	}
 	else //Slave
 	{
 		//Copy the low fidelity capture to shared memory
 		memcpy(_mappedBuffer,(char*) *compressedFrame,frameSize);
+
+		SetEvent(_masterBarrier);
+		WaitForSingleObject(_slaveBarrier, INFINITE);
 	}
 
 	return true;
@@ -143,7 +181,8 @@ bool DeltaServer::Send(void** compressedFrame, int frameSize)
  */
 bool DeltaServer::InitMapping()
 {
-	int size = YUV420pBitsPerPixel(_clientWidth , _clientHeight);
+	int inputOffset = YUV420pBitsPerPixel(_clientWidth , _clientHeight);
+	int size = inputOffset + KAHAWAI_INPUT_COMMAND_BUFFER;
 	HANDLE sharedFile = NULL;
 
 	//Create File to be used for file sharing, use temporary flag for efficiency
@@ -192,6 +231,19 @@ bool DeltaServer::InitMapping()
 		FALSE,
 		"KahawaiiMaster");
 
+	//Define events for accessing the input section of the file map
+
+	_slaveInputEvent = CreateEvent(
+		NULL,
+		FALSE,
+		FALSE,
+		"KahawaiSlaveInput");
+
+	_masterInputEvent = CreateEvent(
+		NULL,
+		FALSE,
+		FALSE,
+		"KahawaiMasterInput");
 
 	WaitForSingleObject(_mutex,INFINITE);
 
@@ -199,10 +251,11 @@ bool DeltaServer::InitMapping()
 		FILE_MAP_ALL_ACCESS,
 		0,
 		0,
-		16);
+		size);
 
 	if(strcmp(kahawaiMaster,b)!=0)
 	{
+		memset(b,0,size);
 		strcpy(b,kahawaiMaster);
 		_master = true;
 	}
@@ -214,39 +267,71 @@ bool DeltaServer::InitMapping()
 	UnmapViewOfFile(b);
 	ReleaseMutex(_mutex);
 
-	DWORD access = _master? FILE_MAP_READ: FILE_MAP_WRITE;
+	DWORD access = FILE_MAP_ALL_ACCESS;
 	_mappedBuffer = (byte*) MapViewOfFile(_map,
 		access,
 		0,
 		0,
-		YUV420pBitsPerPixel(_clientWidth, _clientHeight));
+		size);
+
+	_sharedInputBuffer = _mappedBuffer + inputOffset;
 
 	return true;
 }
 
-
-void DeltaServer::SyncCopies()
-{
-	if(_master)
-	{
-		//signal and wait for slave
-		SetEvent(_masterBarrier);
-		WaitForSingleObject(_slaveBarrier, INFINITE);
-	}
-	else
-	{
-		//signal and wait for master
-		SetEvent(_slaveBarrier);
-		WaitForSingleObject(_masterBarrier,INFINITE);
-	}
-}
-
+/**
+ * Returns whether this instance should use high or low quality settings 
+ * @return the quality of the settings to be used
+ */
 bool DeltaServer::IsHD()
 {
 	//Only master renders in HD
 	return _master;
 }
 
+/**
+ * Receives input from the client and applies it to the server state
+ * @param Server input is ALWAYS discarded
+ * @return the command received from the client for the current frame
+ */
+void* DeltaServer::HandleInput(void*)
+{
+	if(!ShouldHandleInput())
+		return _inputHandler->GetEmptyCommand();
+
+	if(_master)
+	{
+		int length = 0;
+		char* cmd = (char*) _inputHandler->ReceiveCommand(&length);
+		//Send the input to the slave copy
+		//TODO: The barrier may not be enough synchronization
+		//Check this if synchronization issues arise. 
+		//Performance may be hurt if a stronger method is used
+		memcpy(_sharedInputBuffer,cmd,length);
+
+		SetEvent(_masterInputEvent);
+		WaitForSingleObject(_slaveInputEvent, INFINITE);
+		return cmd;
+	}
+	else
+	{
+		void* result = NULL;
+		
+		WaitForSingleObject(_masterInputEvent, INFINITE);
+			result = _sharedInputBuffer;
+		SetEvent(_slaveInputEvent);
+	
+		return result;
+	}
+}
+
+
+
+int DeltaServer::GetFirstInputFrame()
+{
+	//TODO: Need to give a real value based on profiling
+	return 3;
+}
 
 
 //////////////////////////////////////////////////////////////////////////

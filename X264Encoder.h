@@ -8,7 +8,7 @@ class X264Encoder :
 public:
 	X264Encoder(int height, int width, int fps, int crf, int preset, int gop=-1);
 	~X264Encoder(void);
-	int Encode(void* pictureIn, void** pictureOut, transform apply = 0, byte* base = 0); 
+	int Encode(void* pictureIn, void** pictureOut, kahawaiTransform apply = 0, byte* base = 0); 
 protected:
 	x264_t* _encoder;
 	int _height;

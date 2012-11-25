@@ -1,4 +1,3 @@
-using namespace std;
 #include"kahawaiBase.h"
 #ifdef KAHAWAI
 #include "Kahawai.h"
@@ -16,6 +15,7 @@ using namespace std;
 #include<fstream>
 #include<string>
 
+using namespace std;
 
 //////////////////////////////////////////////////////////////////////////
 // Kahawai Public Interface
@@ -130,9 +130,6 @@ Kahawai* Kahawai::LoadFromFile()
 	if(!instance->Initialize())
 		return NULL;
 
-	//TODO: Make sure there is a valid path for debug output
-	//sprintf_s(_resultsPath,"%s\\%s\\%s\\Low\\%s\\%d\\",DEBUG_PATH,_demoFile,KAHAWAI_MODE_NAMES[profile],x264_preset_names[_preset],_crf);
-
 	delete reader;
 
 	return instance;
@@ -222,7 +219,6 @@ int Kahawai::Sys_Milliseconds( void ) {
 	}
 
 	return sys_curtime; 
-	return 0;
 }
 
 
@@ -247,7 +243,6 @@ Kahawai::Kahawai()
 {
 
 }
-
 
 Kahawai::~Kahawai(void)
 {
@@ -284,8 +279,23 @@ bool Kahawai::Initialize()
 	//Read Server Port (Client also needs to know IP. Server uses its own IP)
 	_serverPort = _configReader->ReadIntegerValue(CONFIG_SERVER,CONFIG_SERVER_PORT);
 
-	//Read Doom 3 Settings
-	_configReader->ReadProperty(CONFIG_DOOM3,CONFIG_DEMO_FILE,_demoFile);
+	//Read Game Settings
+	_configReader->ReadProperty(CONFIG_OFFLOAD,CONFIG_GAME,_gameName);
+
+	if(_strnicmp(_gameName, CONFIG_DOOM3,sizeof(CONFIG_DOOM3))==0)
+	{
+		_configReader->ReadProperty(CONFIG_DOOM3,CONFIG_DEMO_FILE,_demoFile);
+	}
+	else if(_strnicmp(_gameName, CONFIG_DOOM3,sizeof(CONFIG_SF4))==0)
+	{
+		KahawaiLog("Street Fighter IV hasn't been fully implemented yet. Aborting", KahawaiError);
+		return false;
+	}
+	else
+	{
+		KahawaiLog("Only Doom 3 and Street Fighter 4 are currently supported by Kahawai. Aborting", KahawaiError);
+		return false;
+	}
 
 	//Load the specified capturer
 
@@ -302,6 +312,8 @@ bool Kahawai::Initialize()
 #ifdef _DEBUG
 	//Read Debug settings
 	_configReader->ReadProperty(CONFIG_DEBUG,CONFIG_RESULTS_PATH,g_resultsPath);
+	_saveCaptures = _configReader->ReadBooleanValue(CONFIG_DEBUG,CONFIG_SAVE_FRAME);
+
 
 	//Read encoder settings (only to determine the save path for the dumped frames)
 	int preset, crf;
@@ -395,12 +407,7 @@ bool Kahawai::Transform(int width, int height)
 		uint8_t *src[3]= {_sourceFrame, NULL, NULL}; 
 		sws_scale(_convertCtx, src, &srcstride, 0, height, _transformPicture->img.plane, _transformPicture->img.i_stride);
 
-#ifdef WRITE_SOURCE_FRAME
-		//TODO: Make sure this debug functionality is implemented
-		char savePath[250];
-		sprintf_s(savePath,"%s\\low\\frame%04d.yuv",g_resultsPath,_renderedFrames);
-		KahawaiWriteFile(savePath,(char*)_transformPicture->img.plane[0],(_width*_height*3)/2);
-#endif
+		LogYUVFrame(_saveCaptures,"low",_renderedFrames,(char*)_transformPicture->img.plane[0],_width,_height);
 
 		_frameInProcess=false;
 	}
@@ -441,34 +448,16 @@ int Kahawai::GetHeight()
 }
 
 //////////////////////////////////////////////////////////////////////////
-// Initialization / Configuration
+
+
+//////////////////////////////////////////////////////////////////////////
+// Input
 //////////////////////////////////////////////////////////////////////////
 
-bool Kahawai::InitNetworking()
+bool Kahawai::ShouldHandleInput()
 {
-#ifdef _MSC_VER
-	//Initialize socket support WINDOWS ONLY!
-	unsigned short wVersionRequested;
-	WSADATA wsaData;
-	int err;
-	wVersionRequested = MAKEWORD( 2, 2 );
-	err = WSAStartup( wVersionRequested, &wsaData );
-	if ( err != 0 || ( LOBYTE( wsaData.wVersion ) != 2 ||
-		HIBYTE( wsaData.wVersion ) != 2 )) {
-			KahawaiLog("Could not find useable sock dll", KahawaiError);
-			return false;
-	}
-	return true;
-#else
-	KahawaiLog("Kahawai Networking hasn't been implemented for non Win32 platforms", KahawaiError)
-	return false;
-#endif
-
+	return GetDisplayedFrames()>=GetFirstInputFrame();
 }
-
-//////////////////////////////////////////////////////////////////////////
-
-
 
 //////////////////////////////////////////////////////////////////////////
 // Instrumentation
@@ -480,20 +469,29 @@ void Kahawai::LogFPS()
 	DWORD totalTime = _offloadEndTime - _offloadStartTime;
 	double fps = ((_renderedFrames - 147)*1000) / totalTime;
 	char result[100];
-	int size = sprintf(result,"Average FPS:%f\nTotal Frames:%d\nTime elapsed:%d\r\t",fps,_renderedFrames-147,totalTime);
+	int size = sprintf_s(result,"Average FPS:%f\nTotal Frames:%d\nTime elapsed:%d\r\t",fps,_renderedFrames-147,totalTime);
 
 	KahawaiWriteFile("KahawaiFPS.log", result,size);
 
 }
 
+char* Kahawai::GetDemoFile()
+{
+
+	return _demoFile;
+}
+
+Kahawai* kahawai;
+char				g_resultsPath[200]; //Path to save the captured frames
+
 //////////////////////////////////////////////////////////////////////////
 // Associated utility methods
 //////////////////////////////////////////////////////////////////////////
 
-bool CreateKahawaiThread(LPTHREAD_START_ROUTINE function, Kahawai* instance)
+bool CreateKahawaiThread(LPTHREAD_START_ROUTINE function, void* instance)
 {
 	DWORD ThreadID;
-	HANDLE thread = CreateThread(NULL,0,function,(void*) instance, 0, &ThreadID);
+	HANDLE thread = CreateThread(NULL,0,function, instance, 0, &ThreadID);
 
 	if(thread==NULL)
 		return false;
@@ -505,13 +503,5 @@ bool CreateKahawaiThread(LPTHREAD_START_ROUTINE function, Kahawai* instance)
 // Debug
 //////////////////////////////////////////////////////////////////////////
 
-char* Kahawai::GetDemoFile()
-{
-
-	return _demoFile;
-}
-
-Kahawai* kahawai;
-char				g_resultsPath[200]; //Path to save the captured frames
 
 #endif

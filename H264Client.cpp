@@ -52,8 +52,7 @@ bool H264Client::Show()
 
 int H264Client::GetFirstInputFrame()
 {
-	//Need to implement this method
-	throw 1;
+	//No OP. H264 doesnt handle input
 	return 0;
 }
 

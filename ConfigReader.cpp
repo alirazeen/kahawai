@@ -40,4 +40,12 @@ int ConfigReader::ReadIntegerValue(char* section, char* attribute)
 	pugi::xml_node sectionNode = _root.child(section);
 	return atoi(sectionNode.attribute(attribute).value());
 }
+
+bool ConfigReader::ReadBooleanValue(char* section, char* attribute)
+{
+	pugi::xml_node _root = _config->child(CONFIG_KAHAWAI);
+	pugi::xml_node sectionNode = _root.child(section);
+	return strncmp(sectionNode.attribute(attribute).value(),"true",sizeof("true"))==0;
+}
+
 #endif

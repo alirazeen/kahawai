@@ -12,7 +12,7 @@ MediaFoundationDecoder::~MediaFoundationDecoder(void)
 {
 }
 
-bool MediaFoundationDecoder::Decode(transform apply, byte* patch)
+bool MediaFoundationDecoder::Decode(kahawaiTransform apply, byte* patch)
 {
 	KahawaiLog("Unimplemented Method: FFMpegDecoder::Decode",KahawaiError);
 	return false;

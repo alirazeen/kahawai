@@ -9,9 +9,15 @@ public:
 
 protected:
 	//Kahawai Lifecycle
-	void OffloadAsync();
-	bool Initialize();
-	int Encode(void** compressedFrame);
-	bool Send(void** compressedFrame, int frameSize);
+	void	OffloadAsync();
+	bool	Initialize();
+	int		Encode(void** compressedFrame);
+	bool	Send(void** compressedFrame, int frameSize);
+
+	//Input Handling
+	void*	HandleInput(void* input);
+	int		GetFirstInputFrame();
+
+
 };
 

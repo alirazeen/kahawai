@@ -5,16 +5,21 @@ class DeltaServer :
 {
 protected:
 	//Low fidelity resolution
-	int _clientWidth;
-	int _clientHeight;
+	int		_clientWidth;
+	int		_clientHeight;
 
 	//Master-slave server instance sync variables
-	bool _master;
-	HANDLE _mutex;
-	HANDLE _map;
-	HANDLE _slaveBarrier;
-	HANDLE _masterBarrier;
-	byte* _mappedBuffer;
+	bool	_master;
+	HANDLE	_mutex;
+	HANDLE	_map;
+	HANDLE	_slaveBarrier;
+	HANDLE	_masterBarrier;
+	HANDLE	_slaveInputEvent;
+	HANDLE	_masterInputEvent;
+
+
+	byte*	_mappedBuffer;
+	byte*	_sharedInputBuffer;
 
 
 public:
@@ -22,19 +27,23 @@ public:
 	~DeltaServer(void);
 
 	//Lifecycle methods
-	void OffloadAsync();
-	bool Initialize();
-	bool Transform(int width, int height);
-	int Encode(void** compressedFrame);
-	bool Send(void** compressedFrame, int frameSize);
+	void	OffloadAsync();
+	bool	Initialize();
+	bool	Transform(int width, int height);
+	int		Encode(void** transformedFrame);
+	bool	Send(void** compressedFrame, int frameSize);
+	
+	//Input Handling
+	void*	HandleInput(void*);
+	int		GetFirstInputFrame();
+
 
 	//Fidelity configuration
-	bool IsHD();
+	bool	IsHD();
 
 
 private:
-	bool InitMapping();
-	void SyncCopies();
+	bool	InitMapping();
 
 };
 

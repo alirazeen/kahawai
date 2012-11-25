@@ -2,32 +2,52 @@
 #include "kahawai.h"
 #include "ConfigReader.h"
 #include "VideoDecoder.h"
+#include "InputHandlerClient.h"
+#include <queue>
+using namespace std;
 
 class KahawaiClient :
 	public Kahawai
 {
 protected:
-	//Member variables
-	char _serverIP[75]; //Only client specifies IP. Port specified in base class
-	VideoDecoder* _decoder;
 
-	///Methods
-	//Pipeline
-	bool Initialize();
-	virtual bool Decode()=0;
-	virtual bool Show()=0;
+	//////////////////////////////////////////////////////////////////////////
+	// Public interface (must be implemented by derived classes)
+	//////////////////////////////////////////////////////////////////////////
+	//Pipeline (Interface)
+	virtual bool		Decode()=0;
+	virtual bool		Show()=0;
+
+
+	//////////////////////////////////////////////////////////////////////////
+	///Public Client Methods
+	//////////////////////////////////////////////////////////////////////////
+
+	bool				Initialize();
 
 	//Game fidelity
-	bool IsHD();
+	bool				IsHD();
 
 	//Asynchronous entry point
-	void OffloadAsync();
+	void				OffloadAsync();
 
 	//Input delay profile
-	virtual int			GetFirstInputFrame()=0; //returns the number of the first frame to receive input
 	void				PingServer();
 	void				ProfileGraphics();
 	int					GetDisplayedFrames();
+	void*				HandleInput(void*);
+
+	//////////////////////////////////////////////////////////////////////////
+	//Member variables
+	//////////////////////////////////////////////////////////////////////////
+	char				_serverIP[75]; //Only client specifies IP. Port specified in base class
+	VideoDecoder*		_decoder;
+
+	//Input Handling
+	InputHandlerClient* _inputHandler;
+	int					_maxFPS;
+	int					_serverRTT;
+	queue<void*>		_localInputQueue;
 
 public:
 	KahawaiClient(void);
@@ -35,11 +55,6 @@ public:
 
 	//public Interface
 
-private:
-
-	//Input profile information
-	int	_maxFPS;
-	int _serverRTT;
 
 
 };
