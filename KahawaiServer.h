@@ -24,6 +24,7 @@ protected:
 	//Input Handling
 	void*				HandleInput(void*);
 	int					GetDisplayedFrames();
+	bool				IsInputSource();
 
 	//Asynchronous entry point
 	void				OffloadAsync();

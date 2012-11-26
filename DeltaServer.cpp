@@ -74,7 +74,7 @@ void DeltaServer::OffloadAsync()
 	{
 		bool connection = true;
 
-#ifdef HANDLE_INPUT
+#ifndef HANDLE_INPUT
 		connection = _inputHandler->Connect();
 #endif
 		_socketToClient = CreateSocketToClient(_serverPort);

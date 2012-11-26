@@ -22,7 +22,7 @@ protected:
 	T Read()
 	{
 		T result;
-		memcpy(&result,_buffer+_position,sizeof(T)); _position+=sizeof(T);	
+		memcpy(&result,_buffer+_position,sizeof(T)); _position+=sizeof(T);
 		return result;
 	}
 

@@ -70,7 +70,7 @@ bool DeltaClient::Capture(int width, int height)
 /**
  * Transforms the captured screen from RGB to YUV420p
  * Overrides base class transform because the client may have a lower resolution
- * @param height the height of the screen to be captured
+ * @param height the height otimf the screen to be captured
  * @param width the width of the screen to be captured
  * @return true if the transformation is successful
  */

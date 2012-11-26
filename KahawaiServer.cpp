@@ -62,6 +62,12 @@ void* KahawaiServer::HandleInput(void*)
 	throw 1;
 }
 
+//The server is never the source of the input
+bool KahawaiServer::IsInputSource()
+{
+	return false;
+}
+
 int KahawaiServer::GetDisplayedFrames()
 {
 	return _renderedFrames;

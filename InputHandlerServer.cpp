@@ -10,9 +10,9 @@
 void* InputHandlerServer::ReceiveCommand(int* length)
 {
 	int receivedBytes = 0;
-	int commandSize = 0;
+	size_t commandSize = 0;
 
-	if(recv(_inputSocket,(char*)&commandSize,sizeof(int),0) == SOCKET_ERROR)
+	if(recv(_inputSocket,(char*)&commandSize,sizeof(size_t),0) == SOCKET_ERROR)
 	{
 		KahawaiLog("Failed to receive command from client", KahawaiError);
 		return NULL;

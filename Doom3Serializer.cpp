@@ -33,6 +33,7 @@ char* Doom3Serializer::Serialize(void* nativeInput, int* length)
 	_position=0;
 	*length = sizeof(usercmd_t) + sizeof(int);
 
+
 	Write( sizeof(usercmd_t) ); //the size of the command itself
 	Write( cmd->gameFrame );
 	Write( cmd->gameTime );
@@ -60,11 +61,13 @@ char* Doom3Serializer::Serialize(void* nativeInput, int* length)
 
 void* Doom3Serializer::Deserialize(char* serializedInput)
 {
-	_position = sizeof(int);
 	char* oldBuffer = _buffer;
 	_buffer = serializedInput;
+	_position = 0;
 
+	KahawaiLog ("Receiving command",KahawaiDebug);
 	usercmd_t* cmd = new usercmd_t();
+
 	cmd->gameFrame = Read<int>();
 	cmd->gameTime = Read<int>();
 	cmd->duplicateCount = Read<int>();
@@ -80,7 +83,7 @@ void* Doom3Serializer::Deserialize(char* serializedInput)
 	cmd->impulse = Read<signed char>();
 	cmd->flags = Read<byte>();
 	cmd->sequence = Read<int>();
-	
+
 	//save persistent attributes
 	_flags = cmd->flags;
 	_impulse = cmd->impulse;

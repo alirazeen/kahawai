@@ -52,7 +52,7 @@ bool KahawaiClient::Initialize()
 void KahawaiClient::OffloadAsync()
 {
 	//Connect input handler to server
-#ifdef HANDLE_INPUT
+#ifndef HANDLE_INPUT
 	if(!_inputHandler->Connect())
 	{
 		KahawaiLog("Unable to start input handler", KahawaiError);
@@ -96,6 +96,12 @@ void* KahawaiClient::HandleInput(void* inputCommand)
 		_localInputQueue.pop();
 		return command;
 	}	
+}
+
+//The client is the one receiving direct input from the user
+bool KahawaiClient::IsInputSource()
+{
+	return true;
 }
 
 bool KahawaiClient::IsHD()

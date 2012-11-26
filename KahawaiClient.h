@@ -36,6 +36,7 @@ protected:
 	void				ProfileGraphics();
 	int					GetDisplayedFrames();
 	void*				HandleInput(void*);
+	bool				IsInputSource();
 
 	//////////////////////////////////////////////////////////////////////////
 	//Member variables

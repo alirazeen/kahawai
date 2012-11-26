@@ -22,7 +22,7 @@ typedef unsigned char byte;
 enum KahawaiLogLevel { KahawaiDebug=0, KahawaiError=1 };
 //Public general purpose methods
 void CaptureFrameBuffer(int width, int height, char* filename);
-void KahawaiLog(char* content, KahawaiLogLevel errorLevel);
+void KahawaiLog(char* content, KahawaiLogLevel errorLevel,...);
 void KahawaiWriteFile(const char* filename, char* content, int length, int suffix = 0);
 void KahawaiSaveVideoFrame(const char* subfolder, char* fileName, char* data, int frame_size);
 void KahawaiSaveYUVFrame(const char* subfolder, int serialId, char* data, int width, int height);

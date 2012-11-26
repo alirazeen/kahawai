@@ -20,18 +20,22 @@ using namespace std;
 /* General Kahawai Utilities                                            */ 
 /************************************************************************/
 
-void KahawaiLog(char* content, KahawaiLogLevel errorLevel)
+void KahawaiLog(char* content, KahawaiLogLevel errorLevel, ...)
 {
+	va_list formatArguments;
 	int minLevel;
 #ifdef _DEBUG
-	minLevel = 1;
-#else
 	minLevel = 0;
+#else
+	minLevel = 1;
 #endif
 
 	if(errorLevel >= minLevel)
 	{
-		KahawaiWriteFile(KAHAWAI_LOG_FILE,content,strlen(content));
+		char formatted[1000];
+		va_start(formatArguments,errorLevel);
+		vsprintf_s(formatted,content,formatArguments);
+		KahawaiWriteFile(KAHAWAI_LOG_FILE,formatted,strlen(formatted));
 		KahawaiWriteFile(KAHAWAI_LOG_FILE,LOG_RETURN,strlen(LOG_RETURN));
 
 	}

@@ -18,6 +18,8 @@ public:
 	virtual void*		HandleInput(void* input)=0;
 	virtual int			GetFirstInputFrame()=0; //returns the number of the first frame to receive input
 	virtual int			GetDisplayedFrames()=0;
+	virtual bool		IsInputSource()=0;
+
 	//Asynchronous Kahawai thread (Usually starts with "Transform")
 	virtual void		OffloadAsync()=0;
 	//Rendering Settings
