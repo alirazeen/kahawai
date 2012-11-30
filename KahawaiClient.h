@@ -49,6 +49,8 @@ protected:
 	int					_maxFPS;
 	int					_serverRTT;
 	queue<void*>		_localInputQueue;
+private:
+	void*				_lastCommand;
 
 public:
 	KahawaiClient(void);

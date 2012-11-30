@@ -38,7 +38,7 @@ bool KahawaiClient::Initialize()
 	_decoder->EnableFrameLogging(_saveCaptures);
 
 	//Initialize input handler
-	_inputHandler = new InputHandlerClient(_serverIP,_serverPort+1,_gameName);
+	_inputHandler = new InputHandlerClient(_serverIP,_serverPort+10,_gameName);
 
 
 	return true;
@@ -83,8 +83,23 @@ void KahawaiClient::OffloadAsync()
 
 void* KahawaiClient::HandleInput(void* inputCommand)
 {
-	_localInputQueue.push(inputCommand);
-	_inputHandler->SendCommand(inputCommand);
+	//Free memory from previous invocations
+	if(_lastCommand != NULL)
+	{
+		delete[] _lastCommand;
+		_lastCommand = NULL;
+	}
+
+
+	//Create a copy of the command to push into the queue
+	size_t cmdLength = _inputHandler->GetCommandLength();
+
+	char* queuedCommand = new char[cmdLength];
+	memcpy(queuedCommand,inputCommand,cmdLength);
+
+
+	_localInputQueue.push(queuedCommand);
+	_inputHandler->SendCommand(queuedCommand);
 
 	if(!ShouldHandleInput())
 	{
@@ -92,9 +107,9 @@ void* KahawaiClient::HandleInput(void* inputCommand)
 	}
 	else
 	{
-		void* command = _localInputQueue.front();
+		_lastCommand = _localInputQueue.front();
 		_localInputQueue.pop();
-		return command;
+		return _lastCommand;
 	}	
 }
 
@@ -111,13 +126,15 @@ bool KahawaiClient::IsHD()
 
 int KahawaiClient::GetDisplayedFrames()
 {
-	return _decoder->GetDisplayedFrames();
+	return _renderedFrames;
+	//return _decoder->GetDisplayedFrames();
 }
 
 
 KahawaiClient::KahawaiClient(void)
 	:Kahawai(),
-	_decoder(0)
+	_decoder(0),
+	_lastCommand(NULL)
 {
 	strncpy_s(_serverIP,KAHAWAI_LOCALHOST,sizeof(KAHAWAI_LOCALHOST));
 

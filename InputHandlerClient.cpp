@@ -28,9 +28,7 @@ bool InputHandlerClient::Connect()
 }
 
 InputHandlerClient::InputHandlerClient(char* serverIP, int port, char* gameName)
-	:_inputQueued(false),
-	_queuedCommand(NULL),
-	_port(port),
+	:_port(port),
 	_serverIP(serverIP),
 	_inputSocket(0),
 	_connected(false)
@@ -70,33 +68,36 @@ DWORD WINAPI InputHandlerClient::AsyncInputHandler(void* Param)
 
 void InputHandlerClient::SendCommandsAsync()
 {
+	char* command = NULL;
 
 	//TODO: Link to kahawai offloading state
 	while(true)
 	{
 		EnterCriticalSection(&_inputBufferCS);
 		{
-			while(!_inputQueued || !_connected)
+			while(_commandQueue.empty() || !_connected)
 			{
 				SleepConditionVariableCS(&_inputReadyCV,&_inputBufferCS,INFINITE);
 			}
 
-			if(send(_inputSocket,_queuedCommand,_commandLength,0)==SOCKET_ERROR)
-			{
-				KahawaiLog("Unable to send input to server", KahawaiError);
-
-			}
-			else
-			{
-				delete[] _queuedCommand;
-				_queuedCommand = NULL;
-				_inputQueued=false;
-			}
+			command = _commandQueue.front();			
+			_commandQueue.pop();
 
 		}
 		//Wake the game thread if it is waiting to send more frames.
 		WakeConditionVariable(&_inputFullCV);
 		LeaveCriticalSection(&_inputBufferCS);
+
+		//Send the command to the server
+		if(send(_inputSocket,command,_commandLength,0)==SOCKET_ERROR)
+		{
+			KahawaiLog("Unable to send input to server", KahawaiError);
+
+		}
+
+		delete[] command;
+		command = NULL;
+
 	}
 
 }
@@ -105,16 +106,16 @@ void InputHandlerClient::SendCommandsAsync()
 void InputHandlerClient::SendCommand(void* command)
 {
 	char* serializedCommand = _serializer->Serialize(command,&_commandLength);
+	char* copyCommand = new char[_commandLength]; 
+	memcpy(copyCommand,serializedCommand, _commandLength);
 
 	EnterCriticalSection(&_inputBufferCS);
 	{
-		while(_inputQueued)
+		while(_commandQueue.size()>3)//TODO: Check what is a reasonable queue length
 		{
 			SleepConditionVariableCS(&_inputFullCV,&_inputBufferCS,INFINITE);
 		}
-		_queuedCommand = new char[_commandLength]; 
-		memcpy(_queuedCommand,serializedCommand, _commandLength);
-		_inputQueued = true;
+		_commandQueue.push(copyCommand);
 	}
 	WakeConditionVariable(&_inputReadyCV);
 	LeaveCriticalSection(&_inputBufferCS);

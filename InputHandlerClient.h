@@ -2,6 +2,8 @@
 #include "kahawaiBase.h"
 #ifdef KAHAWAI
 #include "InputSerializer.h"
+#include <queue>
+using namespace std;
 
 class InputHandlerClient
 {
@@ -12,9 +14,11 @@ public:
 	static DWORD WINAPI		AsyncInputHandler(void* Param);
 	void					SendCommand(void* command);
 	void*					GetEmptyCommand();	
+	size_t					GetCommandLength() {return _serializer->GetCommandSize();}
+
 	bool					Connect();
 
-protected:
+private:
 	void					SendCommandsAsync();
 
 	//Communication
@@ -27,11 +31,11 @@ protected:
 	CONDITION_VARIABLE		_inputFullCV;
 	CONDITION_VARIABLE		_inputReadyCV;
 	CRITICAL_SECTION		_inputBufferCS;
-	bool					_inputQueued;
+	queue<char*>			_commandQueue;
 
 	//Serialization
 	InputSerializer*		_serializer;
-	char*					_queuedCommand;
+
 	int						_commandLength;
 
 };

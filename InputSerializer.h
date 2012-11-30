@@ -8,7 +8,7 @@ public:
 	virtual char*	Serialize(void* nativeInput, int* length) = 0;
 	virtual void*	Deserialize(char* serializedInput)= 0;
 	virtual void*	GetEmptyCommand()=0;
-
+	virtual size_t	GetCommandSize()=0;
 
 protected:
 

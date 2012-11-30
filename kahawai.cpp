@@ -330,7 +330,7 @@ bool Kahawai::Initialize()
 	x264_picture_alloc(_transformPicture, X264_CSP_I420, _width, _height);
 
 	//Initialize sws scaling context
-	_convertCtx = sws_getContext(_width,_height,PIX_FMT_RGB24, _width, _height,PIX_FMT_YUV420P, SWS_FAST_BILINEAR,NULL,NULL,NULL);
+	_convertCtx = sws_getContext(_width,_height,PIX_FMT_BGRA, _width, _height,PIX_FMT_YUV420P, SWS_FAST_BILINEAR,NULL,NULL,NULL);
 
 	//Initialize Networking
 	InitNetworking();

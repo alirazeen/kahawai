@@ -31,10 +31,10 @@ char* Doom3Serializer::Serialize(void* nativeInput, int* length)
 {
 	usercmd_t* cmd = (usercmd_t*) nativeInput;
 	_position=0;
-	*length = sizeof(usercmd_t) + sizeof(int);
+	*length = sizeof(usercmd_t);// + sizeof(int);
 
 
-	Write( sizeof(usercmd_t) ); //the size of the command itself
+	//Write( sizeof(usercmd_t) ); //the size of the command itself
 	Write( cmd->gameFrame );
 	Write( cmd->gameTime );
 	Write( cmd->duplicateCount );
@@ -91,6 +91,11 @@ void* Doom3Serializer::Deserialize(char* serializedInput)
 	_buffer = oldBuffer;
 
 	return (void*) cmd;
+}
+
+size_t Doom3Serializer::GetCommandSize()
+{
+	return 32;
 }
 
 

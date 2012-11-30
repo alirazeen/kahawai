@@ -48,13 +48,13 @@ bool DeltaServer::Initialize()
 	_encoder = new X264Encoder(_height,_width,_fps,_crf,_preset);
 
 	//Initialize input handler
-	_inputHandler = new InputHandlerServer(_serverPort+1, _gameName);
+	_inputHandler = new InputHandlerServer(_serverPort+10, _gameName);
 
 
 	if(!_master)
 	{	//Re-Initialize sws scaling context if slave
 		delete[] _sourceFrame;
-		_convertCtx = sws_getContext(_clientWidth,_clientHeight,PIX_FMT_RGB24, _width, _height,PIX_FMT_YUV420P, SWS_FAST_BILINEAR,NULL,NULL,NULL);
+		_convertCtx = sws_getContext(_clientWidth,_clientHeight,PIX_FMT_BGRA, _width, _height,PIX_FMT_YUV420P, SWS_FAST_BILINEAR,NULL,NULL,NULL);
 		_sourceFrame = new uint8_t[_clientWidth*_clientWidth*SOURCE_BITS_PER_PIXEL];
 	}
 
@@ -301,8 +301,8 @@ void* DeltaServer::HandleInput(void*)
 
 	if(_master)
 	{
-		int length = 0;
-		char* cmd = (char*) _inputHandler->ReceiveCommand(&length);
+		int length = _inputHandler->GetCommandLength();
+		char* cmd = (char*) _inputHandler->ReceiveCommand();
 		//Send the input to the slave copy
 		//TODO: The barrier may not be enough synchronization
 		//Check this if synchronization issues arise. 

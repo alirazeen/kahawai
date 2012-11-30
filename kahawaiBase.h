@@ -41,7 +41,7 @@ typedef byte (*kahawaiTransform)(byte apply,byte patch);
 #define IFRAME_MUTEX "IFRAME"
 #define KAHAWAI_DEFAULT_PORT 9001
 #define KAHAWAI_LOCALHOST "127.0.0.1"
-#define SOURCE_BITS_PER_PIXEL 3 //We are not using alpha
+#define SOURCE_BITS_PER_PIXEL 4 //We are using alpha
 #define TARGET_FPS 60
 
 

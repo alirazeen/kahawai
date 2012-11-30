@@ -13,6 +13,7 @@ public:
 	char*			Serialize(void* nativeInput, int* length);
 	void*			Deserialize(char* serializedInput);
 	void*			GetEmptyCommand();
+	size_t			GetCommandSize();
 
 private:
 	usercmd_t	_empty;
