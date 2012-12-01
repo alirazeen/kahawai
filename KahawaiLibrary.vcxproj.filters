@@ -1,0 +1,225 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Kahawai">
+      <UniqueIdentifier>{54cf0af3-5260-446d-99dd-ee30c4b6fb62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kahawai\BasicEncoder">
+      <UniqueIdentifier>{22a0eda2-7cd4-4bd5-abf4-59eee4eaceee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kahawai\Delta">
+      <UniqueIdentifier>{0e2f6640-a164-426a-9a75-134fd5146a8d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kahawai\IFrame">
+      <UniqueIdentifier>{808d12f7-f3c6-4a9c-af50-857637531e47}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kahawai\H264">
+      <UniqueIdentifier>{2c3d9a49-cbd8-4379-9b57-c99ad2455d8e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kahawai\Config">
+      <UniqueIdentifier>{00e650b0-1c50-40bc-aaa2-c199bd13f0f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kahawai\Utils">
+      <UniqueIdentifier>{844c3eb5-ced9-486b-a5ba-2d7736494ce7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kahawai\Decoder">
+      <UniqueIdentifier>{57fd6d38-8df3-4b65-971b-47753138e390}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kahawai\Capturer">
+      <UniqueIdentifier>{dc92c60f-cbfd-41f4-a5a7-46911771f631}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kahawai\Encoder">
+      <UniqueIdentifier>{d17f2ddb-f700-4b58-9f2a-59f8a3e57427}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kahawai\Input">
+      <UniqueIdentifier>{40549c44-3066-4b2a-a925-ae690ab0d311}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kahawai\Input\Doom3">
+      <UniqueIdentifier>{b4caebbe-e9a9-4b07-8767-bb07c3507e28}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kahawai\Networking">
+      <UniqueIdentifier>{d8c3d73f-679a-425d-a619-f3b401153544}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\kahawai\Kahawai.cpp">
+      <Filter>Kahawai</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\KahawaiClient.cpp">
+      <Filter>Kahawai</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\KahawaiServer.cpp">
+      <Filter>Kahawai</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\BasicH264Encoder.cpp">
+      <Filter>Kahawai\BasicEncoder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\DeltaClient.cpp">
+      <Filter>Kahawai\Delta</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\DeltaServer.cpp">
+      <Filter>Kahawai\Delta</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\IFrameClient.cpp">
+      <Filter>Kahawai\IFrame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\IFrameClientDecoder.cpp">
+      <Filter>Kahawai\IFrame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\IframeClientEncoder.cpp">
+      <Filter>Kahawai\IFrame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\IFrameServer.cpp">
+      <Filter>Kahawai\IFrame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\H264Client.cpp">
+      <Filter>Kahawai\H264</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\H264Server.cpp">
+      <Filter>Kahawai\H264</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\ConfigReader.cpp">
+      <Filter>Kahawai\Config</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\pugixml.cpp">
+      <Filter>Kahawai\Config</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\utils.cpp">
+      <Filter>Kahawai\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\FFMpegDecoder.cpp">
+      <Filter>Kahawai\Decoder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\MediaFoundationDecoder.cpp">
+      <Filter>Kahawai\Decoder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\DirectXCapturer.cpp">
+      <Filter>Kahawai\Capturer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\OpenGLCapturer.cpp">
+      <Filter>Kahawai\Capturer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\X264Encoder.cpp">
+      <Filter>Kahawai\Encoder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\InputHandlerClient.cpp">
+      <Filter>Kahawai\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\InputHandlerServer.cpp">
+      <Filter>Kahawai\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\Doom3Serializer.cpp">
+      <Filter>Kahawai\Input\Doom3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kahawai\Networking.cpp">
+      <Filter>Kahawai\Networking</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\kahawai\Kahawai.h">
+      <Filter>Kahawai</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\kahawaiBase.h">
+      <Filter>Kahawai</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\KahawaiClient.h">
+      <Filter>Kahawai</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\kahawaiDependencies.h">
+      <Filter>Kahawai</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\KahawaiServer.h">
+      <Filter>Kahawai</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\KahawaiTypes.h">
+      <Filter>Kahawai</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\endPacked.h">
+      <Filter>Kahawai\BasicEncoder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\packed.h">
+      <Filter>Kahawai\BasicEncoder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\DeltaClient.h">
+      <Filter>Kahawai\Delta</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\DeltaServer.h">
+      <Filter>Kahawai\Delta</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\IFrameClient.h">
+      <Filter>Kahawai\IFrame</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\IFrameClientDecoder.h">
+      <Filter>Kahawai\IFrame</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\IframeClientEncoder.h">
+      <Filter>Kahawai\IFrame</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\IFrameServer.h">
+      <Filter>Kahawai\IFrame</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\H264Client.h">
+      <Filter>Kahawai\H264</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\H264Server.h">
+      <Filter>Kahawai\H264</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\config.h">
+      <Filter>Kahawai\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\ConfigReader.h">
+      <Filter>Kahawai\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\pugiconfig.hpp">
+      <Filter>Kahawai\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\pugixml.hpp">
+      <Filter>Kahawai\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\utils.h">
+      <Filter>Kahawai\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\FFMpegDecoder.h">
+      <Filter>Kahawai\Decoder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\MediaFoundationDecoder.h">
+      <Filter>Kahawai\Decoder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\VideoDecoder.h">
+      <Filter>Kahawai\Decoder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\Capturer.h">
+      <Filter>Kahawai\Capturer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\DirectXCapturer.h">
+      <Filter>Kahawai\Capturer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\OpenGLCapturer.h">
+      <Filter>Kahawai\Capturer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\VideoEncoder.h">
+      <Filter>Kahawai\Encoder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\X264Encoder.h">
+      <Filter>Kahawai\Encoder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\InputHandlerClient.h">
+      <Filter>Kahawai\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\InputHandlerServer.h">
+      <Filter>Kahawai\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\InputSerializer.h">
+      <Filter>Kahawai\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\Doom3Serializer.h">
+      <Filter>Kahawai\Input\Doom3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kahawai\Networking.h">
+      <Filter>Kahawai\Networking</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\ClassDiagram1.cd" />
+  </ItemGroup>
+</Project>

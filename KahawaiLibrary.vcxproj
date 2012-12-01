@@ -1,0 +1,144 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\kahawai\BasicH264Encoder.cpp" />
+    <ClCompile Include="..\kahawai\ConfigReader.cpp" />
+    <ClCompile Include="..\kahawai\DeltaClient.cpp" />
+    <ClCompile Include="..\kahawai\DeltaServer.cpp" />
+    <ClCompile Include="..\kahawai\DirectXCapturer.cpp" />
+    <ClCompile Include="..\kahawai\Doom3Serializer.cpp" />
+    <ClCompile Include="..\kahawai\FFMpegDecoder.cpp" />
+    <ClCompile Include="..\kahawai\H264Client.cpp" />
+    <ClCompile Include="..\kahawai\H264Server.cpp" />
+    <ClCompile Include="..\kahawai\IFrameClient.cpp" />
+    <ClCompile Include="..\kahawai\IFrameClientDecoder.cpp" />
+    <ClCompile Include="..\kahawai\IframeClientEncoder.cpp" />
+    <ClCompile Include="..\kahawai\IFrameServer.cpp" />
+    <ClCompile Include="..\kahawai\InputHandlerClient.cpp" />
+    <ClCompile Include="..\kahawai\InputHandlerServer.cpp" />
+    <ClCompile Include="..\kahawai\Kahawai.cpp" />
+    <ClCompile Include="..\kahawai\KahawaiClient.cpp" />
+    <ClCompile Include="..\kahawai\KahawaiServer.cpp" />
+    <ClCompile Include="..\kahawai\MediaFoundationDecoder.cpp" />
+    <ClCompile Include="..\kahawai\Networking.cpp" />
+    <ClCompile Include="..\kahawai\OpenGLCapturer.cpp" />
+    <ClCompile Include="..\kahawai\pugixml.cpp" />
+    <ClCompile Include="..\kahawai\utils.cpp" />
+    <ClCompile Include="..\kahawai\X264Encoder.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\kahawai\Capturer.h" />
+    <ClInclude Include="..\kahawai\config.h" />
+    <ClInclude Include="..\kahawai\ConfigReader.h" />
+    <ClInclude Include="..\kahawai\DeltaClient.h" />
+    <ClInclude Include="..\kahawai\DeltaServer.h" />
+    <ClInclude Include="..\kahawai\DirectXCapturer.h" />
+    <ClInclude Include="..\kahawai\Doom3Serializer.h" />
+    <ClInclude Include="..\kahawai\endPacked.h" />
+    <ClInclude Include="..\kahawai\FFMpegDecoder.h" />
+    <ClInclude Include="..\kahawai\H264Client.h" />
+    <ClInclude Include="..\kahawai\H264Server.h" />
+    <ClInclude Include="..\kahawai\IFrameClient.h" />
+    <ClInclude Include="..\kahawai\IFrameClientDecoder.h" />
+    <ClInclude Include="..\kahawai\IframeClientEncoder.h" />
+    <ClInclude Include="..\kahawai\IFrameServer.h" />
+    <ClInclude Include="..\kahawai\InputHandlerClient.h" />
+    <ClInclude Include="..\kahawai\InputHandlerServer.h" />
+    <ClInclude Include="..\kahawai\InputSerializer.h" />
+    <ClInclude Include="..\kahawai\Kahawai.h" />
+    <ClInclude Include="..\kahawai\kahawaiBase.h" />
+    <ClInclude Include="..\kahawai\KahawaiClient.h" />
+    <ClInclude Include="..\kahawai\kahawaiDependencies.h" />
+    <ClInclude Include="..\kahawai\KahawaiServer.h" />
+    <ClInclude Include="..\kahawai\KahawaiTypes.h" />
+    <ClInclude Include="..\kahawai\MediaFoundationDecoder.h" />
+    <ClInclude Include="..\kahawai\Networking.h" />
+    <ClInclude Include="..\kahawai\OpenGLCapturer.h" />
+    <ClInclude Include="..\kahawai\packed.h" />
+    <ClInclude Include="..\kahawai\pugiconfig.hpp" />
+    <ClInclude Include="..\kahawai\pugixml.hpp" />
+    <ClInclude Include="..\kahawai\utils.h" />
+    <ClInclude Include="..\kahawai\VideoDecoder.h" />
+    <ClInclude Include="..\kahawai\VideoEncoder.h" />
+    <ClInclude Include="..\kahawai\X264Encoder.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\ClassDiagram1.cd" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{F90834F1-D2EC-4405-950E-D96D662CFD6A}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>KahawaiLibrary</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>$(SolutionDir)\kahawai\include;$(UserProfile)\Dropbox\Visual Studio Projects\SDL\include;$(ProjectDir)\include;$(UserProfile)\Dropbox\workspace\x264;$(UserProfile)\Dropbox\workspace\ffmpeg;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+    <LibraryPath>$(UserProfile)\Dropbox\Visual Studio Projects\SDL\VisualC\Debug;$(UserProfile)\Dropbox\Visual Studio Projects\SDL\VisualC\SDLmain\Debug;$(UserProfile)\Dropbox\workspace\x264;$(UserProfile)\Dropbox\workspace\ffmpeg\libavcodec;$(UserProfile)\Dropbox\workspace\ffmpeg\libavformat;$(UserProfile)\Dropbox\workspace\ffmpeg\libavutil;$(UserProfile)\Dropbox\workspace\ffmpeg\libswscale;$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;NO_SOUND;AUTORUN;WRITE_MOVIE;WRITE_DECODED_FRAMES;WRITE_SOURCE_FRAME;KAHAWAI;DETERMINISTIC_TIME;DETERMINISTIC_RANDOM;NO_ASYNC_THREAD;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
