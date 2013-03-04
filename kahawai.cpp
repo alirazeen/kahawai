@@ -240,12 +240,18 @@ Kahawai::Kahawai()
 	,_captureMode(OpenGL)
 	,_frameInProcess(false)
 	,_capturer(NULL)
+	,_finished(false)
 {
 
 }
 
 Kahawai::~Kahawai(void)
 {
+	if(!_finished)
+	{
+		Finalize();
+	}
+
 	if(_sourceFrame!=NULL)
 		delete[] _sourceFrame;
 
@@ -347,6 +353,14 @@ bool Kahawai::Initialize()
 	return true;	
 }
 
+bool Kahawai::Finalize()
+{
+	WakeConditionVariable(&_captureReadyCV);
+	WakeConditionVariable(&_captureFullCV);
+	_finished = true;
+
+	return true;
+}
 
 
 /**
@@ -370,6 +384,8 @@ bool Kahawai::Capture(int width, int height)
 		while(_frameInProcess)
 		{
 			SleepConditionVariableCS(&_captureFullCV,&_frameBufferCS,INFINITE);
+			if(!_offloading)
+				return false;
 		}
 		memcpy(_sourceFrame,frameBuffer, width* height*SOURCE_BITS_PER_PIXEL);
 		_frameInProcess = true;
@@ -399,6 +415,8 @@ bool Kahawai::Transform(int width, int height)
 		while(!_frameInProcess)
 		{
 			SleepConditionVariableCS(&_captureReadyCV,&_frameBufferCS,INFINITE);
+			if(!_offloading)
+				return false;
 		}
 
 		//Image colorspace transformation inverts image. Pre-inverting to save time

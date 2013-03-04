@@ -21,12 +21,14 @@ public:
 	void*					ReceiveCommand();
 	void*					GetEmptyCommand();		
 	size_t					GetCommandLength() {return _serializer->GetCommandSize();}
+	bool					Finalize();
 
 private:
 	void					ReceiveCommandsAsync();
 	//Communication
 	SOCKET					_inputSocket;
 	int						_port;
+	bool					_offloading;
 
 	//Network Input queue synchronization
 	CONDITION_VARIABLE		_inputFullCV;

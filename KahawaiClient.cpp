@@ -37,13 +37,22 @@ bool KahawaiClient::Initialize()
 	//Config the decoder to save (or not) the decoded frames
 	_decoder->EnableFrameLogging(_saveCaptures);
 
-	//Initialize input handler
-	_inputHandler = new InputHandlerClient(_serverIP,_serverPort+10,_gameName);
-
-
 	return true;
 }
 
+bool KahawaiClient::Finalize()
+{
+
+	KahawaiLog("Shutting down Kahawai", KahawaiDebug);
+
+	bool cleanExit = true; 
+	_offloading = false;
+	cleanExit &= Kahawai::Finalize();
+	cleanExit &= _inputHandler->Finalize();
+	_finished = true;
+
+	return cleanExit;
+}
 
 /**
  * Executes the client side of the pipeline
@@ -52,8 +61,8 @@ bool KahawaiClient::Initialize()
 void KahawaiClient::OffloadAsync()
 {
 	//Connect input handler to server
-#ifndef HANDLE_INPUT
-	if(!_inputHandler->Connect())
+#ifndef NO_HANDLE_INPUT
+	if(!_inputHandler==NULL && !_inputHandler->Connect())
 	{
 		KahawaiLog("Unable to start input handler", KahawaiError);
 		_offloading = false;
@@ -71,6 +80,9 @@ void KahawaiClient::OffloadAsync()
 		_offloading &= Show();
 	}
 	/////////////////////////////////////////////////////////////////////////
+
+	//clean up all threads and missing resources
+	Finalize();
 
 	KahawaiLog("Offload finished.\n", KahawaiDebug);
 }
@@ -134,7 +146,8 @@ int KahawaiClient::GetDisplayedFrames()
 KahawaiClient::KahawaiClient(void)
 	:Kahawai(),
 	_decoder(0),
-	_lastCommand(NULL)
+	_lastCommand(NULL),
+	_inputHandler(NULL)
 {
 	strncpy_s(_serverIP,KAHAWAI_LOCALHOST,sizeof(KAHAWAI_LOCALHOST));
 

@@ -13,6 +13,7 @@
 #endif 
 
 #define DEBUG_PATH "E:\\Benchmarks"
+#define MAX_ATTEMPTS 100 //Maximum reconnection attempts
 
 
 #include "kahawaiDependencies.h"

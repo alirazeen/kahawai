@@ -22,6 +22,8 @@ void KahawaiServer::OffloadAsync()
 	}
 	/////////////////////////////////////////////////////////////////////////
 
+	Finalize();
+
 	KahawaiLog("Finished Offloading", KahawaiDebug);
 }
 
@@ -52,6 +54,20 @@ bool KahawaiServer::Initialize()
 	return true;
 }
 
+bool KahawaiServer::Finalize()
+{
+
+	KahawaiLog("Shutting down Kahawai", KahawaiDebug);
+
+	bool cleanExit = true; 
+	_offloading = false;
+	cleanExit &= Kahawai::Finalize();
+	cleanExit &= _inputHandler->Finalize();
+	_finished = true;
+
+	return cleanExit;
+}
+
 bool KahawaiServer::IsHD()
 {
 	return true;
@@ -77,6 +93,7 @@ int KahawaiServer::GetDisplayedFrames()
 KahawaiServer::KahawaiServer(void)
 	:Kahawai(),
 	_encoder(NULL),
+	_inputHandler(NULL),
 	_crf(0),
 	_preset(0)
 

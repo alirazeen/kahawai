@@ -17,6 +17,7 @@ public:
 	size_t					GetCommandLength() {return _serializer->GetCommandSize();}
 
 	bool					Connect();
+	bool					Finalize();
 
 private:
 	void					SendCommandsAsync();
@@ -26,6 +27,7 @@ private:
 	char*					_serverIP;
 	int						_port;
 	bool					_connected;
+	bool					_offloading;
 
 	//Network Input queue synchronization
 	CONDITION_VARIABLE		_inputFullCV;
@@ -37,6 +39,7 @@ private:
 	InputSerializer*		_serializer;
 
 	int						_commandLength;
+
 
 };
 #endif

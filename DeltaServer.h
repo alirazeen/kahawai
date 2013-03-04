@@ -29,6 +29,7 @@ public:
 	//Lifecycle methods
 	void	OffloadAsync();
 	bool	Initialize();
+	bool	Finalize();
 	bool	Transform(int width, int height);
 	int		Encode(void** transformedFrame);
 	bool	Send(void** compressedFrame, int frameSize);

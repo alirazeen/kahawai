@@ -48,8 +48,9 @@ bool DeltaServer::Initialize()
 	_encoder = new X264Encoder(_height,_width,_fps,_crf,_preset);
 
 	//Initialize input handler
+#ifndef NO_HANDLE_INPUT
 	_inputHandler = new InputHandlerServer(_serverPort+10, _gameName);
-
+#endif
 
 	if(!_master)
 	{	//Re-Initialize sws scaling context if slave
@@ -57,6 +58,20 @@ bool DeltaServer::Initialize()
 		_convertCtx = sws_getContext(_clientWidth,_clientHeight,PIX_FMT_BGRA, _width, _height,PIX_FMT_YUV420P, SWS_FAST_BILINEAR,NULL,NULL,NULL);
 		_sourceFrame = new uint8_t[_clientWidth*_clientWidth*SOURCE_BITS_PER_PIXEL];
 	}
+
+	return true;
+}
+
+bool DeltaServer::Finalize()
+{
+	KahawaiServer::Finalize();
+
+	//Unlock waiting threads
+
+	if(_master)
+		SetEvent(_slaveBarrier);
+	else
+		SetEvent(_masterBarrier);
 
 	return true;
 }
@@ -74,7 +89,7 @@ void DeltaServer::OffloadAsync()
 	{
 		bool connection = true;
 
-#ifndef HANDLE_INPUT
+#ifndef NO_HANDLE_INPUT
 		connection = _inputHandler->Connect();
 #endif
 		_socketToClient = CreateSocketToClient(_serverPort);
@@ -103,8 +118,6 @@ void DeltaServer::OffloadAsync()
  */
 bool DeltaServer::Transform(int width, int height)
 {
-	//Synchronize both processes
-	//SyncCopies();
 	return KahawaiServer::Transform(_width, _height);
 }
 
@@ -288,6 +301,11 @@ bool DeltaServer::IsHD()
 	//Only master renders in HD
 	return _master;
 }
+
+//////////////////////////////////////////////////////////////////////////
+// Input Handling
+//////////////////////////////////////////////////////////////////////////
+
 
 /**
  * Receives input from the client and applies it to the server state

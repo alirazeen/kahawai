@@ -8,9 +8,9 @@
 
 void InputHandlerServer::ReceiveCommandsAsync()
 {
+	_offloading = true;
 
-	//TODO: Link to kahawai offloading state
-	while(true)
+	while(_offloading)
 	{
 
 		char* command = new char[KAHAWAI_INPUT_COMMAND_BUFFER];
@@ -47,6 +47,21 @@ void InputHandlerServer::ReceiveCommandsAsync()
 
 	}
 
+}
+
+bool InputHandlerServer::Finalize()
+{
+	_offloading =false;
+	WakeConditionVariable(&_inputFullCV);
+	WakeConditionVariable(&_inputReadyCV);
+
+	if(_inputSocket!=INVALID_SOCKET)
+	{
+		closesocket(_inputSocket);
+		_inputSocket = INVALID_SOCKET;
+	}
+
+	return true;
 }
 
 void* InputHandlerServer::ReceiveCommand()

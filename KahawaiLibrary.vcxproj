@@ -5,6 +5,10 @@
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Deterministic Release|Win32">
+      <Configuration>Deterministic Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
@@ -86,6 +90,11 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Deterministic Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -98,6 +107,9 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Deterministic Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -106,7 +118,26 @@
     <IncludePath>$(SolutionDir)\kahawai\include;$(UserProfile)\Dropbox\Visual Studio Projects\SDL\include;$(ProjectDir)\include;$(UserProfile)\Dropbox\workspace\x264;$(UserProfile)\Dropbox\workspace\ffmpeg;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
     <LibraryPath>$(UserProfile)\Dropbox\Visual Studio Projects\SDL\VisualC\Debug;$(UserProfile)\Dropbox\Visual Studio Projects\SDL\VisualC\SDLmain\Debug;$(UserProfile)\Dropbox\workspace\x264;$(UserProfile)\Dropbox\workspace\ffmpeg\libavcodec;$(UserProfile)\Dropbox\workspace\ffmpeg\libavformat;$(UserProfile)\Dropbox\workspace\ffmpeg\libavutil;$(UserProfile)\Dropbox\workspace\ffmpeg\libswscale;$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib</LibraryPath>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Deterministic Release|Win32'">
+    <IncludePath>$(SolutionDir)\kahawai\include;$(UserProfile)\Dropbox\Visual Studio Projects\SDL\include;$(ProjectDir)\include;$(UserProfile)\Dropbox\workspace\x264;$(UserProfile)\Dropbox\workspace\ffmpeg;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+    <LibraryPath>$(UserProfile)\Dropbox\Visual Studio Projects\SDL\VisualC\Debug;$(UserProfile)\Dropbox\Visual Studio Projects\SDL\VisualC\SDLmain\Debug;$(UserProfile)\Dropbox\workspace\x264;$(UserProfile)\Dropbox\workspace\ffmpeg\libavcodec;$(UserProfile)\Dropbox\workspace\ffmpeg\libavformat;$(UserProfile)\Dropbox\workspace\ffmpeg\libavutil;$(UserProfile)\Dropbox\workspace\ffmpeg\libswscale;$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;NO_SOUND;AUTORUN;WRITE_MOVIE;WRITE_DECODED_FRAMES;WRITE_SOURCE_FRAME;KAHAWAI;DETERMINISTIC_TIME;DETERMINISTIC_RANDOM;NO_ASYNC_THREAD;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Deterministic Release|Win32'">
     <ClCompile>
       <PrecompiledHeader>
       </PrecompiledHeader>

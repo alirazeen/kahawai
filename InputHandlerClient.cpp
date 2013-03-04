@@ -12,7 +12,15 @@
 bool InputHandlerClient::Connect()
 {
 	//Connect to offloading server
-	_inputSocket = CreateSocketToServer(_serverIP,_port);
+	int attempts = 0;
+	while(_inputSocket == INVALID_SOCKET && attempts < MAX_ATTEMPTS)
+	{
+		_inputSocket = CreateSocketToServer(_serverIP,_port);
+#ifdef WIN32
+		Sleep(5000);
+#endif
+	}
+
 
 	//Spawn listening thread
 	bool threadCreated = CreateKahawaiThread(AsyncInputHandler,this);
@@ -30,7 +38,7 @@ bool InputHandlerClient::Connect()
 InputHandlerClient::InputHandlerClient(char* serverIP, int port, char* gameName)
 	:_port(port),
 	_serverIP(serverIP),
-	_inputSocket(0),
+	_inputSocket(INVALID_SOCKET),
 	_connected(false)
 {
 
@@ -69,9 +77,9 @@ DWORD WINAPI InputHandlerClient::AsyncInputHandler(void* Param)
 void InputHandlerClient::SendCommandsAsync()
 {
 	char* command = NULL;
+	_offloading = true;
 
-	//TODO: Link to kahawai offloading state
-	while(true)
+	while(_offloading)
 	{
 		EnterCriticalSection(&_inputBufferCS);
 		{
@@ -102,6 +110,22 @@ void InputHandlerClient::SendCommandsAsync()
 
 }
 
+
+bool InputHandlerClient::Finalize()
+{
+	_offloading =false;
+	WakeConditionVariable(&_inputFullCV);
+	WakeConditionVariable(&_inputReadyCV);
+
+	if(_inputSocket!=INVALID_SOCKET)
+	{
+		closesocket(_inputSocket);
+		_inputSocket = INVALID_SOCKET;
+	}
+
+	return true;
+
+}
 
 void InputHandlerClient::SendCommand(void* command)
 {

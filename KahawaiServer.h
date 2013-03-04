@@ -21,6 +21,7 @@ protected:
 	//////////////////////////////////////////////////////////////////////////
 
 	bool				Initialize();
+	bool				Finalize();
 	//Input Handling
 	void*				HandleInput(void*);
 	int					GetDisplayedFrames();

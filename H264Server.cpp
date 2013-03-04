@@ -37,7 +37,6 @@ int H264Server::Encode(void** compressedFrame)
 
 bool H264Server::Send(void** compressedFrame,int frameSize)
 {
-	//Send the encoded delta to the client
 	if(send(_socketToClient, (char*) *compressedFrame,frameSize,0)==SOCKET_ERROR)
 	{
 		char errorMsg[100];

@@ -50,15 +50,28 @@ bool H264Client::Show()
 	return _decoder->Show();
 }
 
-int H264Client::GetFirstInputFrame()
-{
-	//No OP. H264 doesnt handle input
-	return 0;
-}
 
 bool H264Client::StopOffload()
 {
 	//Offload stops naturally when the server stops sending data
 	return true;
 }
+
+//////////////////////////////////////////////////////////////////////////
+//Input Handling (NO OP)
+//////////////////////////////////////////////////////////////////////////
+
+void* H264Client::HandleInput(void* inputCommand)
+{
+	//Overrides KahawaiClient by not doing anything.
+	return inputCommand;
+}
+
+int H264Client::GetFirstInputFrame()
+{
+	//No OP. H264 doesnt handle input
+	return 0;
+}
+//////////////////////////////////////////////////////////////////////////
+
 #endif

@@ -1,8 +1,6 @@
 #pragma once
 #include "videodecoder.h"
 
-#define MAX_ATTEMPTS 100
-
 //SDL Imports
 #include <SDL.h>
 #include <SDL_thread.h>

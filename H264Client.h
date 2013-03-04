@@ -14,7 +14,10 @@ protected:
 	bool		Show();	
 
 	bool		StopOffload();
+
 	int			GetFirstInputFrame();
+	void*		HandleInput(void* inputCommand);
+
 
 };
 

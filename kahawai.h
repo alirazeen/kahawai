@@ -58,6 +58,8 @@ protected:
 	virtual bool		Transform(int width, int height);
 	//Encode and Send implemented by servers
 	//Decode and Show implemented by clients
+	virtual bool		Finalize(); //Cleanup specially for locks and threads
+
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -126,21 +128,27 @@ protected:
 	//Kahawai capturer
 	Capturer*			_capturer;
 
-	//Capture stage synchronization
-	CONDITION_VARIABLE	_captureFullCV;
-	CONDITION_VARIABLE	_captureReadyCV;
-
-	CRITICAL_SECTION	_frameBufferCS;
-	
-	//Transform phase synchronization
-	bool				_frameInProcess;
 
 	// Lib sws_scale context. (Implementation tied to libx264 because of the datatypes used for pic handling)
 	SwsContext*			_convertCtx; //Each implementation class has to initialize this one if resizing is desired
 	x264_picture_t*		_transformPicture; //Picture structure used for manipulations such as colorspace changes.
 
+	//Cleanup state
+	bool				_finished;
+
 	//Debug Settings
 	bool				_saveCaptures; //Used for measuring quality. save snapshots to disk
+
+private:
+	//Capture stage synchronization
+	CONDITION_VARIABLE	_captureFullCV;
+	CONDITION_VARIABLE	_captureReadyCV;
+
+	CRITICAL_SECTION	_frameBufferCS;
+
+	//Transform phase synchronization
+	bool				_frameInProcess;
+
 
 	//////////////////////////////////////////////////////////////////////////
 

@@ -40,6 +40,11 @@ bool DeltaClient::Initialize()
 	if(!KahawaiClient::Initialize())
 		return false;
 
+	//Initialize input handler
+#ifndef NO_HANDLE_INPUT
+	_inputHandler = new InputHandlerClient(_serverIP,_serverPort+10,_gameName);
+#endif
+
 	//Read client's resolution. (Can be lower than the server's. Interpolation occurs to match deltas)
 	_clientWidth = _configReader->ReadIntegerValue(CONFIG_DELTA,CONFIG_WIDTH);
 	_clientHeight = _configReader->ReadIntegerValue(CONFIG_DELTA,CONFIG_HEIGHT);

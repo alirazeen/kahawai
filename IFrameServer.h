@@ -9,6 +9,9 @@ public:
 	~IFrameServer(void);
 
 protected:
+
+	bool	Initialize();
+
 	//Kahawai life-cycle
 	int		Encode(void** compressedFrame);
 	bool	Send(void** compressedFrame, int frameSize);
@@ -16,6 +19,9 @@ protected:
 	//Input Handling (NO OP)
 	void*	HandleInput(void* input);
 	int		GetFirstInputFrame();
+
+
+	int		_gop;
 
 };
 

@@ -24,6 +24,7 @@ protected:
 	//////////////////////////////////////////////////////////////////////////
 
 	bool				Initialize();
+	bool				Finalize();
 
 	//Game fidelity
 	bool				IsHD();
