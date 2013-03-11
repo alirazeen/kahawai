@@ -10,6 +10,7 @@
 #include "ConfigReader.h"
 #include "ConfigReader.h"
 #include "OpenGLCapturer.h"
+#include "DirectXCapturer.h"
 
 #include<iostream>
 #include<fstream>
@@ -71,6 +72,7 @@ bool Kahawai::Offload()
 //////////////////////////////////////////////////////////////////////////
 
 /**
+ * Static factory. Use instead of the constructor
  * Creates a new Kahawai instance using the default config file (Kahawai.xml)
  */
 Kahawai* Kahawai::LoadFromFile()
@@ -237,7 +239,7 @@ Kahawai::Kahawai()
 	,_timeStep(1000/_fps)
 	,_renderedFrames(0)
 	,_serverPort(KAHAWAI_DEFAULT_PORT)
-	,_captureMode(OpenGL)
+	,_captureMode(OpenGL) //OpenGL by default
 	,_frameInProcess(false)
 	,_capturer(NULL)
 	,_finished(false)
@@ -277,6 +279,8 @@ Kahawai::~Kahawai(void)
  */
 bool Kahawai::Initialize()
 {
+	//char capturer config buffer
+	char captureType[20];
 
 	//Read Screen Resolution
 	_width = _configReader->ReadIntegerValue(CONFIG_RESOLUTION,CONFIG_WIDTH);
@@ -304,10 +308,24 @@ bool Kahawai::Initialize()
 	}
 
 	//Load the specified capturer
+	_configReader->ReadProperty(CONFIG_OFFLOAD,CONFIG_CAPTURE,captureType);
+	if(_strnicmp(captureType, CONFIG_DIRECTX_CAPTURER,sizeof(CONFIG_DIRECTX_CAPTURER))==0)
+	{
+		_captureMode == DirectX;
+	}
+	if(_strnicmp(captureType, CONFIG_OPENGL_CAPTURER,sizeof(CONFIG_OPENGL_CAPTURER))==0)
+	{
+		_captureMode == OpenGL;
+	}
+
 
 	if(_captureMode == OpenGL)
 	{
 		_capturer = new OpenGLCapturer(_width,_height);
+	}
+	if(_captureMode == DirectX)
+	{
+		_capturer = new DirectXCapturer();
 	}
 	else
 	{
