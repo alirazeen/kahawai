@@ -1,6 +1,5 @@
 #include "kahawaiBase.h"
-#ifdef KAHAWAI
-
+//#ifdef KAHAWAI
 /**
  * pugixml parser - version 1.2
  * --------------------------------------------------------
@@ -10252,4 +10251,4 @@ namespace pugi
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#endif
+// #endif // KAHAWAI

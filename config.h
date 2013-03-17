@@ -18,6 +18,8 @@
 #define CONFIG_DOOM3 "doom3"
 #define CONFIG_SF4 "Street Fighter 4"
 #define CONFIG_AUTORUN "autorun"
+#define CONFIG_ENABLED "enabled"
+#define CONFIG_AUTORUN_LEVEL "level"
 #define CONFIG_TRUE "true"
 #define CONFIG_FALSE "false"
 
@@ -51,9 +53,5 @@
 
 #define CONFIG_DEMO_FILE "Demo"
 #define CONFIG_RESULTS_PATH "ResultsPath"
-
-#define CONFIG_CAPTURE "capturer"
-#define CONFIG_OPENGL_CAPTURER "opengl"
-#define CONFIG_DIRECTX_CAPTURER "directx"
 
 #endif
