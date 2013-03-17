@@ -54,4 +54,8 @@
 #define CONFIG_DEMO_FILE "Demo"
 #define CONFIG_RESULTS_PATH "ResultsPath"
 
+#define CONFIG_CAPTURE "capturer"
+#define CONFIG_OPENGL_CAPTURER "opengl"
+#define CONFIG_DIRECTX_CAPTURER "directx"
+
 #endif
