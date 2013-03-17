@@ -322,8 +322,7 @@ bool Kahawai::Initialize()
 	if(_captureMode == OpenGL)
 	{
 		_capturer = new OpenGLCapturer(_width,_height);
-	}
-	if(_captureMode == DirectX)
+	} else if(_captureMode == DirectX)
 	{
 		_capturer = new DirectXCapturer();
 	}
