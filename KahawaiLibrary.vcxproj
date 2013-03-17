@@ -131,6 +131,7 @@
       <PreprocessorDefinitions>WIN32;NO_SOUND;AUTORUN;WRITE_MOVIE;WRITE_DECODED_FRAMES;WRITE_SOURCE_FRAME;KAHAWAI;DETERMINISTIC_TIME;DETERMINISTIC_RANDOM;NO_ASYNC_THREAD;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
