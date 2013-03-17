@@ -115,8 +115,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)\kahawai\include;$(UserProfile)\Dropbox\Visual Studio Projects\SDL\include;$(ProjectDir)\include;$(UserProfile)\Dropbox\workspace\x264;$(UserProfile)\Dropbox\workspace\ffmpeg;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
-    <LibraryPath>$(UserProfile)\Dropbox\Visual Studio Projects\SDL\VisualC\Debug;$(UserProfile)\Dropbox\Visual Studio Projects\SDL\VisualC\SDLmain\Debug;$(UserProfile)\Dropbox\workspace\x264;$(UserProfile)\Dropbox\workspace\ffmpeg\libavcodec;$(UserProfile)\Dropbox\workspace\ffmpeg\libavformat;$(UserProfile)\Dropbox\workspace\ffmpeg\libavutil;$(UserProfile)\Dropbox\workspace\ffmpeg\libswscale;$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib</LibraryPath>
+    <IncludePath>$(SolutionDir)\kahawai\include;$(SolutionDir)\include\SDL\include;$(ProjectDir)\include;$(SolutionDir)\include\x264;$(SolutionDir)\include\ffmpeg;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
+    <LibraryPath>$(SolutionDir)\libraries\SDL\VisualC\Debug;$(SolutionDir)\libraries\SDL\VisualC\SDLmain\Debug;$(SolutionDir)\libraries\x264;$(SolutionDir)\libraries\ffmpeg\libavcodec;$(SolutionDir)\libraries\ffmpeg\libavformat;$(SolutionDir)\libraries\ffmpeg\libavutil;$(SolutionDir)\libraries\ffmpeg\libswscale;$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Deterministic Release|Win32'">
     <IncludePath>$(SolutionDir)\kahawai\include;$(UserProfile)\Dropbox\Visual Studio Projects\SDL\include;$(ProjectDir)\include;$(UserProfile)\Dropbox\workspace\x264;$(UserProfile)\Dropbox\workspace\ffmpeg;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
