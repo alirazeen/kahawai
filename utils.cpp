@@ -41,6 +41,16 @@ void KahawaiLog(char* content, KahawaiLogLevel errorLevel, ...)
 	}
 }
 
+void KahawaiPrintF(char* content, ...)
+{
+	va_list formatArguments;
+
+	char formatted[1000];
+	va_start(formatArguments,content);
+	vsprintf_s(formatted,content,formatArguments);
+
+	OutputDebugString(formatted);
+}
 
 void KahawaiSaveYUVFrame(const char* subfolder, int serialId, char* data, int width, int height)
 {
