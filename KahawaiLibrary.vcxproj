@@ -39,6 +39,7 @@
     <ClCompile Include="..\kahawai\pugixml.cpp" />
     <ClCompile Include="..\kahawai\utils.cpp" />
     <ClCompile Include="..\kahawai\X264Encoder.cpp" />
+    <ClCompile Include="Measurement.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\kahawai\Capturer.h" />
@@ -75,6 +76,7 @@
     <ClInclude Include="..\kahawai\VideoDecoder.h" />
     <ClInclude Include="..\kahawai\VideoEncoder.h" />
     <ClInclude Include="..\kahawai\X264Encoder.h" />
+    <ClInclude Include="Measurement.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\ClassDiagram1.cd" />

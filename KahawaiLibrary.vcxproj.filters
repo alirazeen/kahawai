@@ -40,6 +40,9 @@
     <Filter Include="Kahawai\Networking">
       <UniqueIdentifier>{d8c3d73f-679a-425d-a619-f3b401153544}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Kahawai\Measurement">
+      <UniqueIdentifier>{46627748-ce0f-44b9-8005-5338a643290d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kahawai\Kahawai.cpp">
@@ -113,6 +116,9 @@
     </ClCompile>
     <ClCompile Include="..\kahawai\Networking.cpp">
       <Filter>Kahawai\Networking</Filter>
+    </ClCompile>
+    <ClCompile Include="Measurement.cpp">
+      <Filter>Kahawai\Measurement</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -217,6 +223,9 @@
     </ClInclude>
     <ClInclude Include="..\kahawai\Networking.h">
       <Filter>Kahawai\Networking</Filter>
+    </ClInclude>
+    <ClInclude Include="Measurement.h">
+      <Filter>Kahawai\Measurement</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
