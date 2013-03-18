@@ -3,6 +3,7 @@
 #include "ConfigReader.h"
 #include "VideoDecoder.h"
 #include "InputHandlerClient.h"
+#include "Measurement.h"
 #include <queue>
 using namespace std;
 
@@ -50,6 +51,9 @@ protected:
 	int					_maxFPS;
 	int					_serverRTT;
 	queue<void*>		_localInputQueue;
+
+	//Instrumentation
+	Measurement*		_measurement;
 private:
 	void*				_lastCommand;
 
@@ -59,7 +63,9 @@ public:
 
 	//public Interface
 
-
+	//Instrumentation
+	void				FrameStart();
+	void				FrameEnd();
 
 };
 

@@ -54,6 +54,7 @@ bool DeltaClient::Initialize()
 	_convertCtx = sws_getContext(_clientWidth,_clientHeight,PIX_FMT_BGRA, _width, _height,PIX_FMT_YUV420P, SWS_FAST_BILINEAR,NULL,NULL,NULL);
 	_sourceFrame = new uint8_t[_clientWidth*_clientWidth*SOURCE_BITS_PER_PIXEL];
 
+	_measurement = new Measurement("delta_client_measurement.csv");
 
 	return true;
 }
@@ -68,7 +69,11 @@ bool DeltaClient::Initialize()
 bool DeltaClient::Capture(int width, int height)
 {
 	//Captures at the client resolution
-	return KahawaiClient::Capture(_clientWidth,_clientHeight);
+	_measurement->CaptureStart(_renderedFrames+1);
+	bool result = KahawaiClient::Capture(_clientWidth,_clientHeight);
+	_measurement->CaptureEnd(_renderedFrames);
+	
+	return result;
 }
 
 
@@ -82,19 +87,30 @@ bool DeltaClient::Capture(int width, int height)
 bool DeltaClient::Transform(int width, int height)
 {
 	//transforms the screen captured at the client resolution
-	return KahawaiClient::Transform(_clientWidth, _clientHeight);
+	_measurement->TransformStart();
+	bool result = KahawaiClient::Transform(_clientWidth, _clientHeight);
+	_measurement->TransformEnd();
+
+	return result;
 }
 
 bool DeltaClient::Decode()
 {	
+	_measurement->DecodeStart();
 	LogYUVFrame(_saveCaptures,"low",_renderedFrames,(char*)_transformPicture->img.plane[0],_clientWidth,_clientHeight);
+	bool result = _decoder->Decode(Patch,_transformPicture->img.plane[0]);
+	_measurement->DecodeEnd();
 
-	return _decoder->Decode(Patch,_transformPicture->img.plane[0]);
+	return result;
 }
 
 bool DeltaClient::Show()
 {
-	return _decoder->Show();
+	_measurement->ShowStart();
+	bool result = _decoder->Show();
+	_measurement->ShowEnd();
+
+	return result;
 }
 
 

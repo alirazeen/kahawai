@@ -52,11 +52,16 @@ bool DeltaServer::Initialize()
 	_inputHandler = new InputHandlerServer(_serverPort+10, _gameName);
 #endif
 
-	if(!_master)
+	if (_master)
+	{
+		_measurement = new Measurement("delta_server_master_measurement.csv");
+	} else
 	{	//Re-Initialize sws scaling context if slave
 		delete[] _sourceFrame;
 		_convertCtx = sws_getContext(_clientWidth,_clientHeight,PIX_FMT_BGRA, _width, _height,PIX_FMT_YUV420P, SWS_FAST_BILINEAR,NULL,NULL,NULL);
 		_sourceFrame = new uint8_t[_clientWidth*_clientWidth*SOURCE_BITS_PER_PIXEL];
+	
+		_measurement = new Measurement("delta_server_slave_measurement.csv");
 	}
 
 	return true;
@@ -118,7 +123,11 @@ void DeltaServer::OffloadAsync()
  */
 bool DeltaServer::Transform(int width, int height)
 {
-	return KahawaiServer::Transform(_width, _height);
+	_measurement->TransformStart();
+	bool result = KahawaiServer::Transform(_width, _height);
+	_measurement->TransformEnd();
+
+	return result;
 }
 
 /**
@@ -131,24 +140,24 @@ bool DeltaServer::Transform(int width, int height)
  */
 int DeltaServer::Encode(void** transformedFrame)
 {
+	_measurement->EncodeStart();
+	int result = 0;
 	if(_master)
 	{
-		int result = 0;
-
 		LogYUVFrame(_renderedFrames,"source",_renderedFrames,(char*)_transformPicture->img.plane[0],_width,_height);
 	
 		//Wait for the slave copy to finish writing the low quality version to shared memory
 		WaitForSingleObject(_masterBarrier, INFINITE);
-			result = _encoder->Encode(_transformPicture,transformedFrame,Delta, _mappedBuffer);
+		result = _encoder->Encode(_transformPicture,transformedFrame,Delta, _mappedBuffer);
 		SetEvent(_slaveBarrier);
-
-		return result;
 	}
 	else
 	{
 		*transformedFrame =  _transformPicture->img.plane[0];
-		return YUV420pBitsPerPixel(_width,_height);
+		result = YUV420pBitsPerPixel(_width,_height);
 	}
+	_measurement->EncodeEnd();
+	return result;
 }
 
 /**
@@ -160,12 +169,15 @@ int DeltaServer::Encode(void** transformedFrame)
  */
 bool DeltaServer::Send(void** compressedFrame, int frameSize)
 {
+	_measurement->SendStart();
+
 	if(_master)
 	{
 		//Send the encoded delta to the client
 		if(send(_socketToClient,(char*) *compressedFrame,frameSize,0)==SOCKET_ERROR)
 		{
 			KahawaiLog("Unable to send frame to client", KahawaiError);
+			_measurement->SendEnd();
 			return false;
 		}
 		LogVideoFrame(_saveCaptures,"transferred","deltaMovie.h264",(char*)*compressedFrame,frameSize);
@@ -179,6 +191,7 @@ bool DeltaServer::Send(void** compressedFrame, int frameSize)
 		WaitForSingleObject(_slaveBarrier, INFINITE);
 	}
 
+	_measurement->SendEnd();
 	return true;
 }
 
@@ -326,9 +339,11 @@ void* DeltaServer::HandleInput(void*)
 		//Check this if synchronization issues arise. 
 		//Performance may be hurt if a stronger method is used
 		memcpy(_sharedInputBuffer,cmd,length);
-
+		_measurement->InputReceived(cmd, _renderedFrames+1);
+		
 		SetEvent(_masterInputEvent);
 		WaitForSingleObject(_slaveInputEvent, INFINITE);
+		_measurement->InputSent(cmd, _renderedFrames+1);
 		return cmd;
 	}
 	else
@@ -336,9 +351,11 @@ void* DeltaServer::HandleInput(void*)
 		void* result = NULL;
 		
 		WaitForSingleObject(_masterInputEvent, INFINITE);
-			result = _sharedInputBuffer;
+		result = _sharedInputBuffer;
+		_measurement->InputReceived(result, _renderedFrames+1);
 		SetEvent(_slaveInputEvent);
 	
+		_measurement->InputSent(result, _renderedFrames+1);
 		return result;
 	}
 }

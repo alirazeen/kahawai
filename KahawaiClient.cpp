@@ -75,9 +75,11 @@ void KahawaiClient::OffloadAsync()
 	while(_offloading)
 	{
 		//Exits on error
+		_measurement->KahawaiStart();
 		_offloading &= Transform(_width,_height);
 		_offloading &= Decode();
 		_offloading &= Show();
+		_measurement->KahawaiEnd();
 	}
 	/////////////////////////////////////////////////////////////////////////
 
@@ -112,6 +114,7 @@ void* KahawaiClient::HandleInput(void* inputCommand)
 
 	_localInputQueue.push(queuedCommand);
 	_inputHandler->SendCommand(queuedCommand);
+	_measurement->InputReceived(queuedCommand, _renderedFrames+1); // +1 because _renderedFrames is one step behind at this point
 
 	if(!ShouldHandleInput())
 	{
@@ -120,6 +123,7 @@ void* KahawaiClient::HandleInput(void* inputCommand)
 	else
 	{
 		_lastCommand = _localInputQueue.front();
+		_measurement->InputSent(_lastCommand, _renderedFrames+1);
 		_localInputQueue.pop();
 		return _lastCommand;
 	}	
@@ -140,6 +144,16 @@ int KahawaiClient::GetDisplayedFrames()
 {
 	return _renderedFrames;
 	//return _decoder->GetDisplayedFrames();
+}
+
+void KahawaiClient::FrameStart()
+{
+	_measurement->FrameStart();
+}
+
+void KahawaiClient::FrameEnd()
+{
+	_measurement->FrameEnd();
 }
 
 

@@ -38,6 +38,10 @@ public:
 	virtual bool		StopOffload();
 	bool				IsOffloading();
 
+	//Instrumentation at Doom 3 engine
+	virtual void			FrameStart()=0;
+	virtual void			FrameEnd()=0;
+
 	//Timer Handling
 	int					Sys_Milliseconds();
 	

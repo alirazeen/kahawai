@@ -15,10 +15,11 @@ void KahawaiServer::OffloadAsync()
 	//////////////////////////////////////////////////////////////////////////
 	while(_offloading)
 	{
-
+		_measurement->KahawaiStart();
 		_offloading	 &=	Transform(_width,_height);
 		int frameSize = Encode(&compressedFrame);
 		_offloading	 &=	Send(&compressedFrame,frameSize);
+		_measurement->KahawaiEnd();
 	}
 	/////////////////////////////////////////////////////////////////////////
 
@@ -71,6 +72,16 @@ bool KahawaiServer::Finalize()
 bool KahawaiServer::IsHD()
 {
 	return true;
+}
+
+void KahawaiServer::FrameStart()
+{
+	_measurement->FrameStart();
+}
+
+void KahawaiServer::FrameEnd()
+{
+	_measurement->FrameEnd();
 }
 
 void* KahawaiServer::HandleInput(void*)

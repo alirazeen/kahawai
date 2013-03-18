@@ -11,6 +11,7 @@
 #include "ConfigReader.h"
 #include "OpenGLCapturer.h"
 #include "DirectXCapturer.h"
+#include "Measurement.h"
 
 #include<iostream>
 #include<fstream>

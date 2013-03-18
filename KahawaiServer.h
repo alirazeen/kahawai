@@ -3,6 +3,7 @@
 #include "ConfigReader.h"
 #include "VideoEncoder.h"
 #include "InputHandlerServer.h"
+#include "Measurement.h"
 
 class KahawaiServer :
 	public Kahawai
@@ -48,8 +49,15 @@ protected:
 	SOCKET				_socketToClient;
 	InputHandlerServer* _inputHandler;
 
+	//Instrumentation
+	Measurement*		_measurement;
+
 public:
 	KahawaiServer(void);
 	~KahawaiServer(void);
+
+	//Instrumentation
+	virtual void		FrameStart();
+	virtual void		FrameEnd();
 };
 
