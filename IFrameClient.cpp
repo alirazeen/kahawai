@@ -12,6 +12,12 @@ IFrameClient::~IFrameClient(void)
 {
 }
 
+bool IFrameClient::ShouldSkip()
+{
+	// TODO: This needs to be implemented based on the client iframe logic
+	KahawaiLog("Not implemented: IframeClient::ShouldSkip", KahawaiError);
+	return false;
+}
 
 bool IFrameClient::Decode()
 {

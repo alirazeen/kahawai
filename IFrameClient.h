@@ -10,6 +10,8 @@ public:
 	IFrameClient(void);
 	~IFrameClient(void);
 
+	bool		ShouldSkip();
+
 protected:
 	//Kahawai life-cycle
 	bool		Decode();
