@@ -26,6 +26,8 @@ public:
 	DeltaServer(void);
 	~DeltaServer(void);
 
+	bool	ShouldSkip();
+
 	//Lifecycle methods
 	void	OffloadAsync();
 	bool	Initialize();

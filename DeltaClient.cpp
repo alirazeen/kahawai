@@ -59,6 +59,13 @@ bool DeltaClient::Initialize()
 	return true;
 }
 
+bool DeltaClient::ShouldSkip()
+{
+	// Frames are never skipped from rendering in
+	// the delta technique
+	return false;
+}
+
 /**
  * Captures the content of the framebuffer into system memory
  * Overrides base class transform because the client may have a lower resolution
