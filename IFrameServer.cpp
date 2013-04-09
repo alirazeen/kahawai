@@ -36,6 +36,13 @@ bool IFrameServer::Initialize()
 	return (_encoder!=NULL && _inputHandler!=NULL);
 }
 
+bool IFrameServer::ShouldSkip()
+{
+	// The server never skips frames
+	return false;
+
+}
+
 int IFrameServer::Encode(void** compressedFrame)
 {
 	if(_renderedFrames%_gop==0) //is it time to encode an I-Frame
