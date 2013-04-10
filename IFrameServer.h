@@ -8,8 +8,6 @@ public:
 	IFrameServer(void);
 	~IFrameServer(void);
 
-	bool	ShouldSkip();
-
 protected:
 
 	bool	Initialize();

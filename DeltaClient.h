@@ -7,8 +7,6 @@ public:
 	DeltaClient(void);
 	~DeltaClient(void);
 
-	bool		ShouldSkip();
-
 protected:
 	//Low fidelity resolution
 	int			_clientWidth;

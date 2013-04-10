@@ -81,13 +81,6 @@ bool DeltaServer::Finalize()
 	return true;
 }
 
-bool DeltaServer::ShouldSkip()
-{
-	// Frames are never skipped from rendering in
-	// the delta technique
-	return false;
-}
-
 /**
  * Executes the server side of the pipeline
  * Defines initialization steps before first frame is offloaded
