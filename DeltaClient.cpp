@@ -23,7 +23,8 @@ byte Patch(byte delta, byte lo)
 DeltaClient::DeltaClient(void)
 	:KahawaiClient(),
 	_clientHeight(0),
-	_clientWidth(0)
+	_clientWidth(0),
+	_lastCommand(NULL)
 {
 }
 
@@ -114,7 +115,45 @@ bool DeltaClient::Show()
 }
 
 
-//Input Handling
+
+//////////////////////////////////////////////////////////////////////////
+//INPUT Handling
+//////////////////////////////////////////////////////////////////////////
+
+
+void* DeltaClient::HandleInput(void* inputCommand)
+{
+	//Free memory from previous invocations
+	if(_lastCommand != NULL)
+	{
+		delete[] _lastCommand;
+		_lastCommand = NULL;
+	}
+
+
+	//Create a copy of the command to push into the queue
+	size_t cmdLength = _inputHandler->GetCommandLength();
+
+	char* queuedCommand = new char[cmdLength];
+	memcpy(queuedCommand,inputCommand,cmdLength);
+
+
+	_localInputQueue.push(queuedCommand);
+	_inputHandler->SendCommand(queuedCommand);
+	_measurement->InputReceived(queuedCommand, _renderedFrames+1); // +1 because _renderedFrames is one step behind at this point
+
+	if(!ShouldHandleInput())
+	{
+		return _inputHandler->GetEmptyCommand();
+	}
+	else
+	{
+		_lastCommand = _localInputQueue.front();
+		_measurement->InputSent(_lastCommand, _renderedFrames+1);
+		_localInputQueue.pop();
+		return _lastCommand;
+	}	
+}
 
 /**
  * Returns the first frame that should receive user's input

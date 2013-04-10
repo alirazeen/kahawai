@@ -31,6 +31,11 @@ bool IFrameClient::Show()
 	return false;
 }
 
+void* IFrameClient::HandleInput(void* cmd)
+{
+	return NULL;
+}
+
 int IFrameClient::GetFirstInputFrame()
 {
 	//Need to implement this method

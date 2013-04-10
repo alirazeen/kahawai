@@ -23,7 +23,12 @@ protected:
 	bool		Show();
 
 	//Input Handling Profile
+	void*		HandleInput(void*);
 	int			GetFirstInputFrame();
+
+private:
+	void*	_lastCommand;
+
 };
 
 byte Patch(byte delta, byte lo);

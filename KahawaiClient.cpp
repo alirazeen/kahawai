@@ -90,44 +90,6 @@ void KahawaiClient::OffloadAsync()
 }
 
 
-//////////////////////////////////////////////////////////////////////////
-//INPUT Handling
-//////////////////////////////////////////////////////////////////////////
-
-
-void* KahawaiClient::HandleInput(void* inputCommand)
-{
-	//Free memory from previous invocations
-	if(_lastCommand != NULL)
-	{
-		delete[] _lastCommand;
-		_lastCommand = NULL;
-	}
-
-
-	//Create a copy of the command to push into the queue
-	size_t cmdLength = _inputHandler->GetCommandLength();
-
-	char* queuedCommand = new char[cmdLength];
-	memcpy(queuedCommand,inputCommand,cmdLength);
-
-
-	_localInputQueue.push(queuedCommand);
-	_inputHandler->SendCommand(queuedCommand);
-	_measurement->InputReceived(queuedCommand, _renderedFrames+1); // +1 because _renderedFrames is one step behind at this point
-
-	if(!ShouldHandleInput())
-	{
-		return _inputHandler->GetEmptyCommand();
-	}
-	else
-	{
-		_lastCommand = _localInputQueue.front();
-		_measurement->InputSent(_lastCommand, _renderedFrames+1);
-		_localInputQueue.pop();
-		return _lastCommand;
-	}	
-}
 
 //The client is the one receiving direct input from the user
 bool KahawaiClient::IsInputSource()
@@ -160,7 +122,6 @@ void KahawaiClient::FrameEnd()
 KahawaiClient::KahawaiClient(void)
 	:Kahawai(),
 	_decoder(0),
-	_lastCommand(NULL),
 	_inputHandler(NULL)
 {
 	strncpy_s(_serverIP,KAHAWAI_LOCALHOST,sizeof(KAHAWAI_LOCALHOST));

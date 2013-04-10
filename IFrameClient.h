@@ -11,6 +11,7 @@ public:
 	~IFrameClient(void);
 
 	bool		ShouldSkip();
+	void*		HandleInput(void*);
 
 protected:
 	//Kahawai life-cycle

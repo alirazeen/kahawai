@@ -37,7 +37,6 @@ protected:
 	void				PingServer();
 	void				ProfileGraphics();
 	int					GetDisplayedFrames();
-	void*				HandleInput(void*);
 	bool				IsInputSource();
 
 	//////////////////////////////////////////////////////////////////////////
@@ -54,8 +53,6 @@ protected:
 
 	//Instrumentation
 	Measurement*		_measurement;
-private:
-	void*				_lastCommand;
 
 public:
 	KahawaiClient(void);
