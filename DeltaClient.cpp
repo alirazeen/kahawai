@@ -162,7 +162,10 @@ void* DeltaClient::HandleInput(void* inputCommand)
  */
 int DeltaClient::GetFirstInputFrame()
 {
-	//TODO: Need to give a real value based on profiling
+	// This is actually the frame gap. 
+	// TODO: This should actually be read from a config file
+	// or dynamically determined based on the RTT or some 
+	// combination of the two. It should NOT be a static value
 	return 3;
 }
 
