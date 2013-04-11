@@ -41,9 +41,8 @@ bool KahawaiServer::Initialize()
 	//Use X264 Encoder
 	if(_strnicmp(varBuffer,CONFIG_X264_ENCODER,sizeof(CONFIG_X264_ENCODER))==0)
 	{
-		int preset, crf;
-		preset = _configReader->ReadIntegerValue(CONFIG_ENCODER,CONFIG_ENCODER_LEVEL);
-		crf = _configReader->ReadIntegerValue(CONFIG_ENCODER,CONFIG_CRF);
+		_preset = _configReader->ReadIntegerValue(CONFIG_ENCODER,CONFIG_ENCODER_LEVEL);
+		_crf = _configReader->ReadIntegerValue(CONFIG_ENCODER,CONFIG_CRF);
 		//Actual initialization depends on whether is IFrame or Delta
 	}
 	else
