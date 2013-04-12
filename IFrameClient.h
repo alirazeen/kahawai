@@ -1,6 +1,7 @@
 #pragma once
 #include "kahawaiclient.h"
 #include "IframeClientEncoder.h"
+#include "IFrameClientMuxer.h"
 
 class IFrameClient :
 	public KahawaiClient
@@ -9,10 +10,14 @@ public:
 	IFrameClient(void);
 	~IFrameClient(void);
 
+	bool		Initialize();
+	bool		InitializeDecoder();
 	bool		ShouldSkip();
 	void*		HandleInput(void*);
 
 protected:
+	int			_gop;
+
 	//Kahawai life-cycle
 	bool		Decode();
 	bool		Show();
@@ -21,8 +26,11 @@ protected:
 	int			GetFirstInputFrame();
 
 	//Components
-	IFrameClientEncoder* _encoderComponent;
+	IFrameClientEncoder*	_encoderComponent;
+	IFrameClientMuxer*		_muxerComponent;
 
+private:
+	void*		_lastCommand;
 
 
 };
