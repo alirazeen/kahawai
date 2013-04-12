@@ -4,21 +4,24 @@
 #include "X264Encoder.h"
 
 IFrameClientEncoder::IFrameClientEncoder(void)
+	: _encoder(NULL)
 {
 }
 
 
 IFrameClientEncoder::~IFrameClientEncoder(void)
 {
+	if (_encoder != NULL)
+		delete _encoder;
 }
 
 bool IFrameClientEncoder::Initialize(ConfigReader* configReader)
 {
 	// Read all encoder settings
-	_height = _configReader->ReadIntegerValue(CONFIG_RESOLUTION,CONFIG_HEIGHT);
-	_width = _configReader->ReadIntegerValue(CONFIG_RESOLUTION,CONFIG_WIDTH);
-	_crf = _configReader->ReadIntegerValue(CONFIG_ENCODER,CONFIG_CRF);
-	_preset = _configReader->ReadIntegerValue(CONFIG_ENCODER,CONFIG_ENCODER_LEVEL);
+	_height = configReader->ReadIntegerValue(CONFIG_RESOLUTION,CONFIG_HEIGHT);
+	_width = configReader->ReadIntegerValue(CONFIG_RESOLUTION,CONFIG_WIDTH);
+	_crf = configReader->ReadIntegerValue(CONFIG_ENCODER,CONFIG_CRF);
+	_preset = configReader->ReadIntegerValue(CONFIG_ENCODER,CONFIG_ENCODER_LEVEL);
 	_gop = configReader->ReadIntegerValue(CONFIG_IFRAME,CONFIG_GOP_SIZE);
 
 	//Initialize encoder
