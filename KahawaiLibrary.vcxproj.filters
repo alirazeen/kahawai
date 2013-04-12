@@ -117,6 +117,9 @@
     <ClCompile Include="Measurement.cpp">
       <Filter>Kahawai\Measurement</Filter>
     </ClCompile>
+    <ClCompile Include="IFrameClientMuxer.cpp">
+      <Filter>Kahawai\IFrame</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\kahawai\Kahawai.h">
@@ -220,6 +223,9 @@
     </ClInclude>
     <ClInclude Include="Measurement.h">
       <Filter>Kahawai\Measurement</Filter>
+    </ClInclude>
+    <ClInclude Include="IFrameClientMuxer.h">
+      <Filter>Kahawai\IFrame</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
