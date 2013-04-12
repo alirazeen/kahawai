@@ -11,13 +11,28 @@ bool KahawaiClient::Initialize()
 	if(!Kahawai::Initialize())
 		return false;
 
+	//Obtain server IP Address (Port is common to server and client. Obtained in base class)
+	_configReader->ReadProperty(CONFIG_SERVER,CONFIG_SERVER_ADDRESS, _serverIP);
+
+	//Initialize the decoder
+	if (!InitializeDecoder())
+	{
+		KahawaiLog("Decoder not initialized", KahawaiError);
+		return false;
+	}
+
+	//Config the decoder to save (or not) the decoded frames
+	_decoder->EnableFrameLogging(_saveCaptures);
+
+	return true;
+}
+
+bool KahawaiClient::InitializeDecoder()
+{
 	char varBuffer[30];
 
 	//Initialize Decoder
 	_configReader->ReadProperty(CONFIG_OFFLOAD,CONFIG_DECODER, varBuffer);
-
-	//Obtain server IP Address (Port is common to server and client. Obtained in base class)
-	_configReader->ReadProperty(CONFIG_SERVER,CONFIG_SERVER_ADDRESS, _serverIP);
 
 	//Use FFMPEG Decoder
 	if(_strnicmp(varBuffer,CONFIG_FFMPEG_DECODER,sizeof(CONFIG_FFMPEG_DECODER))==0)
@@ -34,10 +49,7 @@ bool KahawaiClient::Initialize()
 		_decoder = new MediaFoundationDecoder();
 	}
 
-	//Config the decoder to save (or not) the decoded frames
-	_decoder->EnableFrameLogging(_saveCaptures);
-
-	return true;
+	return (_decoder != NULL);
 }
 
 bool KahawaiClient::Finalize()
