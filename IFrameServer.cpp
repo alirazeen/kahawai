@@ -38,7 +38,7 @@ bool IFrameServer::Initialize()
 
 int IFrameServer::Encode(void** compressedFrame)
 {
-	if(_renderedFrames%_gop==0) //is it time to encode an I-Frame
+	if((_renderedFrames-1)%_gop==0) //is it time to encode an I-Frame
 	{
 		_transformPicture->i_type = X264_TYPE_IDR; //lets try with an IDR frame first
 		_transformPicture->i_qpplus1 = 1;
