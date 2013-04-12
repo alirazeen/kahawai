@@ -66,9 +66,6 @@
     <ClCompile Include="..\kahawai\IFrameClient.cpp">
       <Filter>Kahawai\IFrame</Filter>
     </ClCompile>
-    <ClCompile Include="..\kahawai\IFrameClientDecoder.cpp">
-      <Filter>Kahawai\IFrame</Filter>
-    </ClCompile>
     <ClCompile Include="..\kahawai\IframeClientEncoder.cpp">
       <Filter>Kahawai\IFrame</Filter>
     </ClCompile>
@@ -153,9 +150,6 @@
       <Filter>Kahawai\Delta</Filter>
     </ClInclude>
     <ClInclude Include="..\kahawai\IFrameClient.h">
-      <Filter>Kahawai\IFrame</Filter>
-    </ClInclude>
-    <ClInclude Include="..\kahawai\IFrameClientDecoder.h">
       <Filter>Kahawai\IFrame</Filter>
     </ClInclude>
     <ClInclude Include="..\kahawai\IframeClientEncoder.h">

@@ -1,7 +1,6 @@
 #pragma once
 #include "kahawaiclient.h"
 #include "IframeClientEncoder.h"
-#include "IframeClientDecoder.h"
 
 class IFrameClient :
 	public KahawaiClient
@@ -22,7 +21,6 @@ protected:
 	int			GetFirstInputFrame();
 
 	//Components
-	IFrameClientDecoder* _decoderComponent;
 	IFrameClientEncoder* _encoderComponent;
 
 
