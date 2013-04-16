@@ -58,4 +58,8 @@
 #define CONFIG_OPENGL_CAPTURER "opengl"
 #define CONFIG_DIRECTX_CAPTURER "directx"
 
+#define IFRAME_MUXER_PORT_OFFSET 5
+#define INPUT_HANDLER_PORT_OFFSET 10
+
+
 #endif

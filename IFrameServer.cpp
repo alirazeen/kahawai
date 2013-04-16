@@ -30,7 +30,7 @@ bool IFrameServer::Initialize()
 
 	//Initialize input handler
 #ifndef NO_HANDLE_INPUT
-	_inputHandler = new InputHandlerServer(_serverPort+10, _gameName);
+	_inputHandler = new InputHandlerServer(_serverPort+INPUT_HANDLER_PORT_OFFSET, _gameName);
 #endif
 
 	return (_encoder!=NULL && _inputHandler!=NULL);

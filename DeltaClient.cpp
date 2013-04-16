@@ -43,7 +43,7 @@ bool DeltaClient::Initialize()
 
 	//Initialize input handler
 #ifndef NO_HANDLE_INPUT
-	_inputHandler = new InputHandlerClient(_serverIP,_serverPort+10,_gameName);
+	_inputHandler = new InputHandlerClient(_serverIP,_serverPort+INPUT_HANDLER_PORT_OFFSET,_gameName);
 #endif
 
 	//Read client's resolution. (Can be lower than the server's. Interpolation occurs to match deltas)
