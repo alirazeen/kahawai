@@ -49,7 +49,7 @@ bool DeltaServer::Initialize()
 
 	//Initialize input handler
 #ifndef NO_HANDLE_INPUT
-	_inputHandler = new InputHandlerServer(_serverPort+INPUT_HANDLER_PORT_OFFSET, _gameName);
+	_inputHandler = new InputHandlerServer(_serverPort+PORT_OFFSET_INPUT_HANDLER, _gameName);
 #endif
 
 	if (_master)

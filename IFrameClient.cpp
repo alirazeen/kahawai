@@ -42,7 +42,7 @@ bool IFrameClient::Initialize()
 
 	//Initialize input handler
 #ifndef NO_HANDLE_INPUT
-	_inputHandler = new InputHandlerClient(_serverIP,_serverPort+10,_gameName);
+	_inputHandler = new InputHandlerClient(_serverIP,_serverPort+PORT_OFFSET_INPUT_HANDLER,_gameName);
 #endif
 
 }
