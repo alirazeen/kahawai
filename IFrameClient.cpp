@@ -20,14 +20,14 @@ IFrameClient::~IFrameClient(void)
 
 bool IFrameClient::Initialize()
 {
-	// Initialize the component that will encode the locally
-	// rendered frames into I-frames
-	if (!_encoderComponent->Initialize(_configReader))
-		return false;
-
 	// Initialize the component that will receive the P frames
 	// from the server and mix the stream with the I frames
 	if (!_muxerComponent->Initialize(_configReader))
+		return false;
+
+	// Initialize the component that will encode the locally
+	// rendered frames into I-frames
+	if (!_encoderComponent->Initialize(_configReader, _muxerComponent))
 		return false;
 
 	// Now we start initializing Kahawai. Note that we have to initialize the

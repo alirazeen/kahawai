@@ -66,7 +66,11 @@ bool IFrameClientMuxer::InitLocalSocket()
 	return _socketToDecoder != INVALID_SOCKET && threadCreated == true;
 }
 
-
+bool IFrameClientMuxer::ReceiveIFrame(void** compressedFrame, int size)
+{
+	// TODO: Fill the logic out here
+	return true;
+}
 bool IFrameClientMuxer::Decode()
 {
 	// TODO: Implement this

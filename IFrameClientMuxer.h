@@ -8,6 +8,7 @@ public:
 
 	bool		Initialize(ConfigReader* configReader);
 
+	bool		ReceiveIFrame(void** compressedFrame, int size);
 	bool		Decode();
 	bool		Show();
 

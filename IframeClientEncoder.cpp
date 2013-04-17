@@ -15,7 +15,7 @@ IFrameClientEncoder::~IFrameClientEncoder(void)
 		delete _encoder;
 }
 
-bool IFrameClientEncoder::Initialize(ConfigReader* configReader)
+bool IFrameClientEncoder::Initialize(ConfigReader* configReader, IFrameClientMuxer* muxer)
 {
 	// Read all encoder settings
 	_height = configReader->ReadIntegerValue(CONFIG_RESOLUTION,CONFIG_HEIGHT);
@@ -26,6 +26,7 @@ bool IFrameClientEncoder::Initialize(ConfigReader* configReader)
 
 	//Initialize encoder
 	_encoder = new X264Encoder(_height, _width, _fps, _crf, _preset, _gop);
+	_muxer = muxer;
 
 	return (_encoder != NULL);
 }
@@ -47,13 +48,12 @@ int IFrameClientEncoder::Encode(x264_picture_t* transformPicture)
 	transformPicture->i_qpplus1 = 1;
 
 	int size = _encoder->Encode(transformPicture, &compressedFrame);
-	return (size > 0);
-}
+	bool result = (size > 0);
 
-bool IFrameClientEncoder::Send(void** compressedFrame, int frameSize)
-{
-	// TODO: Implement this
-	return false;
+	if (result)
+		result = _muxer->ReceiveIFrame(&compressedFrame, size);
+
+	return result;
 }
 
 #endif

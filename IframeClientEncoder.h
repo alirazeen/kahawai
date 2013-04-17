@@ -1,5 +1,6 @@
 #pragma once
 #include "kahawaiserver.h"
+#include "IFrameClientMuxer.h"
 class IFrameClientEncoder
 {
 public:
@@ -7,10 +8,9 @@ public:
 	~IFrameClientEncoder(void);
 
 
-	bool				Initialize(ConfigReader* configReader);
+	bool				Initialize(ConfigReader* configReader, IFrameClientMuxer* muxer);
 	bool				ReceiveTransformedPicture(x264_picture_t* transformPicture);
 	int					Encode(x264_picture_t* transformPicture);
-	bool				Send(void** compressedFrame, int frameSize);
 
 private:
 
@@ -23,5 +23,6 @@ private:
 	int					_gop;
 
 	VideoEncoder*		_encoder;
+	IFrameClientMuxer*	_muxer;
 };
 
