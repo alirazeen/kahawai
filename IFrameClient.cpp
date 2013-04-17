@@ -62,6 +62,8 @@ bool IFrameClient::InitializeDecoder()
 		sprintf_s(url,100,"tcp://%s:%d","127.0.0.1",_serverPort+PORT_OFFSET_IFRAME_MUXER);
 		_decoder = new FFMpegDecoder(url,_width, _height);
 	}
+
+	return (_decoder != NULL);
 }
 
 
@@ -69,6 +71,20 @@ bool IFrameClient::ShouldSkip()
 {
 	// Skip if it's not time to render an i-frame
 	return (0 != _renderedFrames % _gop);
+}
+
+bool IFrameClient::Transform(int width, int height)
+{
+	bool result = KahawaiClient::Transform(width, height);
+	if (result)
+		result = SendTransformPictureoEncoder();
+
+	return result;
+}
+
+bool IFrameClient::SendTransformPictureoEncoder()
+{
+	return _encoderComponent->ReceiveTransformedPicture(_transformPicture);
 }
 
 bool IFrameClient::Decode()

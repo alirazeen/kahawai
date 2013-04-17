@@ -30,10 +30,24 @@ bool IFrameClientEncoder::Initialize(ConfigReader* configReader)
 	return (_encoder != NULL);
 }
 
-int IFrameClientEncoder::Encode(void** transformedFrame)
+bool IFrameClientEncoder::ReceiveTransformedPicture(x264_picture_t* transformPicture)
 {
-	// TODO: Implement this
-	return -1;
+	bool result = Encode(transformPicture);
+	return result;
+}
+
+int IFrameClientEncoder::Encode(x264_picture_t* transformPicture)
+{
+	// TODO: Do something with this compressed frame
+	void* compressedFrame = NULL;
+
+	//We only want to encode an iframe here
+	//So set the appropriate x264 encoder settings
+	transformPicture->i_type=X264_TYPE_IDR;
+	transformPicture->i_qpplus1 = 1;
+
+	int size = _encoder->Encode(transformPicture, &compressedFrame);
+	return (size > 0);
 }
 
 bool IFrameClientEncoder::Send(void** compressedFrame, int frameSize)

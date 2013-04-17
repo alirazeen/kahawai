@@ -19,6 +19,7 @@ protected:
 	int			_gop;
 
 	//Kahawai life-cycle
+	bool		Transform(int width, int height);
 	bool		Decode();
 	bool		Show();
 
@@ -30,8 +31,10 @@ protected:
 	IFrameClientMuxer*		_muxerComponent;
 
 private:
+	//Input-handling variables
 	void*		_lastCommand;
 
 
+	bool		SendTransformPictureoEncoder();
 };
 

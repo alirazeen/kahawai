@@ -8,8 +8,8 @@ public:
 
 
 	bool				Initialize(ConfigReader* configReader);
-
-	int					Encode(void** transformedFrame);
+	bool				ReceiveTransformedPicture(x264_picture_t* transformPicture);
+	int					Encode(x264_picture_t* transformPicture);
 	bool				Send(void** compressedFrame, int frameSize);
 
 private:
