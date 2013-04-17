@@ -51,18 +51,17 @@ bool IFrameClient::InitializeDecoder()
 {
 	char varBuffer[30];
 
+	//Initialize Decoder
+	_configReader->ReadProperty(CONFIG_OFFLOAD,CONFIG_DECODER, varBuffer);
+
 	//Use FFMPEG Decoder
 	if(_strnicmp(varBuffer,CONFIG_FFMPEG_DECODER,sizeof(CONFIG_FFMPEG_DECODER))==0)
 	{
-		// TODO: Fill this up appropriately based on the URL of the muxer
 		// Open video file
-		//char url[100];
-		//sprintf_s(url,100,"tcp://%s:%d",_serverIP,_serverPort);
-		//_decoder = new FFMpegDecoder(url,_width, _height);
+		char url[100];
+		sprintf_s(url,100,"tcp://%s:%d","127.0.0.1",_serverPort+PORT_OFFSET_IFRAME_MUXER);
+		_decoder = new FFMpegDecoder(url,_width, _height);
 	}
-
-
-	return (_decoder != NULL);
 }
 
 
