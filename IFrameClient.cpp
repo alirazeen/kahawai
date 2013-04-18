@@ -89,14 +89,12 @@ bool IFrameClient::SendTransformPictureoEncoder()
 
 bool IFrameClient::Decode()
 {
-	KahawaiLog("Not implemented: IframeClient::Decode", KahawaiError);
-	return false;
+	return KahawaiClient::Decode();
 }
 
 bool IFrameClient::Show()
 {
-	KahawaiLog("Not implemented: IFrameClient::Show", KahawaiError);
-	return false;
+	return KahawaiClient::Show();
 }
 
 void* IFrameClient::HandleInput(void* inputCommand)
