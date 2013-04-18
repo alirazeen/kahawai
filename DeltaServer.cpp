@@ -101,7 +101,7 @@ void DeltaServer::OffloadAsync()
 
 		if(_socketToClient==INVALID_SOCKET || !connection)
 		{
-			KahawaiLog("Unable to create connection to client", KahawaiError);
+			KahawaiLog("Unable to create connection to client in DeltaServer::OffloadAsync()", KahawaiError);
 			return;
 		}
 
