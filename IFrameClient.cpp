@@ -89,12 +89,14 @@ bool IFrameClient::SendTransformPictureoEncoder()
 
 bool IFrameClient::Decode()
 {
-	return KahawaiClient::Decode();
+	bool result = _decoder->Decode();
+	return result;
 }
 
 bool IFrameClient::Show()
 {
-	return KahawaiClient::Show();
+	bool result = _decoder->Show();
+	return result;
 }
 
 void* IFrameClient::HandleInput(void* inputCommand)
