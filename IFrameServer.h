@@ -13,6 +13,7 @@ protected:
 	bool	Initialize();
 
 	//Kahawai life-cycle
+	void	OffloadAsync();
 	int		Encode(void** compressedFrame);
 	bool	Send(void** compressedFrame, int frameSize);
 

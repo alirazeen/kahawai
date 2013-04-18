@@ -36,6 +36,24 @@ bool IFrameServer::Initialize()
 	return (_encoder!=NULL && _inputHandler!=NULL);
 }
 
+void IFrameServer::OffloadAsync()
+{
+	bool connection = false;
+
+	//Initialize input handler
+#ifndef NO_HANDLE_INPUT
+	connection = _inputHandler->Connect();
+#endif
+
+	_socketToClient = CreateSocketToClient(_serverPort);
+
+	if(_socketToClient==INVALID_SOCKET || !connection)
+	{
+		KahawaiLog("Unable to create connection to client in IFrameServer::OffloadAsync()", KahawaiError);
+		return;
+	}
+}
+
 int IFrameServer::Encode(void** compressedFrame)
 {
 	if((_renderedFrames-1)%_gop==0) //is it time to encode an I-Frame
