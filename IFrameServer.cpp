@@ -56,6 +56,17 @@ bool IFrameServer::Send(void** compressedFrame, int frameSize)
 {
 	if(_renderedFrames%_gop!=0) //We send only the P-frames
 	{
+		//Send the pframe size to the client
+		if(send(_socketToClient, (char*)&frameSize,sizeof(frameSize),0)==SOCKET_ERROR)
+		{
+			char errorMsg[100];
+			int errorCode = WSAGetLastError();
+			sprintf_s(errorMsg,"Unable to send frame size to client. Error code: %d",errorCode);
+			KahawaiLog(errorMsg, KahawaiError);
+			return false;
+		}
+
+		//Send the actual pframe to the client
 		if(send(_socketToClient, (char*) *compressedFrame,frameSize,0)==SOCKET_ERROR)
 		{
 			char errorMsg[100];
