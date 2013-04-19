@@ -125,7 +125,6 @@ void* IFrameClient::HandleInput(void* inputCommand)
 
 	_localInputQueue.push(queuedCommand);
 	_inputHandler->SendCommand(queuedCommand);
-	//_measurement->InputReceived(queuedCommand, _renderedFrames+1); // +1 because _renderedFrames is one step behind at this point
 
 	if(!ShouldHandleInput())
 	{
@@ -134,7 +133,6 @@ void* IFrameClient::HandleInput(void* inputCommand)
 	else
 	{
 		_lastCommand = _localInputQueue.front();
-		//_measurement->InputSent(_lastCommand, _renderedFrames+1);
 		_localInputQueue.pop();
 		return _lastCommand;
 	}
