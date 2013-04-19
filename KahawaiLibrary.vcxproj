@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -26,7 +26,7 @@
     <ClCompile Include="..\kahawai\H264Server.cpp" />
     <ClCompile Include="..\kahawai\IFrameClient.cpp" />
     <ClCompile Include="IFrameClientMuxer.cpp" />
-    <ClCompile Include="..\kahawai\IframeClientEncoder.cpp" />
+    <ClCompile Include="..\kahawai\IFrameClientEncoder.cpp" />
     <ClCompile Include="..\kahawai\IFrameServer.cpp" />
     <ClCompile Include="..\kahawai\InputHandlerClient.cpp" />
     <ClCompile Include="..\kahawai\InputHandlerServer.cpp" />
@@ -55,7 +55,7 @@
     <ClInclude Include="..\kahawai\H264Server.h" />
     <ClInclude Include="..\kahawai\IFrameClient.h" />
     <ClInclude Include="IFrameClientMuxer.h" />
-    <ClInclude Include="..\kahawai\IframeClientEncoder.h" />
+    <ClInclude Include="..\kahawai\IFrameClientEncoder.h" />
     <ClInclude Include="..\kahawai\IFrameServer.h" />
     <ClInclude Include="..\kahawai\InputHandlerClient.h" />
     <ClInclude Include="..\kahawai\InputHandlerServer.h" />

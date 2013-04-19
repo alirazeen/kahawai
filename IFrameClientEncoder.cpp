@@ -1,6 +1,6 @@
 #include "kahawaiBase.h"
 #ifdef KAHAWAI
-#include "IframeClientEncoder.h"
+#include "IFrameClientEncoder.h"
 #include "X264Encoder.h"
 
 IFrameClientEncoder::IFrameClientEncoder(void)

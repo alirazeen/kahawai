@@ -1,6 +1,6 @@
 #pragma once
 #include "kahawaiclient.h"
-#include "IframeClientEncoder.h"
+#include "IFrameClientEncoder.h"
 #include "IFrameClientMuxer.h"
 
 class IFrameClient :
