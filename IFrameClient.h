@@ -35,6 +35,6 @@ private:
 	void*		_lastCommand;
 
 
-	bool		SendTransformPictureoEncoder();
+	bool		SendTransformPictureEncoder();
 };
 

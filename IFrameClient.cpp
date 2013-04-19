@@ -77,12 +77,12 @@ bool IFrameClient::Transform(int width, int height)
 {
 	bool result = KahawaiClient::Transform(width, height);
 	if (result)
-		result = SendTransformPictureoEncoder();
+		result = SendTransformPictureEncoder();
 
 	return result;
 }
 
-bool IFrameClient::SendTransformPictureoEncoder()
+bool IFrameClient::SendTransformPictureEncoder()
 {
 	return _encoderComponent->ReceiveTransformedPicture(_transformPicture);
 }
