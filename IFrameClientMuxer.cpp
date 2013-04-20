@@ -12,6 +12,17 @@ IFrameClientMuxer::IFrameClientMuxer(void)
 
 IFrameClientMuxer::~IFrameClientMuxer(void)
 {
+	if (_iFrame != NULL)
+	{
+		delete _iFrame;
+		_iFrame = NULL;
+	}
+
+	if (_pFrame != NULL)
+	{
+		delete _pFrame;
+		_pFrame = NULL;
+	}
 }
 
 bool IFrameClientMuxer::Initialize(ConfigReader* configReader)
