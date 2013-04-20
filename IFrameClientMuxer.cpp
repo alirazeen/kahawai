@@ -78,7 +78,7 @@ bool IFrameClientMuxer::InitSocketToServer()
 	//Spawn thread to get the P frames
 	bool threadCreated = false;
 	if (_socketToServer != INVALID_SOCKET)
-		threadCreated = CreateKahawaiThread(AsyncReceivePFrames, this);
+		threadCreated = CreateKahawaiThread(AsyncSendFrames, this);
 
 	return _socketToServer != INVALID_SOCKET && threadCreated == true;
 }
@@ -100,7 +100,7 @@ bool IFrameClientMuxer::ReceiveIFrame(void** compressedFrame, int size)
 			//TODO: Should return false and exit loop if we not offloading anymore
 		}
 
-		SendFrameToLocalSocket((char*)(*compressedFrame), size);
+		SendFrameToLocalDecoder((char*)(*compressedFrame), size);
 	}
 	WakeConditionVariable(&_pframeWaitingCV);
 	LeaveCriticalSection(&_sendingFrameCS);
@@ -108,15 +108,15 @@ bool IFrameClientMuxer::ReceiveIFrame(void** compressedFrame, int size)
 }
 
 
-DWORD WINAPI IFrameClientMuxer::AsyncReceivePFrames(void* Param)
+DWORD WINAPI IFrameClientMuxer::AsyncSendFrames(void* Param)
 {
 	IFrameClientMuxer* This = (IFrameClientMuxer*) Param;
-	This->ReceivePFrames();
+	This->ReceivePFrame();
 
 	return 0;
 }
 
-void IFrameClientMuxer::ReceivePFrames()
+void IFrameClientMuxer::ReceivePFrame()
 {
 	EnterCriticalSection(&_sendingFrameCS);
 	{
@@ -148,13 +148,13 @@ void IFrameClientMuxer::ReceivePFrames()
 		}
 
 		//Send out P frame
-		SendFrameToLocalSocket((char*)_pFrame, length);
+		SendFrameToLocalDecoder((char*)_pFrame, length);
 	}
 	WakeConditionVariable(&_iframeWaitingCV);
 	LeaveCriticalSection(&_sendingFrameCS);
 }
 
-bool IFrameClientMuxer::SendFrameToLocalSocket(char* frame, int size)
+bool IFrameClientMuxer::SendFrameToLocalDecoder(char* frame, int size)
 {
 	int sent = 0;
 	while (sent < size)

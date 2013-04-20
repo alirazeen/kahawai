@@ -6,20 +6,18 @@ public:
 	IFrameClientMuxer(void);
 	~IFrameClientMuxer(void);
 
+	//Initialize the muxer
 	bool		Initialize(ConfigReader* configReader);
 
-	bool		ReceiveIFrame(void** compressedFrame, int size);
-
-protected:
 	//To be called just before the client begins the offloading process
 	bool		BeginOffload();
 
-	//Methods to receive P frames from the cloud server
-	static DWORD WINAPI		AsyncReceivePFrames(void* Param);
-	void					ReceivePFrames();
+	//Receive I-frame from the local encoder
+	bool		ReceiveIFrame(void** compressedFrame, int size);
 
 private:
 
+	//Needed for bookkeeping
 	int		_currFrameNum;
 	int		_gop;
 
@@ -40,7 +38,7 @@ private:
 	int			_localMuxerPort;
 	SOCKET		_socketToDecoder;
 
-
+	//Synchronization related variables
 	CONDITION_VARIABLE	_iframeWaitingCV;
 	CONDITION_VARIABLE	_pframeWaitingCV;
 
@@ -53,6 +51,13 @@ private:
 	//IFrameClient
 	bool		InitLocalSocket();
 
-	bool		SendFrameToLocalSocket(char* frame, int size);
+	//Async method to send frames to the local decoder
+	static DWORD WINAPI		AsyncSendFrames(void* Param);
+
+	//Receive P-frame from the remote server
+	void					ReceivePFrame();
+
+	//Send a frame to the local decoder
+	bool		SendFrameToLocalDecoder(char* frame, int size);
 };
 
