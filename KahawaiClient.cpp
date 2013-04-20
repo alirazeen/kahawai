@@ -60,7 +60,9 @@ bool KahawaiClient::Finalize()
 	bool cleanExit = true; 
 	_offloading = false;
 	cleanExit &= Kahawai::Finalize();
+#ifndef NO_HANDLE_INPUT
 	cleanExit &= _inputHandler->Finalize();
+#endif
 	_finished = true;
 
 	return cleanExit;
