@@ -11,6 +11,8 @@ public:
 	bool		ReceiveIFrame(void** compressedFrame, int size);
 
 protected:
+	//To be called just before the client begins the offloading process
+	bool		BeginOffload();
 
 	//Methods to receive P frames from the cloud server
 	static DWORD WINAPI		AsyncReceivePFrames(void* Param);

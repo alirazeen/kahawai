@@ -35,17 +35,6 @@ bool IFrameClientMuxer::Initialize(ConfigReader* configReader)
 	_gop = configReader->ReadIntegerValue(CONFIG_IFRAME,CONFIG_GOP_SIZE);
 	_currFrameNum = 0;
 
-	if (!InitSocketToServer())
-	{
-		KahawaiLog("IFrameClientMuxer::InitSocketToServer() failed", KahawaiError);
-		return false;
-	}
-
-	if (!InitLocalSocket()) {
-		KahawaiLog("IFrameClientMuxer::InitLocalSocket() failed", KahawaiError);
-		return false;
-	}
-
 	//Initialize Synchronization
 	InitializeCriticalSection(&_sendingFrameCS);
 	InitializeConditionVariable(&_iframeWaitingCV);
@@ -58,6 +47,20 @@ bool IFrameClientMuxer::Initialize(ConfigReader* configReader)
 	_pFrame = new byte[height * width * _gop * 2]; // twice the size of the GOP 
 
 	return true;
+}
+
+bool IFrameClientMuxer::BeginOffload()
+{
+	if (!InitSocketToServer())
+	{
+		KahawaiLog("IFrameClientMuxer::InitSocketToServer() failed", KahawaiError);
+		return false;
+	}
+
+	if (!InitLocalSocket()) {
+		KahawaiLog("IFrameClientMuxer::InitLocalSocket() failed", KahawaiError);
+		return false;
+	}
 }
 
 bool IFrameClientMuxer::InitSocketToServer()
