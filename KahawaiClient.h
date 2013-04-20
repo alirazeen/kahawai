@@ -25,7 +25,7 @@ protected:
 	//////////////////////////////////////////////////////////////////////////
 
 	bool				Initialize();
-	bool				InitializeDecoder();
+	virtual bool		InitializeDecoder();
 	bool				Finalize();
 
 	//Game fidelity
