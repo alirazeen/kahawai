@@ -20,6 +20,10 @@ private:
 
 	int		_currFrameNum;
 	int		_gop;
+
+	//Buffers to hold the i- and p-frames received from the 
+	//local encoder and remote server
+	byte*	_iFrame;
 	byte*	_pFrame;
 
 

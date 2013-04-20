@@ -40,8 +40,10 @@ bool IFrameClientMuxer::Initialize(ConfigReader* configReader)
 	InitializeConditionVariable(&_iframeWaitingCV);
 	InitializeConditionVariable(&_pframeWaitingCV);
 
+	//Initialize the buffers where we store the received I/P frames
 	int width = configReader->ReadIntegerValue(CONFIG_RESOLUTION,CONFIG_WIDTH);
 	int height = configReader->ReadIntegerValue(CONFIG_RESOLUTION,CONFIG_HEIGHT);
+	_iFrame = new byte[height * width * 2]; // twice the size of a normal frame
 	_pFrame = new byte[height * width * _gop * 2]; // twice the size of the GOP 
 
 	return true;
