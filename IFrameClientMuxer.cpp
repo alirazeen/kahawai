@@ -217,8 +217,8 @@ void IFrameClientMuxer::ReceivePFrame()
 			receivedBytes += burst;
 		}
 
+		_receivedPFrame = true;
 		_pFrameSize = length;
-		SendFrameToLocalDecoder((char*)_pFrame, length);
 	}
 	WakeConditionVariable(&_receivingPFrameCV);
 	LeaveCriticalSection(&_receivePFrameCS);
