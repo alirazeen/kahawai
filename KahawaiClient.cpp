@@ -74,9 +74,9 @@ bool KahawaiClient::Finalize()
  */
 void KahawaiClient::OffloadAsync()
 {
-	//NOTE: The subclasses _MUST_ initialize the input handler
+	//NOTE: The subclasses _MUST_ initialize the input handler and connect it
 #ifndef NO_HANDLE_INPUT
-	assert(_inputHandler != NULL);
+	assert(_inputHandler != NULL && _inputHandler->IsConnected());
 #endif
 
 	//////////////////////////////////////////////////////////////////////////
