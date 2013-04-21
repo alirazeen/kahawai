@@ -5,7 +5,8 @@
 // Supported decoders
 #include "FFMpegDecoder.h"
 
-IFrameClient::IFrameClient(void)
+IFrameClient::IFrameClient(void) :
+_lastCommand(NULL)
 {
 	_encoderComponent = new IFrameClientEncoder();
 	_muxerComponent = new IFrameClientMuxer();
