@@ -52,6 +52,8 @@ void IFrameServer::OffloadAsync()
 		KahawaiLog("Unable to create connection to client in IFrameServer::OffloadAsync()", KahawaiError);
 		return;
 	}
+
+	KahawaiServer::OffloadAsync();
 }
 
 int IFrameServer::Encode(void** compressedFrame)
