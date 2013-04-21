@@ -15,11 +15,17 @@ void KahawaiServer::OffloadAsync()
 	//////////////////////////////////////////////////////////////////////////
 	while(_offloading)
 	{
+#ifndef MEASUREMENT_OFF
 		_measurement->KahawaiStart();
+#endif
+		
 		_offloading	 &=	Transform(_width,_height);
 		int frameSize = Encode(&compressedFrame);
 		_offloading	 &=	Send(&compressedFrame,frameSize);
+		
+#ifndef MEASUREMENT_OFF
 		_measurement->KahawaiEnd();
+#endif
 	}
 	/////////////////////////////////////////////////////////////////////////
 

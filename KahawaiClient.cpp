@@ -89,11 +89,17 @@ void KahawaiClient::OffloadAsync()
 	while(_offloading)
 	{
 		//Exits on error
+#ifndef MEASUREMENT_OFF
 		_measurement->KahawaiStart();
+#endif
+
 		_offloading &= Transform(_width,_height);
 		_offloading &= Decode();
 		_offloading &= Show();
+		
+#ifndef MEASUREMENT_OFF
 		_measurement->KahawaiEnd();
+#endif
 	}
 	/////////////////////////////////////////////////////////////////////////
 
@@ -124,12 +130,16 @@ int KahawaiClient::GetDisplayedFrames()
 
 void KahawaiClient::FrameStart()
 {
+#ifndef MEASUREMENT_OFF
 	_measurement->FrameStart();
+#endif
 }
 
 void KahawaiClient::FrameEnd()
 {
+#ifndef MEASUREMENT_OFF
 	_measurement->FrameEnd();
+#endif
 }
 
 

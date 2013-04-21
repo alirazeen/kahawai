@@ -54,14 +54,19 @@ bool DeltaServer::Initialize()
 
 	if (_master)
 	{
+
+#ifndef MEASUREMENT_OFF
 		_measurement = new Measurement("delta_server_master_measurement.csv");
+#endif
+
 	} else
 	{	//Re-Initialize sws scaling context if slave
 		delete[] _sourceFrame;
 		_convertCtx = sws_getContext(_clientWidth,_clientHeight,PIX_FMT_BGRA, _width, _height,PIX_FMT_YUV420P, SWS_FAST_BILINEAR,NULL,NULL,NULL);
 		_sourceFrame = new uint8_t[_clientWidth*_clientWidth*SOURCE_BITS_PER_PIXEL];
-	
+#ifndef MEASUREMENT_OFF
 		_measurement = new Measurement("delta_server_slave_measurement.csv");
+#endif
 	}
 
 	return true;
@@ -123,9 +128,15 @@ void DeltaServer::OffloadAsync()
  */
 bool DeltaServer::Transform(int width, int height)
 {
+#ifndef MEASUREMENT_OFF
 	_measurement->TransformStart();
+#endif
+
 	bool result = KahawaiServer::Transform(_width, _height);
+	
+#ifndef MEASUREMENT_OFF
 	_measurement->TransformEnd();
+#endif
 
 	return result;
 }
@@ -140,7 +151,10 @@ bool DeltaServer::Transform(int width, int height)
  */
 int DeltaServer::Encode(void** transformedFrame)
 {
+#ifndef MEASUREMENT_OFF
 	_measurement->EncodeStart();
+#endif
+
 	int result = 0;
 	if(_master)
 	{
@@ -156,7 +170,11 @@ int DeltaServer::Encode(void** transformedFrame)
 		*transformedFrame =  _transformPicture->img.plane[0];
 		result = YUV420pBitsPerPixel(_width,_height);
 	}
+
+#ifndef MEASUREMENT_OFF
 	_measurement->EncodeEnd();
+#endif
+
 	return result;
 }
 
@@ -169,7 +187,9 @@ int DeltaServer::Encode(void** transformedFrame)
  */
 bool DeltaServer::Send(void** compressedFrame, int frameSize)
 {
+#ifndef MEASUREMENT_OFF
 	_measurement->SendStart();
+#endif
 
 	if(_master)
 	{
@@ -177,7 +197,10 @@ bool DeltaServer::Send(void** compressedFrame, int frameSize)
 		if(send(_socketToClient,(char*) *compressedFrame,frameSize,0)==SOCKET_ERROR)
 		{
 			KahawaiLog("Unable to send frame to client", KahawaiError);
+		
+#ifndef MEASUREMENT_OFF
 			_measurement->SendEnd();
+#endif
 			return false;
 		}
 		LogVideoFrame(_saveCaptures,"transferred","deltaMovie.h264",(char*)*compressedFrame,frameSize);
@@ -191,7 +214,10 @@ bool DeltaServer::Send(void** compressedFrame, int frameSize)
 		WaitForSingleObject(_slaveBarrier, INFINITE);
 	}
 
+#ifndef MEASUREMENT_OFF
 	_measurement->SendEnd();
+#endif
+
 	return true;
 }
 
@@ -339,11 +365,18 @@ void* DeltaServer::HandleInput(void*)
 		//Check this if synchronization issues arise. 
 		//Performance may be hurt if a stronger method is used
 		memcpy(_sharedInputBuffer,cmd,length);
+
+#ifndef MEASUREMENT_OFF
 		_measurement->InputReceived(cmd, _renderedFrames+1);
-		
+#endif
+
 		SetEvent(_masterInputEvent);
 		WaitForSingleObject(_slaveInputEvent, INFINITE);
+
+#ifndef MEASUREMENT_OFF
 		_measurement->InputSent(cmd, _renderedFrames+1);
+#endif
+
 		return cmd;
 	}
 	else
@@ -352,10 +385,17 @@ void* DeltaServer::HandleInput(void*)
 		
 		WaitForSingleObject(_masterInputEvent, INFINITE);
 		result = _sharedInputBuffer;
+
+#ifndef MEASUREMENT_OFF
 		_measurement->InputReceived(result, _renderedFrames+1);
+#endif
+
 		SetEvent(_slaveInputEvent);
-	
+		
+#ifndef MEASUREMENT_OFF
 		_measurement->InputSent(result, _renderedFrames+1);
+#endif
+
 		return result;
 	}
 }

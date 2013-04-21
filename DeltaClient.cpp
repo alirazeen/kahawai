@@ -55,7 +55,9 @@ bool DeltaClient::Initialize()
 	_convertCtx = sws_getContext(_clientWidth,_clientHeight,PIX_FMT_BGRA, _width, _height,PIX_FMT_YUV420P, SWS_FAST_BILINEAR,NULL,NULL,NULL);
 	_sourceFrame = new uint8_t[_clientWidth*_clientWidth*SOURCE_BITS_PER_PIXEL];
 
+#ifndef MEASUREMENT_OFF
 	_measurement = new Measurement("delta_client_measurement.csv");
+#endif
 
 	return true;
 }
@@ -69,11 +71,18 @@ bool DeltaClient::Initialize()
  */
 bool DeltaClient::Capture(int width, int height)
 {
-	//Captures at the client resolution
-	_measurement->CaptureStart(_renderedFrames+1);
-	bool result = KahawaiClient::Capture(_clientWidth,_clientHeight);
-	_measurement->CaptureEnd(_renderedFrames);
 	
+#ifndef MEASUREMENT_OFF
+	_measurement->CaptureStart(_renderedFrames+1);
+#endif
+
+	//Captures at the client resolution
+	bool result = KahawaiClient::Capture(_clientWidth,_clientHeight);
+	
+#ifndef MEASUREMENT_OFF
+	_measurement->CaptureEnd(_renderedFrames);
+#endif
+
 	return result;
 }
 
@@ -88,28 +97,48 @@ bool DeltaClient::Capture(int width, int height)
 bool DeltaClient::Transform(int width, int height)
 {
 	//transforms the screen captured at the client resolution
+	
+
+#ifndef MEASUREMENT_OFF
 	_measurement->TransformStart();
+#endif
+	
 	bool result = KahawaiClient::Transform(_clientWidth, _clientHeight);
+	
+#ifndef MEASUREMENT_OFF
 	_measurement->TransformEnd();
+#endif
 
 	return result;
 }
 
 bool DeltaClient::Decode()
 {	
+#ifndef MEASUREMENT_OFF
 	_measurement->DecodeStart();
+#endif
+
 	LogYUVFrame(_saveCaptures,"low",_renderedFrames,(char*)_transformPicture->img.plane[0],_clientWidth,_clientHeight);
 	bool result = _decoder->Decode(Patch,_transformPicture->img.plane[0]);
+
+#ifndef MEASUREMENT_OFF
 	_measurement->DecodeEnd();
+#endif
 
 	return result;
 }
 
 bool DeltaClient::Show()
 {
+#ifndef MEASUREMENT_OFF
 	_measurement->ShowStart();
+#endif
+	
 	bool result = _decoder->Show();
+	
+#ifndef MEASUREMENT_OFF
 	_measurement->ShowEnd();
+#endif
 
 	return result;
 }
@@ -140,7 +169,10 @@ void* DeltaClient::HandleInput(void* inputCommand)
 
 	_localInputQueue.push(queuedCommand);
 	_inputHandler->SendCommand(queuedCommand);
+
+#ifndef MEASUREMENT_OFF
 	_measurement->InputReceived(queuedCommand, _renderedFrames+1); // +1 because _renderedFrames is one step behind at this point
+#endif
 
 	if(!ShouldHandleInput())
 	{
@@ -149,7 +181,11 @@ void* DeltaClient::HandleInput(void* inputCommand)
 	else
 	{
 		_lastCommand = _localInputQueue.front();
+	
+#ifndef MEASUREMENT_OFF
 		_measurement->InputSent(_lastCommand, _renderedFrames+1);
+#endif
+
 		_localInputQueue.pop();
 		return _lastCommand;
 	}	
