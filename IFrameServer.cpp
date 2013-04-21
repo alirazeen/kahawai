@@ -74,7 +74,7 @@ int IFrameServer::Encode(void** compressedFrame)
 
 bool IFrameServer::Send(void** compressedFrame, int frameSize)
 {
-	if(_renderedFrames%_gop!=0) //We send only the P-frames
+	if((_renderedFrames-1)%_gop!=0) //We send only the P-frames
 	{
 		//Send the pframe size to the client
 		if(send(_socketToClient, (char*)&frameSize,sizeof(frameSize),0)==SOCKET_ERROR)
