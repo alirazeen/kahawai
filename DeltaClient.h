@@ -17,6 +17,7 @@ protected:
 	bool		Initialize();
 
 	//Kahawai Lifecycle
+	void		OffloadAsync();
 	bool		Capture(int width, int height);
 	bool		Transform(int width, int height);
 	bool		Decode();

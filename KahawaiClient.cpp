@@ -74,15 +74,11 @@ bool KahawaiClient::Finalize()
  */
 void KahawaiClient::OffloadAsync()
 {
-	//Connect input handler to server
+	//NOTE: The subclasses _MUST_ initialize the input handler
 #ifndef NO_HANDLE_INPUT
-	if(!_inputHandler==NULL && !_inputHandler->Connect())
-	{
-		KahawaiLog("Unable to start input handler", KahawaiError);
-		_offloading = false;
-		return;
-	}
+	assert(_inputHandler != NULL);
 #endif
+
 	//////////////////////////////////////////////////////////////////////////
 	//Kahawai Client LifeCyle
 	//////////////////////////////////////////////////////////////////////////

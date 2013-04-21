@@ -62,6 +62,21 @@ bool DeltaClient::Initialize()
 	return true;
 }
 
+void DeltaClient::OffloadAsync()
+{
+	//Connect input handler to server
+#ifndef NO_HANDLE_INPUT
+	if(!_inputHandler==NULL && !_inputHandler->Connect())
+	{
+		KahawaiLog("Unable to start input handler", KahawaiError);
+		_offloading = false;
+		return;
+	}
+#endif
+
+	KahawaiClient::OffloadAsync();
+}
+
 /**
  * Captures the content of the framebuffer into system memory
  * Overrides base class transform because the client may have a lower resolution

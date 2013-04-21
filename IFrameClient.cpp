@@ -69,6 +69,16 @@ bool IFrameClient::InitializeDecoder()
 
 void IFrameClient::OffloadAsync()
 {
+	//Connect input handler to server
+#ifndef NO_HANDLE_INPUT
+	if(!_inputHandler==NULL && !_inputHandler->Connect())
+	{
+		KahawaiLog("Unable to start input handler", KahawaiError);
+		_offloading = false;
+		return;
+	}
+#endif
+
 	_muxerComponent->BeginOffload();
 	KahawaiClient::OffloadAsync();
 }
