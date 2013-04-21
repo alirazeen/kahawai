@@ -64,7 +64,8 @@ private:
 	static DWORD WINAPI		AsyncSendFrames(void* Param);
 	void					SendFrames();
 
-	//Receive P-frame from the remote server
+	//Methods to receive P-frames from the remote server
+	static DWORD WINAPI		AsyncReceivePFrames(void* Param);
 	void					ReceivePFrame();
 
 	//Send a frame to the local decoder

@@ -61,13 +61,22 @@ bool IFrameClientMuxer::Initialize(ConfigReader* configReader)
 
 bool IFrameClientMuxer::BeginOffload()
 {
+	
+	//Establish a connection to the remote server
 	if (!InitSocketToServer())
 	{
 		KahawaiLog("IFrameClientMuxer::InitSocketToServer() failed", KahawaiError);
 		return false;
 	}
 
-	return CreateKahawaiThread(AsyncInitLocalSocket, this);
+	//Establish a connection to the local decoder
+	bool threadCreated = CreateKahawaiThread(AsyncInitLocalSocket, this);
+
+	if (threadCreated)
+		//Create the thread that will send frames to the local decoder
+		threadCreated = CreateKahawaiThread(AsyncSendFrames, this);
+
+	return threadCreated;
 }
 
 bool IFrameClientMuxer::InitSocketToServer()
@@ -85,7 +94,7 @@ bool IFrameClientMuxer::InitSocketToServer()
 	//Spawn thread to get the P frames
 	bool threadCreated = false;
 	if (_socketToServer != INVALID_SOCKET)
-		threadCreated = CreateKahawaiThread(AsyncSendFrames, this);
+		threadCreated = CreateKahawaiThread(AsyncReceivePFrames, this);
 
 	return _socketToServer != INVALID_SOCKET && threadCreated == true;
 }
@@ -107,6 +116,14 @@ bool IFrameClientMuxer::InitLocalSocket()
 	LeaveCriticalSection(&_initSocketCS);
 
 	return _socketToDecoder != INVALID_SOCKET;
+}
+
+DWORD WINAPI IFrameClientMuxer::AsyncReceivePFrames(void* Param)
+{
+	IFrameClientMuxer* This = (IFrameClientMuxer*) Param;
+	This->ReceivePFrame();
+
+	return 0;
 }
 
 DWORD WINAPI IFrameClientMuxer::AsyncSendFrames(void* Param)
@@ -208,7 +225,7 @@ void IFrameClientMuxer::ReceivePFrame()
 			LeaveCriticalSection(&_receivePFrameCS);
 			return;
 		}
-
+		
 		//Receive P frame completely
 		int receivedBytes = 0;
 		while(receivedBytes < length)
@@ -221,6 +238,7 @@ void IFrameClientMuxer::ReceivePFrame()
 
 		_receivedPFrame = true;
 		_pFrameSize = length;
+		
 	}
 	WakeConditionVariable(&_receivingPFrameCV);
 	LeaveCriticalSection(&_receivePFrameCS);
