@@ -81,12 +81,16 @@ bool KahawaiServer::IsHD()
 
 void KahawaiServer::FrameStart()
 {
+#ifndef MEASUREMENT_OFF
 	_measurement->FrameStart();
+#endif
 }
 
 void KahawaiServer::FrameEnd()
 {
+#ifndef MEASUREMENT_OFF
 	_measurement->FrameEnd();
+#endif
 }
 
 void* KahawaiServer::HandleInput(void*)
