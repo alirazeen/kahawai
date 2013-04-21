@@ -179,11 +179,11 @@ bool IFrameClientMuxer::SendFrameToLocalDecoder(char* frame, int size)
 	return true;
 }
 
-bool IFrameClientMuxer::ReceiveIFrame(void** compressedFrame, int size)
+bool IFrameClientMuxer::ReceiveIFrame(void* compressedFrame, int size)
 {	
 	EnterCriticalSection(&_receiveIFrameCS);
 	{
-		memcpy(_iFrame,(*compressedFrame),size);
+		memcpy(_iFrame,compressedFrame,size);
 		_receivedIFrame = true;
 		_iFrameSize = size;
 	}

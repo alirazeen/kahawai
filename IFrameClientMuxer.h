@@ -13,7 +13,7 @@ public:
 	bool		BeginOffload();
 
 	//Receive I-frame from the local encoder
-	bool		ReceiveIFrame(void** compressedFrame, int size);
+	bool		ReceiveIFrame(void* compressedFrame, int size);
 
 private:
 

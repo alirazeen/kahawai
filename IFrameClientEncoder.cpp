@@ -39,7 +39,6 @@ bool IFrameClientEncoder::ReceiveTransformedPicture(x264_picture_t* transformPic
 
 int IFrameClientEncoder::Encode(x264_picture_t* transformPicture)
 {
-	// TODO: Do something with this compressed frame
 	void* compressedFrame = NULL;
 
 	//We only want to encode an iframe here
@@ -51,7 +50,7 @@ int IFrameClientEncoder::Encode(x264_picture_t* transformPicture)
 	bool result = (size > 0);
 
 	if (result)
-		result = _muxer->ReceiveIFrame(&compressedFrame, size);
+		result = _muxer->ReceiveIFrame(compressedFrame, size);
 
 	return result;
 }
