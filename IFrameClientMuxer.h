@@ -24,8 +24,10 @@ private:
 	//Buffers to hold the i- and p-frames received from the 
 	//local encoder and remote server
 	byte*	_iFrame;
-	byte*	_pFrame;
+	int		_iFrameSize;
 
+	byte*	_pFrame;
+	int		_pFrameSize;
 
 	//Variables related to the connection to the server
 	//The Muxer will retrieve the P-frames sent by the server
@@ -39,20 +41,28 @@ private:
 	SOCKET		_socketToDecoder;
 
 	//Synchronization related variables
-	CONDITION_VARIABLE	_iframeWaitingCV;
-	CONDITION_VARIABLE	_pframeWaitingCV;
+	CRITICAL_SECTION	_initSocketCS;
+	CONDITION_VARIABLE	_initSocketCV;
 
-	CRITICAL_SECTION	_sendingFrameCS;
+	CRITICAL_SECTION	_receiveIFrameCS;
+	CONDITION_VARIABLE	_receivingIFrameCV;
+	bool				_receivedIFrame;
+
+	CRITICAL_SECTION	_receivePFrameCS;
+	CONDITION_VARIABLE	_receivingPFrameCV;
+	bool				_receivedPFrame;
 
 	//Connect to the cloud server
 	bool		InitSocketToServer();
 
 	//Listen locally for a connection from the
 	//IFrameClient
-	bool		InitLocalSocket();
+	static DWORD WINAPI		AsyncInitLocalSocket(void* Param);
+	bool					InitLocalSocket();
 
-	//Async method to send frames to the local decoder
+	//Methods to send frames to the local decoder
 	static DWORD WINAPI		AsyncSendFrames(void* Param);
+	void					SendFrames();
 
 	//Receive P-frame from the remote server
 	void					ReceivePFrame();
