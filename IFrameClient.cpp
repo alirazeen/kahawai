@@ -46,6 +46,7 @@ bool IFrameClient::Initialize()
 	_inputHandler = new InputHandlerClient(_serverIP,_serverPort+PORT_OFFSET_INPUT_HANDLER,_gameName);
 #endif
 
+	return true;
 }
 
 bool IFrameClient::InitializeDecoder()
