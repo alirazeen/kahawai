@@ -18,6 +18,7 @@ public:
 	static DWORD WINAPI		AsyncInputHandler(void* Param);
 
 	bool					Connect();
+	bool					IsConnected();
 	void*					ReceiveCommand();
 	void*					GetEmptyCommand();		
 	size_t					GetCommandLength() {return _serializer->GetCommandSize();}

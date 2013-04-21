@@ -103,6 +103,11 @@ bool InputHandlerServer::Connect()
 	return _inputSocket != INVALID_SOCKET;
 }
 
+bool InputHandlerServer::IsConnected()
+{
+	return _inputSocket != INVALID_SOCKET;
+}
+
 void* InputHandlerServer::GetEmptyCommand()
 {
 	return _serializer->GetEmptyCommand();

@@ -8,6 +8,12 @@
  */
 void KahawaiServer::OffloadAsync()
 {
+
+	//NOTE: The subclasses _MUST_ initialize the input handler and connect it
+#ifndef NO_HANDLE_INPUT
+	assert(_inputHandler != NULL && _inputHandler->IsConnected());
+#endif
+
 	void* compressedFrame = NULL;
 
 	//////////////////////////////////////////////////////////////////////////
