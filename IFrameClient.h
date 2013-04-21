@@ -19,6 +19,7 @@ protected:
 	int			_gop;
 
 	//Kahawai life-cycle
+	void		OffloadAsync();
 	bool		Transform(int width, int height);
 	bool		Decode();
 	bool		Show();

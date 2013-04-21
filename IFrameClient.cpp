@@ -67,6 +67,11 @@ bool IFrameClient::InitializeDecoder()
 	return (_decoder != NULL);
 }
 
+void IFrameClient::OffloadAsync()
+{
+	_muxerComponent->BeginOffload();
+	KahawaiClient::OffloadAsync();
+}
 
 bool IFrameClient::ShouldSkip()
 {
