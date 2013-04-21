@@ -204,6 +204,8 @@ void IFrameClientMuxer::ReceivePFrame()
 			int errorCode = WSAGetLastError();
 			sprintf_s(errorMsg,"Unable to receive P frame size. Error code: %d",errorCode);
 			KahawaiLog(errorMsg, KahawaiError);
+
+			LeaveCriticalSection(&_receivePFrameCS);
 			return;
 		}
 
