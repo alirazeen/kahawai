@@ -44,6 +44,11 @@ typedef byte (*kahawaiTransform)(byte apply,byte patch);
 #define KAHAWAI_LOCALHOST "127.0.0.1"
 #define SOURCE_BITS_PER_PIXEL 4 //We are using alpha
 #define TARGET_FPS 60
+#define DEFAULT_BIT_DEPTH 3
+
+#define PORT_OFFSET_IFRAME_MUXER 5
+#define PORT_OFFSET_INPUT_HANDLER 10
+
 
 
 enum ENCODING_MODE { DeltaEncoding, IPFrame, H264};
