@@ -18,6 +18,7 @@ public:
 
 	bool					Connect();
 	bool					Finalize();
+	bool					IsConnected();
 
 private:
 	void					SendCommandsAsync();

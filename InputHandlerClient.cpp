@@ -35,6 +35,11 @@ bool InputHandlerClient::Connect()
 	return _connected;
 }
 
+bool InputHandlerClient::IsConnected()
+{
+	return _connected;
+}
+
 InputHandlerClient::InputHandlerClient(char* serverIP, int port, char* gameName)
 	:_port(port),
 	_serverIP(serverIP),
