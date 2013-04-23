@@ -97,9 +97,9 @@ bool IFrameServer::Send(void** compressedFrame, int frameSize)
 			return false;
 		}
 
-		return true;
 	}
 
+	_currFrameNum++;
 	return true;
 }
 
