@@ -6,7 +6,8 @@
 #include "FFMpegDecoder.h"
 
 IFrameClient::IFrameClient(void) :
-_lastCommand(NULL)
+	_lastCommand(NULL),
+	_currFrameNum(0)
 {
 	_encoderComponent = new IFrameClientEncoder();
 	_muxerComponent = new IFrameClientMuxer();
@@ -93,7 +94,7 @@ bool IFrameClient::ShouldSkip()
 bool IFrameClient::Transform(int width, int height)
 {
 	bool result = KahawaiClient::Transform(width, height);
-	if (result)
+	if (result && (_currFrameNum % _gop == 0))
 		result = SendTransformPictureEncoder();
 
 	return result;
@@ -113,6 +114,7 @@ bool IFrameClient::Decode()
 bool IFrameClient::Show()
 {
 	bool result = _decoder->Show();
+	_currFrameNum++;
 	return result;
 }
 

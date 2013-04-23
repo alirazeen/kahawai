@@ -34,6 +34,7 @@ protected:
 private:
 	//Input-handling variables
 	void*		_lastCommand;
+	int			_currFrameNum;
 
 
 	bool		SendTransformPictureEncoder();
