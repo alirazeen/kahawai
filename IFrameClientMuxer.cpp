@@ -123,7 +123,12 @@ bool IFrameClientMuxer::InitLocalSocket()
 DWORD WINAPI IFrameClientMuxer::AsyncReceivePFrames(void* Param)
 {
 	IFrameClientMuxer* This = (IFrameClientMuxer*) Param;
-	This->ReceivePFrame();
+
+	//TODO: Need to exit loop at _some_ point
+	while(true)
+	{
+		This->ReceivePFrame();
+	}
 
 	return 0;
 }
