@@ -118,6 +118,10 @@ bool IFrameClient::Show()
 
 void* IFrameClient::HandleInput(void* inputCommand)
 {
+	//TODO: Implement this logic properly
+	return _inputHandler->GetEmptyCommand();
+
+	/*
 	//Free memory from previous invocations
 	if(_lastCommand != NULL)
 	{
@@ -153,6 +157,7 @@ void* IFrameClient::HandleInput(void* inputCommand)
 		_localInputQueue.pop();
 		return _lastCommand;
 	}
+	*/
 }
 
 int IFrameClient::GetFirstInputFrame()
