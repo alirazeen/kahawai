@@ -38,5 +38,8 @@ private:
 
 
 	bool		SendTransformPictureEncoder();
+
+	static DWORD WINAPI		AsyncDecodeShow(void* Param);
+	void					DecodeShow();
 };
 

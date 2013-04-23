@@ -82,7 +82,16 @@ void IFrameClient::OffloadAsync()
 #endif
 
 	_muxerComponent->BeginOffload();
-	KahawaiClient::OffloadAsync();
+	CreateKahawaiThread(AsyncDecodeShow, this);
+	
+	while(_offloading) {
+		_offloading &= Transform(_width, _height);
+	}
+
+	Finalize();
+
+	KahawaiLog("Offload finished.\n", KahawaiDebug);
+	//KahawaiClient::OffloadAsync();
 }
 
 bool IFrameClient::ShouldSkip()
@@ -97,6 +106,7 @@ bool IFrameClient::Transform(int width, int height)
 	if (result && (_currFrameNum % _gop == 0))
 		result = SendTransformPictureEncoder();
 
+	_currFrameNum++;
 	return result;
 }
 
@@ -114,7 +124,6 @@ bool IFrameClient::Decode()
 bool IFrameClient::Show()
 {
 	bool result = _decoder->Show();
-	_currFrameNum++;
 	return result;
 }
 
@@ -169,6 +178,23 @@ int IFrameClient::GetFirstInputFrame()
 	// or dynamically determined based on the RTT or some 
 	// combination of the two. It should NOT be a static value
 	return 3;
+}
+
+DWORD WINAPI IFrameClient::AsyncDecodeShow(void* Param)
+{
+	IFrameClient* This = (IFrameClient*)Param;
+	This->DecodeShow();
+	return 0;
+}
+
+void IFrameClient::DecodeShow()
+{
+	bool offloading = true;
+	while (offloading)
+	{
+		offloading &= Decode();
+		offloading &= Show();
+	}
 }
 
 #endif
