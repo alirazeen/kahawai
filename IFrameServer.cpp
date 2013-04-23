@@ -6,7 +6,8 @@
 #include "X264Encoder.h"
 
 IFrameServer::IFrameServer(void)
-	:_gop(0)
+	:_gop(0),
+	_currFrameNum(0)
 {
 }
 
@@ -58,7 +59,7 @@ void IFrameServer::OffloadAsync()
 
 int IFrameServer::Encode(void** compressedFrame)
 {
-	if((_renderedFrames-1)%_gop==0) //is it time to encode an I-Frame
+	if(_currFrameNum%_gop==0) //is it time to encode an I-Frame
 	{
 		_transformPicture->i_type = X264_TYPE_IDR; //lets try with an IDR frame first
 		_transformPicture->i_qpplus1 = 1;
@@ -74,7 +75,7 @@ int IFrameServer::Encode(void** compressedFrame)
 
 bool IFrameServer::Send(void** compressedFrame, int frameSize)
 {
-	if((_renderedFrames-1)%_gop!=0) //We send only the P-frames
+	if(_currFrameNum%_gop!=0) //We send only the P-frames
 	{
 		//Send the pframe size to the client
 		if(send(_socketToClient, (char*)&frameSize,sizeof(frameSize),0)==SOCKET_ERROR)

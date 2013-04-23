@@ -23,6 +23,6 @@ protected:
 
 
 	int		_gop;
-
+	int		_currFrameNum;
 };
 
