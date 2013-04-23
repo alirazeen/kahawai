@@ -46,9 +46,11 @@ bool IFrameClientMuxer::Initialize(ConfigReader* configReader)
 
 	InitializeCriticalSection(&_receiveIFrameCS);
 	InitializeConditionVariable(&_receivingIFrameCV);
+	InitializeConditionVariable(&_iFrameConsumedCV);
 
 	InitializeCriticalSection(&_receivePFrameCS);
 	InitializeConditionVariable(&_receivingPFrameCV);
+	InitializeConditionVariable(&_pFrameConsumedCV);
 
 	//Initialize the buffers where we store the received I/P frames
 	int width = configReader->ReadIntegerValue(CONFIG_RESOLUTION,CONFIG_WIDTH);
@@ -163,6 +165,7 @@ void IFrameClientMuxer::SendFrames()
 				//We have consumed the frame
 				_receivedIFrame = false;
 			}
+			WakeConditionVariable(&_iFrameConsumedCV);
 			LeaveCriticalSection(&_receiveIFrameCS);
 		} else 
 		{
@@ -177,6 +180,7 @@ void IFrameClientMuxer::SendFrames()
 				//We have consumed the frame
 				_receivedPFrame = false;
 			}
+			WakeConditionVariable(&_pFrameConsumedCV);
 			LeaveCriticalSection(&_receivePFrameCS);
 		}
 
@@ -200,6 +204,9 @@ bool IFrameClientMuxer::ReceiveIFrame(void* compressedFrame, int size)
 {	
 	EnterCriticalSection(&_receiveIFrameCS);
 	{
+		while(_receivedIFrame)
+			SleepConditionVariableCS(&_iFrameConsumedCV, &_receiveIFrameCS, INFINITE);
+
 		memcpy(_iFrame,compressedFrame,size);
 		_receivedIFrame = true;
 		_iFrameSize = size;
@@ -213,6 +220,9 @@ void IFrameClientMuxer::ReceivePFrame()
 {
 	EnterCriticalSection(&_receivePFrameCS);
 	{
+		while(_receivedPFrame) 
+			SleepConditionVariableCS(&_pFrameConsumedCV, &_receivePFrameCS, INFINITE);
+
 		//Receive P-frame size
 		int length=0;
 		if (recv(_socketToServer, (char*)&length,sizeof(int), 0) == SOCKET_ERROR)

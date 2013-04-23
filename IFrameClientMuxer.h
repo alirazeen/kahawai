@@ -46,10 +46,12 @@ private:
 
 	CRITICAL_SECTION	_receiveIFrameCS;
 	CONDITION_VARIABLE	_receivingIFrameCV;
+	CONDITION_VARIABLE	_iFrameConsumedCV;
 	bool				_receivedIFrame;
 
 	CRITICAL_SECTION	_receivePFrameCS;
 	CONDITION_VARIABLE	_receivingPFrameCV;
+	CONDITION_VARIABLE	_pFrameConsumedCV;
 	bool				_receivedPFrame;
 
 	//Connect to the cloud server
