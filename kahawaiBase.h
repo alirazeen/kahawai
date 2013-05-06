@@ -49,7 +49,10 @@ typedef byte (*kahawaiTransform)(byte apply,byte patch);
 #define PORT_OFFSET_IFRAME_MUXER 5
 #define PORT_OFFSET_INPUT_HANDLER 10
 
+#define MEASUREMENT_FRAME_WARM_UP 100
+#define MAX_FRAMES_TO_RUN 6000
 
+#define FRAME_GAP 0
 
 enum ENCODING_MODE { DeltaEncoding, IPFrame, H264};
 enum CAPTURE_MODE { OpenGL, DirectX};

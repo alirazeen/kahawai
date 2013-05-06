@@ -39,16 +39,16 @@ bool Kahawai::Offload()
 			return false;
 	}
 
-	//Start measuring time after 100 frames have been rendered
+	//Start measuring time after some number of frames have been rendered
 	//to ingore initial warm up time
-	if(_renderedFrames == 100)
+	if(_renderedFrames == MEASUREMENT_FRAME_WARM_UP)
 	{
 		_offloadStartTime = timeGetTime();
 	}
 
 #if _DEBUG
 	
-	if(_renderedFrames == 6000)
+	if(_renderedFrames == MAX_FRAMES_TO_RUN)
 	{
 		LogFPS();
 		return false;

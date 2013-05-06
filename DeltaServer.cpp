@@ -405,7 +405,7 @@ void* DeltaServer::HandleInput(void*)
 int DeltaServer::GetFirstInputFrame()
 {
 	//TODO: Need to give a real value based on profiling
-	return 3;
+	return FRAME_GAP;
 }
 
 

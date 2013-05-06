@@ -118,7 +118,7 @@ void* IFrameServer::HandleInput(void* input)
 
 int IFrameServer::GetFirstInputFrame()
 {
-	return 3;
+	return FRAME_GAP;
 }
 
 

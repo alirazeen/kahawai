@@ -172,7 +172,7 @@ int IFrameClient::GetFirstInputFrame()
 	// TODO: This should actually be read from a config file
 	// or dynamically determined based on the RTT or some 
 	// combination of the two. It should NOT be a static value
-	return 3;
+	return FRAME_GAP;
 }
 
 DWORD WINAPI IFrameClient::AsyncDecodeShow(void* Param)
