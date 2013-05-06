@@ -69,6 +69,11 @@ bool IFrameClient::InitializeDecoder()
 	return (_decoder != NULL);
 }
 
+bool IFrameClient::IsHD()
+{
+	return true;
+}
+
 void IFrameClient::OffloadAsync()
 {
 	//Connect input handler to server

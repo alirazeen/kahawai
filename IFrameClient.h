@@ -18,6 +18,8 @@ public:
 protected:
 	int			_gop;
 
+	bool		IsHD();
+
 	//Kahawai life-cycle
 	void		OffloadAsync();
 	bool		Transform(int width, int height);
