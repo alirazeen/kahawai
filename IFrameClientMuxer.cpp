@@ -2,30 +2,33 @@
 #ifdef KAHAWAI
 #include "IFrameClientMuxer.h"
 
+// Number of buffers to create in the circular buffer
+#define NUM_BUFFERS 10
 
 IFrameClientMuxer::IFrameClientMuxer(void)
 	:_socketToServer(INVALID_SOCKET),
 	_socketToDecoder(INVALID_SOCKET),
-	_receivedIFrame(FALSE),
-	_iFrameSize(0),
-	_receivedPFrame(FALSE),
-	_pFrameSize(0)
+	_iFrameBuffers(NULL),
+	_iFrameMaxSize(0),
+	_pFrameBuffers(NULL),
+	_pFrameMaxSize(0)
 {
 }
 
 
 IFrameClientMuxer::~IFrameClientMuxer(void)
 {
-	if (_iFrame != NULL)
+
+	if (_iFrameBuffers != NULL) 
 	{
-		delete _iFrame;
-		_iFrame = NULL;
+		delete _iFrameBuffers;
+		_iFrameBuffers = NULL;
 	}
 
-	if (_pFrame != NULL)
+	if (_pFrameBuffers != NULL)
 	{
-		delete _pFrame;
-		_pFrame = NULL;
+		delete _pFrameBuffers;
+		_pFrameBuffers = NULL;
 	}
 }
 
@@ -44,19 +47,23 @@ bool IFrameClientMuxer::Initialize(ConfigReader* configReader)
 	InitializeCriticalSection(&_initSocketCS);
 	InitializeConditionVariable(&_initSocketCV);
 
-	InitializeCriticalSection(&_receiveIFrameCS);
-	InitializeConditionVariable(&_receivingIFrameCV);
-	InitializeConditionVariable(&_iFrameConsumedCV);
+	InitializeCriticalSection(&_iFrameCS);
+	InitializeConditionVariable(&_iFrameWaitForFrameCV);
+	InitializeConditionVariable(&_iFrameWaitForSpaceCV);
 
-	InitializeCriticalSection(&_receivePFrameCS);
-	InitializeConditionVariable(&_receivingPFrameCV);
-	InitializeConditionVariable(&_pFrameConsumedCV);
+	InitializeCriticalSection(&_pFrameCS);
+	InitializeConditionVariable(&_pFrameWaitForFrameCV);
+	InitializeConditionVariable(&_pFrameWaitForSpaceCV);
 
 	//Initialize the buffers where we store the received I/P frames
 	int width = configReader->ReadIntegerValue(CONFIG_RESOLUTION,CONFIG_WIDTH);
 	int height = configReader->ReadIntegerValue(CONFIG_RESOLUTION,CONFIG_HEIGHT);
-	_iFrame = new byte[height * width * DEFAULT_BIT_DEPTH]; // size of a normal frame
-	_pFrame = new byte[height * width * DEFAULT_BIT_DEPTH * _gop]; // size of the GOP
+
+	_iFrameMaxSize = height * width * DEFAULT_BIT_DEPTH;
+	_pFrameMaxSize = height * width * DEFAULT_BIT_DEPTH * _gop;
+
+	_iFrameBuffers = new CircularBuffer(_iFrameMaxSize, NUM_BUFFERS);
+	_pFrameBuffers = new CircularBuffer(_pFrameMaxSize, NUM_BUFFERS);
 
 	return true;
 }
@@ -154,39 +161,55 @@ void IFrameClientMuxer::SendFrames()
 
 	//TODO: There should be some termination condition where we stop
 	//this loop
+
+	byte* buffer = NULL;
+	int bufferId = -1;
+	int bufferSize = -1;
 	while(true)
 	{
-		
+		KahawaiPrintF("Sending out frame: %d\n", _currFrameNum);
 		if (_currFrameNum % _gop == 0)
 		{
-			EnterCriticalSection(&_receiveIFrameCS);
+			// Get the next i frame
+			EnterCriticalSection(&_iFrameCS);
 			{
-				while(!_receivedIFrame)
-					SleepConditionVariableCS(&_receivingIFrameCV, &_receiveIFrameCS, INFINITE);
-			
-				//Send it out
-				SendFrameToLocalDecoder((char*)_iFrame, _iFrameSize);
-
-				//We have consumed the frame
-				_receivedIFrame = false;
+				while(!_iFrameBuffers->GetStart((void**)&buffer, &bufferSize, &bufferId))
+					SleepConditionVariableCS(&_iFrameWaitForFrameCV, &_iFrameCS, INFINITE);
 			}
-			WakeConditionVariable(&_iFrameConsumedCV);
-			LeaveCriticalSection(&_receiveIFrameCS);
+			LeaveCriticalSection(&_iFrameCS);
+
+			// Send out the i frame
+			SendFrameToLocalDecoder((char*)buffer, bufferSize);
+
+			// Finish consuming the iframe
+			EnterCriticalSection(&_iFrameCS);
+			{
+				_iFrameBuffers->GetEnd(bufferId);
+			}
+			WakeConditionVariable(&_iFrameWaitForSpaceCV);
+			LeaveCriticalSection(&_iFrameCS);
+
 		} else 
 		{
-			EnterCriticalSection(&_receivePFrameCS);
+
+			// Retrieve a pframe from the circular buffer
+			EnterCriticalSection(&_pFrameCS);
 			{
-				while (!_receivedPFrame)
-					SleepConditionVariableCS(&_receivingPFrameCV, &_receivePFrameCS, INFINITE);
-
-				//Send it out
-				SendFrameToLocalDecoder((char*)_pFrame, _pFrameSize);
-
-				//We have consumed the frame
-				_receivedPFrame = false;
+				while(!_pFrameBuffers->GetStart((void**)&buffer, &bufferSize, &bufferId))
+					SleepConditionVariableCS(&_pFrameWaitForFrameCV, &_pFrameCS, INFINITE);
 			}
-			WakeConditionVariable(&_pFrameConsumedCV);
-			LeaveCriticalSection(&_receivePFrameCS);
+			LeaveCriticalSection(&_pFrameCS);
+
+			// Now that we have a pFrame buffer, send it out to the local decoder
+			SendFrameToLocalDecoder((char*)buffer, bufferSize);
+
+			// We have finished sending it out, so let's notify the circular buffer
+			EnterCriticalSection(&_pFrameCS);
+			{
+				_pFrameBuffers->GetEnd(bufferId);
+			}
+			WakeConditionVariable(&_pFrameWaitForSpaceCV);
+			LeaveCriticalSection(&_pFrameCS);
 		}
 
 	}
@@ -205,58 +228,68 @@ bool IFrameClientMuxer::SendFrameToLocalDecoder(char* frame, int size)
 	return true;
 }
 
-bool IFrameClientMuxer::ReceiveIFrame(void* compressedFrame, int size)
-{	
-	EnterCriticalSection(&_receiveIFrameCS);
+void IFrameClientMuxer::ReceiveIFrame(void* frame, int size)
+{
+	void* buffer; 
+	int bufferId = -1;
+	EnterCriticalSection(&_iFrameCS);
 	{
-		while(_receivedIFrame)
-			SleepConditionVariableCS(&_iFrameConsumedCV, &_receiveIFrameCS, INFINITE);
-
-		memcpy(_iFrame,compressedFrame,size);
-		_receivedIFrame = true;
-		_iFrameSize = size;
+		while(!_iFrameBuffers->PutStart(&buffer, &bufferId))
+			SleepConditionVariableCS(&_iFrameWaitForSpaceCV, &_iFrameCS, INFINITE);
 	}
-	WakeConditionVariable(&_receivingIFrameCV);
-	LeaveCriticalSection(&_receiveIFrameCS);
-	return true;
+	LeaveCriticalSection(&_iFrameCS);
+
+	memcpy(buffer, frame, size);
+
+	EnterCriticalSection(&_iFrameCS);
+	{
+		_iFrameBuffers->PutEnd(bufferId, size);
+	}
+	WakeConditionVariable(&_iFrameWaitForFrameCV);
+	LeaveCriticalSection(&_iFrameCS);
 }
 
 void IFrameClientMuxer::ReceivePFrame()
 {
-	EnterCriticalSection(&_receivePFrameCS);
+	byte* buffer = NULL;
+	int bufferId = -1;
+	
+	// Wait until we get a valid buffer to store stuff in
+	EnterCriticalSection(&_pFrameCS);
 	{
-		while(_receivedPFrame) 
-			SleepConditionVariableCS(&_pFrameConsumedCV, &_receivePFrameCS, INFINITE);
-
-		//Receive P-frame size
-		int length=0;
-		if (recv(_socketToServer, (char*)&length,sizeof(int), 0) == SOCKET_ERROR)
-		{
-			char errorMsg[100];
-			int errorCode = WSAGetLastError();
-			sprintf_s(errorMsg,"Unable to receive P frame size. Error code: %d",errorCode);
-			KahawaiLog(errorMsg, KahawaiError);
-
-			LeaveCriticalSection(&_receivePFrameCS);
-			return;
-		}
-		
-		//Receive P frame completely
-		int receivedBytes = 0;
-		while(receivedBytes < length)
-		{
-			int burst = 0;
-			burst = recv(_socketToServer, (char*)_pFrame+receivedBytes, length, 0);
-			VERIFY(burst != SOCKET_ERROR);
-			receivedBytes += burst;
-		}
-
-		_receivedPFrame = true;
-		_pFrameSize = length;
-		
+		while(!_pFrameBuffers->PutStart((void**)&buffer, &bufferId))
+			SleepConditionVariableCS(&_pFrameWaitForSpaceCV, &_pFrameCS, INFINITE);
 	}
-	WakeConditionVariable(&_receivingPFrameCV);
-	LeaveCriticalSection(&_receivePFrameCS);
+	LeaveCriticalSection(&_pFrameCS);
+
+	// Retrieve the size of the P frame
+	int length = 0;
+	if (recv(_socketToServer, (char*)&length, sizeof(int), 0) == SOCKET_ERROR)
+	{
+		char errorMsg[100];
+		int errorCode = WSAGetLastError();
+		sprintf_s(errorMsg,"Unable to receive P frame size. Error code: %d",errorCode);
+		KahawaiLog(errorMsg, KahawaiError);
+		return;
+	}
+
+	// Now retrieve the P frame completely
+	int receivedBytes = 0;
+	while(receivedBytes < length)
+	{
+		int burst = 0;
+		burst = recv(_socketToServer, (char*)buffer+receivedBytes, length, 0);
+		VERIFY(burst != SOCKET_ERROR);
+		receivedBytes += burst;
+	}
+
+	// Now let the circular buffer know we have the buffer filled out
+	EnterCriticalSection(&_pFrameCS);
+	{
+		_pFrameBuffers->PutEnd(bufferId, length);
+	}
+	WakeConditionVariable(&_pFrameWaitForFrameCV);
+	LeaveCriticalSection(&_pFrameCS);
 }
 
 #endif

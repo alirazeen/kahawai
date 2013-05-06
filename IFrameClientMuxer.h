@@ -1,5 +1,7 @@
 #pragma once
 #include "KahawaiClient.h"
+#include "CircularBuffer.h"
+
 class IFrameClientMuxer
 {
 public:
@@ -13,7 +15,7 @@ public:
 	bool		BeginOffload();
 
 	//Receive I-frame from the local encoder
-	bool		ReceiveIFrame(void* compressedFrame, int size);
+	void		ReceiveIFrame(void* frame, int size);
 
 private:
 
@@ -23,11 +25,11 @@ private:
 
 	//Buffers to hold the i- and p-frames received from the 
 	//local encoder and remote server
-	byte*	_iFrame;
-	int		_iFrameSize;
-
-	byte*	_pFrame;
-	int		_pFrameSize;
+	CircularBuffer*		_iFrameBuffers;
+	int					_iFrameMaxSize; // Max iFrame size
+	
+	CircularBuffer*		_pFrameBuffers;
+	int					_pFrameMaxSize; // Max pFrame size
 
 	//Variables related to the connection to the server
 	//The Muxer will retrieve the P-frames sent by the server
@@ -44,15 +46,13 @@ private:
 	CRITICAL_SECTION	_initSocketCS;
 	CONDITION_VARIABLE	_initSocketCV;
 
-	CRITICAL_SECTION	_receiveIFrameCS;
-	CONDITION_VARIABLE	_receivingIFrameCV;
-	CONDITION_VARIABLE	_iFrameConsumedCV;
-	bool				_receivedIFrame;
+	CRITICAL_SECTION	_iFrameCS;
+	CONDITION_VARIABLE	_iFrameWaitForFrameCV;
+	CONDITION_VARIABLE	_iFrameWaitForSpaceCV;
 
-	CRITICAL_SECTION	_receivePFrameCS;
-	CONDITION_VARIABLE	_receivingPFrameCV;
-	CONDITION_VARIABLE	_pFrameConsumedCV;
-	bool				_receivedPFrame;
+	CRITICAL_SECTION	_pFrameCS;
+	CONDITION_VARIABLE	_pFrameWaitForFrameCV;
+	CONDITION_VARIABLE	_pFrameWaitForSpaceCV;
 
 	//Connect to the cloud server
 	bool		InitSocketToServer();

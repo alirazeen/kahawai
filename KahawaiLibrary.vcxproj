@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -24,6 +25,7 @@
     <ClCompile Include="..\kahawai\H264Client.cpp" />
     <ClCompile Include="..\kahawai\H264Server.cpp" />
     <ClCompile Include="..\kahawai\IFrameClient.cpp" />
+    <ClCompile Include="CircularBuffer.cpp" />
     <ClCompile Include="IFrameClientMuxer.cpp" />
     <ClCompile Include="..\kahawai\IFrameClientEncoder.cpp" />
     <ClCompile Include="..\kahawai\IFrameServer.cpp" />
@@ -53,6 +55,7 @@
     <ClInclude Include="..\kahawai\H264Client.h" />
     <ClInclude Include="..\kahawai\H264Server.h" />
     <ClInclude Include="..\kahawai\IFrameClient.h" />
+    <ClInclude Include="CircularBuffer.h" />
     <ClInclude Include="IFrameClientMuxer.h" />
     <ClInclude Include="..\kahawai\IFrameClientEncoder.h" />
     <ClInclude Include="..\kahawai\IFrameServer.h" />
