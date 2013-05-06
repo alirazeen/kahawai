@@ -129,23 +129,13 @@ bool IFrameClient::Show()
 
 void* IFrameClient::HandleInput(void* inputCommand)
 {
-	//TODO: Implement this logic properly
-	return _inputHandler->GetEmptyCommand();
 
-	/*
+
 	//Free memory from previous invocations
 	if(_lastCommand != NULL)
 	{
 		delete[] _lastCommand;
 		_lastCommand = NULL;
-	}
-
-
-	// If we're receiving a command before it's time to render an I-frame
-	// we ignore the input from the user
-	if (ShouldSkip())
-	{
-		return _inputHandler->GetEmptyCommand();
 	}
 
 	//Create a copy of the command to push into the queue
@@ -168,7 +158,7 @@ void* IFrameClient::HandleInput(void* inputCommand)
 		_localInputQueue.pop();
 		return _lastCommand;
 	}
-	*/
+	
 }
 
 int IFrameClient::GetFirstInputFrame()

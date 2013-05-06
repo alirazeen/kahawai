@@ -108,15 +108,11 @@ bool IFrameServer::Send(void** compressedFrame, int frameSize)
 //////////////////////////////////////////////////////////////////////////
 void* IFrameServer::HandleInput(void* input)
 {
-	//TODO: Implement this logic properly
-	return _inputHandler->GetEmptyCommand();
-
-	/*
+	
 	if(!ShouldHandleInput())
 		return _inputHandler->GetEmptyCommand();
 
 	_inputHandler->ReceiveCommand();
-	*/
 }
 
 
