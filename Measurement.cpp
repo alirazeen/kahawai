@@ -3,281 +3,59 @@
 
 Measurement::Measurement(char* filename)
 {
-	doomFrameNum = 0;
-	kahawaiFrameNum = 0;
 	InitMeasurementFile(filename);
+	InitializeCriticalSection(&_recordsCS);
 }
 
-void Measurement::FrameStart() 
+Measurement::~Measurement()
 {
-	FrameRecord* frameRecord = new FrameRecord();
-	frameRecord->frameNum = ++doomFrameNum;
-	frameRecord->timeFrameStart = timeGetTime();
-
-	frameRecords[doomFrameNum] = frameRecord;
-
-	int numAhead = doomFrameNum - kahawaiFrameNum;
+	_measurementFile.close();
 }
 
-void Measurement::FrameEnd()
+void Measurement::AddPhase(const Phase* phase, int frameNum)
 {
-	FrameRecord* frameRecord = frameRecords[doomFrameNum];
-	if (frameRecord == NULL) 
-	{
-		KahawaiPrintF("Frame record not found in FrameEnd()\n");
-		return;
-	}
+	DWORD time = timeGetTime();
+	
+	PhaseRecord* record = new PhaseRecord();
+	record->phase = phase;
+	record->frameNum = frameNum;
+	record->time = time;
 
-	frameRecord->timeFrameEnd = timeGetTime();
-
+	EnterCriticalSection(&_recordsCS);
+	_phaseRecords.push(record);
+	LeaveCriticalSection(&_recordsCS);
 }
 
-void Measurement::InputReceived(void* inputCmd, int frameNum)
+void Measurement::Flush()
 {
-
-	InputRecord* inputRecord = new InputRecord();
-	inputRecord->inputCmd = inputCmd;
-	inputRecord->timeInputReceived = timeGetTime();
-
-	InputRecord* existingRecord = inputRecords[inputCmd];
-	if (existingRecord != NULL) {
-		KahawaiPrintF("Input record already found on InputReceived. New Record: %p, Existing Record: %p\n", inputCmd, existingRecord);
-		return;
-	}
-
-	inputRecords[inputCmd] = inputRecord;
-}
-
-void Measurement::InputSent(void* inputCmd, int frameNum)
-{
-	InputRecord* inputRecord = inputRecords[inputCmd];
-	if (inputRecord == NULL) 
+	EnterCriticalSection(&_recordsCS);
 	{
-		KahawaiPrintF("No input record found on InputSent\n");
-		return;
+		//Sloppy programming? We just need a ``big enough''
+		//char buffer
+		char line[2048];
+		while(!_phaseRecords.empty())
+		{
+			PhaseRecord* record = _phaseRecords.front();
+			_phaseRecords.pop();
+
+			strcpy(line, "");
+			sprintf_s(line, "%s, %d, %ld\n", record->phase->_str, record->frameNum, record->time);
+			WriteMeasurementLine(line);
+
+			delete record;
+		}
+
+		_measurementFile.flush();
 	}
-
-	FrameRecord* frameRecord = frameRecords[frameNum];
-	if (frameRecord == NULL)
-	{
-		KahawaiPrintF("No frame record found on InputSent\n");
-		return;
-	}
-
-	frameRecord->timeInputReceived = inputRecord->timeInputReceived;
-	frameRecord->timeInputSent = timeGetTime();
-
-	inputRecords.erase(inputCmd);
-	delete inputRecord;
-	inputRecord = NULL;
+	LeaveCriticalSection(&_recordsCS);
 }
-
-
-void Measurement::CaptureStart(int frameNum)
-{
-	FrameRecord* frameRecord = frameRecords[frameNum];
-	if (frameRecord == NULL)
-	{
-		KahawaiPrintF("No frame record found on CaptureStart\n");
-		return;
-	}
-
-	frameRecord->timeCaptureStart = timeGetTime();
-}
-
-void Measurement::CaptureEnd(int frameNum)
-{
-	FrameRecord* frameRecord = frameRecords[frameNum];
-	if (frameRecord == NULL)
-	{
-		KahawaiPrintF("No frame record found on CaptureEnd\n");
-		return;
-	}
-
-	frameRecord->timeCaptureEnd = timeGetTime();
-}
-
-
-void Measurement::KahawaiStart()
-{
-	kahawaiFrameNum += 1;
-	FrameRecord* frameRecord = frameRecords[kahawaiFrameNum];
-	if (frameRecord == NULL)
-	{
-		KahawaiPrintF("No frame record found on KahawaiStart\n");
-		return;
-	}
-
-	frameRecord->timeKahawaiStart = timeGetTime();
-}
-
-void Measurement::KahawaiEnd()
-{
-	FrameRecord* frameRecord = frameRecords[kahawaiFrameNum];
-	if (frameRecord == NULL)
-	{
-		KahawaiPrintF("No frame record found on KahawaiEnd\n");
-		return;
-	}
-
-	frameRecord->timeKahawaiEnd = timeGetTime();
-
-	char line[8192];
-	sprintf_s(line,"%d, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld\n", frameRecord->frameNum,
-		frameRecord->timeFrameStart, frameRecord->timeFrameEnd,
-		frameRecord->timeInputReceived, frameRecord->timeInputSent,
-		frameRecord->timeCaptureStart, frameRecord->timeCaptureEnd,
-		frameRecord->timeKahawaiStart, frameRecord->timeKahawaiEnd,
-		frameRecord->timeTransformStart, frameRecord->timeTransformEnd,
-		frameRecord->timeDecodeStart, frameRecord->timeDecodeEnd,
-		frameRecord->timeShowStart, frameRecord->timeShowEnd,
-		frameRecord->timeEncodeStart, frameRecord->timeEncodeEnd,
-		frameRecord->timeSendStart, frameRecord->timeSendEnd);
-	WriteMeasurementLine(line);
-}
-
-void Measurement::EncodeStart()
-{
-
-	FrameRecord* frameRecord = frameRecords[kahawaiFrameNum];
-	if (frameRecord == NULL)
-	{
-		KahawaiPrintF("No frame record found on EncodeStart\n");
-		return;
-	}
-
-	frameRecord->timeEncodeStart = timeGetTime();
-}
-
-void Measurement::EncodeEnd()
-{
-
-	FrameRecord* frameRecord = frameRecords[kahawaiFrameNum];
-	if (frameRecord == NULL)
-	{
-		KahawaiPrintF("No frame record found on EncodeEnd\n");
-		return;
-	}
-
-	frameRecord->timeEncodeEnd = timeGetTime();
-}
-
-void Measurement::SendStart()
-{
-
-	FrameRecord* frameRecord = frameRecords[kahawaiFrameNum];
-	if (frameRecord == NULL)
-	{
-		KahawaiPrintF("No frame record found on SendStart\n");
-		return;
-	}
-
-	frameRecord->timeSendStart = timeGetTime();
-}
-
-void Measurement::SendEnd()
-{
-
-	FrameRecord* frameRecord = frameRecords[kahawaiFrameNum];
-	if (frameRecord == NULL)
-	{
-		KahawaiPrintF("No frame record found on SendEnd\n");
-		return;
-	}
-
-	frameRecord->timeSendEnd = timeGetTime();
-}
-
-
-void Measurement::TransformStart()
-{
-
-	FrameRecord* frameRecord = frameRecords[kahawaiFrameNum];
-	if (frameRecord == NULL)
-	{
-		KahawaiPrintF("No frame record found on TransformStart\n");
-		return;
-	}
-
-	frameRecord->timeTransformStart = timeGetTime();
-}
-
-void Measurement::TransformEnd()
-{
-
-	FrameRecord* frameRecord = frameRecords[kahawaiFrameNum];
-	if (frameRecord == NULL)
-	{
-		KahawaiPrintF("No frame record found on TransformEnd\n");
-		return;
-	}
-
-	frameRecord->timeTransformEnd = timeGetTime();
-}
-
-
-
-void Measurement::DecodeStart()
-{
-	FrameRecord* frameRecord = frameRecords[kahawaiFrameNum];
-	if (frameRecord == NULL)
-	{
-		KahawaiPrintF("No frame record found on DecodeStart\n");
-		return;
-	}
-
-	frameRecord->timeDecodeStart = timeGetTime();
-}
-
-void Measurement::DecodeEnd()
-{
-	FrameRecord* frameRecord = frameRecords[kahawaiFrameNum];
-	if (frameRecord == NULL)
-	{
-		KahawaiPrintF("No frame record found on DecodeEnd\n");
-		return;
-	}
-
-	frameRecord->timeDecodeEnd = timeGetTime();
-}
-
-void Measurement::ShowStart()
-{	
-	FrameRecord* frameRecord = frameRecords[kahawaiFrameNum];
-	if (frameRecord == NULL)
-	{
-		KahawaiPrintF("No frame record found on Showed\n");
-		return;
-	}
-
-	frameRecord->timeShowStart = timeGetTime();
-}
-
-void Measurement::ShowEnd()
-{	
-	FrameRecord* frameRecord = frameRecords[kahawaiFrameNum];
-	if (frameRecord == NULL)
-	{
-		KahawaiPrintF("No frame record found on Showed\n");
-		return;
-	}
-
-	frameRecord->timeShowEnd = timeGetTime();
-}
-
 
 void Measurement::InitMeasurementFile(char* filename)
 {
-	measurementFile.open(filename, ios::trunc);
-	WriteMeasurementLine("frameNum, timeFrameStart, timeFrameEnd, timeInputReceived, timeInputSent, timeCaptureStart, timeCaptureEnd, timeKahawaiStart, timeKahawaiEnd, timeTransformStart, timeTransformEnd, timeDecodeStart, timeDecodeEnd, timeShowStart, timeShowEnd, timeEncodeStart, timeEncodeEnd, timeSendStart, timeSendEnd\n");
+	_measurementFile.open(filename, ios::trunc);
 }
 
 void Measurement::WriteMeasurementLine(char* line)
 {
-	measurementFile << line;
-	measurementFile.flush();
-	// XXX: This is very sloppy programming
-	// XXX: We should be closing the measurement file somewhere instead of just
-	//      relying on flush() and relying on the simple fact that things will 
-	//      be fine when the Doom 3 exits.
+	_measurementFile << line;
 }

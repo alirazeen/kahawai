@@ -62,8 +62,8 @@ public:
 	//public Interface
 
 	//Instrumentation
-	void				FrameStart();
-	void				FrameEnd();
+	void				GameStart();
+	void				GameEnd();
 
 };
 

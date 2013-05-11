@@ -49,15 +49,12 @@ protected:
 	SOCKET				_socketToClient;
 	InputHandlerServer* _inputHandler;
 
-	//Instrumentation
-	Measurement*		_measurement;
-
 public:
 	KahawaiServer(void);
 	~KahawaiServer(void);
 
 	//Instrumentation
-	virtual void		FrameStart();
-	virtual void		FrameEnd();
+	virtual void		GameStart();
+	virtual void		GameEnd();
 };
 

@@ -21,17 +21,9 @@ void KahawaiServer::OffloadAsync()
 	//////////////////////////////////////////////////////////////////////////
 	while(_offloading)
 	{
-#ifndef MEASUREMENT_OFF
-		_measurement->KahawaiStart();
-#endif
-		
 		_offloading	 &=	Transform(_width,_height);
 		int frameSize = Encode(&compressedFrame);
 		_offloading	 &=	Send(&compressedFrame,frameSize);
-		
-#ifndef MEASUREMENT_OFF
-		_measurement->KahawaiEnd();
-#endif
 	}
 	/////////////////////////////////////////////////////////////////////////
 
@@ -85,18 +77,14 @@ bool KahawaiServer::IsHD()
 	return true;
 }
 
-void KahawaiServer::FrameStart()
+void KahawaiServer::GameStart()
 {
-#ifndef MEASUREMENT_OFF
-	_measurement->FrameStart();
-#endif
+	// TODO: Add measurement hooks
 }
 
-void KahawaiServer::FrameEnd()
+void KahawaiServer::GameEnd()
 {
-#ifndef MEASUREMENT_OFF
-	_measurement->FrameEnd();
-#endif
+	// TODO: Add measurement hooks
 }
 
 void* KahawaiServer::HandleInput(void*)

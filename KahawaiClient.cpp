@@ -84,18 +84,20 @@ void KahawaiClient::OffloadAsync()
 	//////////////////////////////////////////////////////////////////////////
 	while(_offloading)
 	{
-		//Exits on error
-#ifndef MEASUREMENT_OFF
-		_measurement->KahawaiStart();
-#endif
 
+#ifndef MEASUREMENT_OFF
+		//_measurement->BeginKahawaiPhase();
+#endif // MEASUREMENT_OFF
+
+		//Exits on error
 		_offloading &= Transform(_width,_height);
 		_offloading &= Decode();
 		_offloading &= Show();
-		
+
 #ifndef MEASUREMENT_OFF
-		_measurement->KahawaiEnd();
-#endif
+		//_measurement->EndKahawaiPhase();
+#endif // MEASUREMENT_OFF
+
 	}
 	/////////////////////////////////////////////////////////////////////////
 
@@ -124,18 +126,18 @@ int KahawaiClient::GetDisplayedFrames()
 	//return _decoder->GetDisplayedFrames();
 }
 
-void KahawaiClient::FrameStart()
+void KahawaiClient::GameStart()
 {
 #ifndef MEASUREMENT_OFF
-	_measurement->FrameStart();
-#endif
+	//_measurement->AddPhase(Phase::GAME_START, _renderedFrames);
+#endif // MEASUREMENT_OFF
 }
 
-void KahawaiClient::FrameEnd()
+void KahawaiClient::GameEnd()
 {
 #ifndef MEASUREMENT_OFF
-	_measurement->FrameEnd();
-#endif
+	//_measurement->AddPhase(Phase::GAME_END, _renderedFrames);
+#endif // MEASUREMENT_OFF
 }
 
 
@@ -159,6 +161,11 @@ KahawaiClient::~KahawaiClient(void)
 		delete _inputHandler;
 
 	_inputHandler = NULL;
+
+	if (_measurement!=NULL)
+		delete _measurement;
+
+	_measurement = NULL;
 }
 
 

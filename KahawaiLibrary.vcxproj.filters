@@ -123,6 +123,9 @@
     <ClCompile Include="CircularBuffer.cpp">
       <Filter>Kahawai\Utils</Filter>
     </ClCompile>
+    <ClCompile Include="Phase.cpp">
+      <Filter>Kahawai\Measurement</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\kahawai\Kahawai.h">
@@ -232,6 +235,9 @@
     </ClInclude>
     <ClInclude Include="CircularBuffer.h">
       <Filter>Kahawai\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Phase.h">
+      <Filter>Kahawai\Measurement</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
