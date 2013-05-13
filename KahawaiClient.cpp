@@ -86,7 +86,7 @@ void KahawaiClient::OffloadAsync()
 	{
 
 #ifndef MEASUREMENT_OFF
-		//_measurement->BeginKahawaiPhase();
+		_measurement->AddPhase(Phase::KAHAWAI_START, _kahawaiFrameNum);
 #endif // MEASUREMENT_OFF
 
 		//Exits on error
@@ -95,7 +95,8 @@ void KahawaiClient::OffloadAsync()
 		_offloading &= Show();
 
 #ifndef MEASUREMENT_OFF
-		//_measurement->EndKahawaiPhase();
+		_measurement->AddPhase(Phase::KAHAWAI_END, _kahawaiFrameNum);
+		_kahawaiFrameNum++;
 #endif // MEASUREMENT_OFF
 
 	}
@@ -129,14 +130,15 @@ int KahawaiClient::GetDisplayedFrames()
 void KahawaiClient::GameStart()
 {
 #ifndef MEASUREMENT_OFF
-	//_measurement->AddPhase(Phase::GAME_START, _renderedFrames);
+	_measurement->AddPhase(Phase::GAME_START, _gameFrameNum);
 #endif // MEASUREMENT_OFF
 }
 
 void KahawaiClient::GameEnd()
 {
 #ifndef MEASUREMENT_OFF
-	//_measurement->AddPhase(Phase::GAME_END, _renderedFrames);
+	_measurement->AddPhase(Phase::GAME_END, _gameFrameNum);
+	_gameFrameNum++;
 #endif // MEASUREMENT_OFF
 }
 
@@ -144,7 +146,9 @@ void KahawaiClient::GameEnd()
 KahawaiClient::KahawaiClient(void)
 	:Kahawai(),
 	_decoder(0),
-	_inputHandler(NULL)
+	_inputHandler(NULL),
+	_gameFrameNum(0),
+	_kahawaiFrameNum(0)
 {
 	strncpy_s(_serverIP,KAHAWAI_LOCALHOST,sizeof(KAHAWAI_LOCALHOST));
 

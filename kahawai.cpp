@@ -63,7 +63,9 @@ bool Kahawai::Offload()
 	// Transform/Decode/Show for the client
 	// are done in the other thread (Implemented in OffloadAsync)
     //////////////////////////////////////////////////////////////////////////
-	Capture(_width, _height);
+	Capture(_width, _height); //TODO: We should NOT be doing capturing if we are not
+								// going to render the frame, like in the case of pframes
+
 
 	return true;
 }

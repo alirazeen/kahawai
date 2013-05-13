@@ -55,8 +55,10 @@ bool DeltaClient::Initialize()
 	_convertCtx = sws_getContext(_clientWidth,_clientHeight,PIX_FMT_BGRA, _width, _height,PIX_FMT_YUV420P, SWS_FAST_BILINEAR,NULL,NULL,NULL);
 	_sourceFrame = new uint8_t[_clientWidth*_clientWidth*SOURCE_BITS_PER_PIXEL];
 
+#ifndef MEASUREMENT_OFF
 	//Initialize instrumentation class
 	_measurement = new Measurement("delta_client.csv");
+#endif // MEASUREMENT_OFF
 
 	return true;
 }

@@ -46,6 +46,11 @@ bool IFrameClient::Initialize()
 #ifndef NO_HANDLE_INPUT
 	_inputHandler = new InputHandlerClient(_serverIP,_serverPort+PORT_OFFSET_INPUT_HANDLER,_gameName);
 #endif
+	
+#ifndef MEASUREMENT_OFF
+	//Initialize instrumentation class
+	_measurement = new Measurement("iframe_client.csv");
+#endif // MEASUREMENT_OFF
 
 	return true;
 }
@@ -107,9 +112,18 @@ bool IFrameClient::ShouldSkip()
 
 bool IFrameClient::Transform(int width, int height)
 {
-	bool result = KahawaiClient::Transform(width, height);
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::TRANSFORM_START, _currFrameNum);
+#endif // MEASUREMENT_OFF
+
+	bool result =  KahawaiClient::Transform(width, height);
 	if (result && (_currFrameNum % _gop == 0))
 		result = SendTransformPictureEncoder();
+	
+
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::TRANSFORM_END, _currFrameNum);
+#endif // MEASUREMENT_OFF
 
 	_currFrameNum++;
 	return result;
@@ -122,13 +136,32 @@ bool IFrameClient::SendTransformPictureEncoder()
 
 bool IFrameClient::Decode()
 {
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::DECODE_START, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
 	bool result = _decoder->Decode();
+
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::DECODE_END, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
 	return result;
 }
 
 bool IFrameClient::Show()
 {
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::SHOW_START, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
 	bool result = _decoder->Show();
+
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::SHOW_END, _kahawaiFrameNum);
+	_kahawaiFrameNum++;
+#endif // MEASUREMENT_OFF
+
 	return result;
 }
 

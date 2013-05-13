@@ -23,6 +23,10 @@ void Measurement::AddPhase(const Phase* phase, int frameNum)
 
 	EnterCriticalSection(&_recordsCS);
 	_phaseRecords.push(record);
+
+	if (_phaseRecords.size() > MAX_RECORDS_BEFORE_FLUSH)
+		Flush();
+
 	LeaveCriticalSection(&_recordsCS);
 }
 
@@ -33,6 +37,7 @@ void Measurement::Flush()
 		//Sloppy programming? We just need a ``big enough''
 		//char buffer
 		char line[2048];
+
 		while(!_phaseRecords.empty())
 		{
 			PhaseRecord* record = _phaseRecords.front();
