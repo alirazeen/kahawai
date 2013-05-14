@@ -7,7 +7,7 @@
 
 IFrameClient::IFrameClient(void) :
 	_lastCommand(NULL),
-	_currFrameNum(0)
+	_numTransformedFrames(0)
 {
 	_encoderComponent = new IFrameClientEncoder();
 	_muxerComponent = new IFrameClientMuxer();
@@ -229,8 +229,8 @@ void IFrameClient::DecodeShow()
 
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::KAHAWAI_START, _kahawaiFrameNum);
-		_kahawaiFrameNum++;
 #endif // MEASUREMENT_OFF
+		_kahawaiFrameNum++;
 	}
 }
 

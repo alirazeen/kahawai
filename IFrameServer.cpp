@@ -34,6 +34,10 @@ bool IFrameServer::Initialize()
 	_inputHandler = new InputHandlerServer(_serverPort+PORT_OFFSET_INPUT_HANDLER, _gameName);
 #endif
 
+#ifndef MEASUREMENT_OFF
+	_measurement = new Measurement("iframe_server.csv");
+#endif // MEASUREMENT_OFF
+
 	return (_encoder!=NULL && _inputHandler!=NULL);
 }
 
@@ -57,8 +61,43 @@ void IFrameServer::OffloadAsync()
 	KahawaiServer::OffloadAsync();
 }
 
+bool IFrameServer::Capture(int width, int height)
+{
+
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::CAPTURE_START, _gameFrameNum);
+#endif // MEASUREMENT_OFF
+
+	bool result = KahawaiServer::Capture(width,height);
+
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::CAPTURE_END, _gameFrameNum);
+#endif // MEASUREMENT_OFF
+
+	return result;
+}
+
+bool IFrameServer::Transform(int width, int height)
+{
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::TRANSFORM_START, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
+	bool result = KahawaiServer::Transform(width,height);
+	
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::TRANSFORM_END, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
+	return result;
+}
+
 int IFrameServer::Encode(void** compressedFrame)
 {
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::ENCODE_START, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
 	if(_currFrameNum%_gop==0) //is it time to encode an I-Frame
 	{
 		_transformPicture->i_type = X264_TYPE_IDR; //lets try with an IDR frame first
@@ -70,11 +109,22 @@ int IFrameServer::Encode(void** compressedFrame)
 		_transformPicture->i_qpplus1 = X264_QP_AUTO;
 	}
 
-	return _encoder->Encode(_transformPicture,compressedFrame);
+	int result = _encoder->Encode(_transformPicture,compressedFrame);
+
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::ENCODE_END, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
+	return result;
 }
 
 bool IFrameServer::Send(void** compressedFrame, int frameSize)
 {
+
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::SEND_START, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
 	if(_currFrameNum%_gop!=0) //We send only the P-frames
 	{
 		//Send the pframe size to the client
@@ -98,6 +148,10 @@ bool IFrameServer::Send(void** compressedFrame, int frameSize)
 		}
 
 	}
+
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::SEND_END, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
 
 	_currFrameNum++;
 	return true;

@@ -32,8 +32,14 @@ public:
 	static const Phase* TRANSFORM_START;
 	static const Phase* TRANSFORM_END;
 
+	static const Phase* ENCODE_START;
+	static const Phase* ENCODE_END;
+
 	static const Phase* DECODE_START;
 	static const Phase* DECODE_END;
+
+	static const Phase* SEND_START;
+	static const Phase* SEND_END;
 
 	static const Phase* SHOW_START;
 	static const Phase* SHOW_END;

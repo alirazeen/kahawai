@@ -87,8 +87,16 @@ void DeltaClient::OffloadAsync()
  */
 bool DeltaClient::Capture(int width, int height)
 {
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::CAPTURE_START, _gameFrameNum);
+#endif // MEASUREMENT_OFF
+
 	//Captures at the client resolution
 	bool result = KahawaiClient::Capture(_clientWidth,_clientHeight);
+
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::CAPTURE_END, _gameFrameNum);
+#endif // MEASUREMENT_OFF
 	return result;
 }
 
@@ -102,21 +110,53 @@ bool DeltaClient::Capture(int width, int height)
  */
 bool DeltaClient::Transform(int width, int height)
 {
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::TRANSFORM_START, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
 	//transforms the screen captured at the client resolution
 	bool result = KahawaiClient::Transform(_clientWidth, _clientHeight);
+
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::TRANSFORM_END, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
 	return result;
 }
 
 bool DeltaClient::Decode()
 {
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::DECODE_START, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
+	//TODO: LogYUVFrame below should NOT rely on the _renderedFrames counter
+	//since that is incremented in the game thread while Decode() runs in the
+	//kahawai thread. It is not necessary for both threads to be processing the 
+	//same frame.
 	LogYUVFrame(_saveCaptures,"low",_renderedFrames,(char*)_transformPicture->img.plane[0],_clientWidth,_clientHeight);
 	bool result = _decoder->Decode(Patch,_transformPicture->img.plane[0]);
+
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::DECODE_END, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
 	return result;
 }
 
 bool DeltaClient::Show()
 {
+
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::SHOW_START, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
 	bool result = _decoder->Show();
+
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::SHOW_END, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
 	return result;
 }
 

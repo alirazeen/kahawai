@@ -21,9 +21,20 @@ void KahawaiServer::OffloadAsync()
 	//////////////////////////////////////////////////////////////////////////
 	while(_offloading)
 	{
+
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase(Phase::KAHAWAI_START, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
 		_offloading	 &=	Transform(_width,_height);
 		int frameSize = Encode(&compressedFrame);
 		_offloading	 &=	Send(&compressedFrame,frameSize);
+
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase(Phase::KAHAWAI_START, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
+		_kahawaiFrameNum++;
 	}
 	/////////////////////////////////////////////////////////////////////////
 
@@ -79,12 +90,17 @@ bool KahawaiServer::IsHD()
 
 void KahawaiServer::GameStart()
 {
-	// TODO: Add measurement hooks
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::GAME_START, _gameFrameNum);
+#endif // MEASUREMENT_OFF
 }
 
 void KahawaiServer::GameEnd()
 {
-	// TODO: Add measurement hooks
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::GAME_END, _gameFrameNum);
+#endif // MEASUREMENT_OFF
+	_gameFrameNum++;
 }
 
 void* KahawaiServer::HandleInput(void*)
@@ -109,8 +125,9 @@ KahawaiServer::KahawaiServer(void)
 	_encoder(NULL),
 	_inputHandler(NULL),
 	_crf(0),
-	_preset(0)
-
+	_preset(0),
+	_gameFrameNum(0),
+	_kahawaiFrameNum(0)
 {
 }
 

@@ -54,13 +54,19 @@ bool DeltaServer::Initialize()
 
 	if (_master)
 	{
-		// TODO: Initialize measurement profiler for delta master
+#ifndef MEASUREMENT_OFF
+		_measurement = new Measurement("delta_server_master.csv");
+#endif // MEASUREMENT_OFF
+
 	} else
 	{	//Re-Initialize sws scaling context if slave
 		delete[] _sourceFrame;
 		_convertCtx = sws_getContext(_clientWidth,_clientHeight,PIX_FMT_BGRA, _width, _height,PIX_FMT_YUV420P, SWS_FAST_BILINEAR,NULL,NULL,NULL);
 		_sourceFrame = new uint8_t[_clientWidth*_clientWidth*SOURCE_BITS_PER_PIXEL];
-		// TODO: Initialize measurement profiler fof delta slave
+
+#ifndef MEASUREMENT_OFF
+		_measurement = new Measurement("delta_server_slave.csv");
+#endif // MEASUREMENT_OFF
 	}
 
 	return true;
@@ -111,6 +117,20 @@ void DeltaServer::OffloadAsync()
 
 }
 
+bool DeltaServer::Capture(int width, int height)
+{
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::CAPTURE_START, _gameFrameNum);
+#endif // MEASUREMENT_OFF
+
+	bool result = KahawaiServer::Capture(width, height);
+
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::CAPTURE_END, _gameFrameNum);
+#endif // MEASUREMENT_OFF
+
+	return result;
+}
 
 /**
  * Overrides Kahawai::Transform because it needs to synchronize
@@ -122,7 +142,16 @@ void DeltaServer::OffloadAsync()
  */
 bool DeltaServer::Transform(int width, int height)
 {
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::TRANSFORM_START, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
 	bool result = KahawaiServer::Transform(_width, _height);
+
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::TRANSFORM_END, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
 	return result;
 }
 
@@ -136,6 +165,10 @@ bool DeltaServer::Transform(int width, int height)
  */
 int DeltaServer::Encode(void** transformedFrame)
 {
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::ENCODE_START, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
 	int result = 0;
 	if(_master)
 	{
@@ -152,6 +185,11 @@ int DeltaServer::Encode(void** transformedFrame)
 		result = YUV420pBitsPerPixel(_width,_height);
 	}
 
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::ENCODE_END, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
+
 	return result;
 }
 
@@ -164,6 +202,10 @@ int DeltaServer::Encode(void** transformedFrame)
  */
 bool DeltaServer::Send(void** compressedFrame, int frameSize)
 {
+
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::SEND_START, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
 
 	if(_master)
 	{
@@ -183,6 +225,10 @@ bool DeltaServer::Send(void** compressedFrame, int frameSize)
 		SetEvent(_masterBarrier);
 		WaitForSingleObject(_slaveBarrier, INFINITE);
 	}
+
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase(Phase::SEND_END, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
 
 	return true;
 }

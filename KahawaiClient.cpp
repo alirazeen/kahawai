@@ -96,9 +96,8 @@ void KahawaiClient::OffloadAsync()
 
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::KAHAWAI_END, _kahawaiFrameNum);
-		_kahawaiFrameNum++;
 #endif // MEASUREMENT_OFF
-
+		_kahawaiFrameNum++;
 	}
 	/////////////////////////////////////////////////////////////////////////
 
@@ -138,8 +137,8 @@ void KahawaiClient::GameEnd()
 {
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::GAME_END, _gameFrameNum);
-	_gameFrameNum++;
 #endif // MEASUREMENT_OFF
+	_gameFrameNum++;
 }
 
 

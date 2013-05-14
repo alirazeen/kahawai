@@ -21,8 +21,14 @@ const Phase* Phase::KAHAWAI_END = new Phase(num++, "KAHAWAI_END");
 const Phase* Phase::TRANSFORM_START = new Phase(num++, "TRANSFORM_START");
 const Phase* Phase::TRANSFORM_END = new Phase(num++, "TRANSFORM_END");
 
+const Phase* Phase::ENCODE_START = new Phase(num++, "ENCODE_START");
+const Phase* Phase::ENCODE_END = new Phase(num++, "ENCODE_END");
+
 const Phase* Phase::DECODE_START = new Phase(num++, "DECODE_START");
 const Phase* Phase::DECODE_END = new Phase(num++, "DECODE_END");
+
+const Phase* Phase::SEND_START = new Phase(num++, "SEND_START");
+const Phase* Phase::SEND_END = new Phase(num++, "SEND_END");
 
 const Phase* Phase::SHOW_START = new Phase(num++, "SHOW_START");
 const Phase* Phase::SHOW_END = new Phase(num++, "SHOW_END");

@@ -52,6 +52,10 @@ protected:
 	//Instrumentation
 	Measurement*		_measurement;
 
+
+	int					_gameFrameNum;
+	int					_kahawaiFrameNum;
+
 public:
 	KahawaiServer(void);
 	~KahawaiServer(void);
