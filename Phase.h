@@ -15,7 +15,7 @@ class Phase
 
 public:
 	
-	const int _num; //Numerical representation of the enum
+	const int _ordinal; //Numerical representation of the enum
 	const char* _str; //String representation of teh enum
 
 	//Phases encountered within the game thread
@@ -47,7 +47,10 @@ public:
 private:
 
 	//No one else can create a new instance of this enum
-	Phase(int num, char* str);
+	Phase(char* str);
+
+	//Used to assign an ordinal to the phases
+	static int _nextOrdinal;
 };
 
 #endif // PHASE
