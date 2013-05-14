@@ -49,6 +49,9 @@ protected:
 	SOCKET				_socketToClient;
 	InputHandlerServer* _inputHandler;
 
+	//Instrumentation
+	Measurement*		_measurement;
+
 public:
 	KahawaiServer(void);
 	~KahawaiServer(void);

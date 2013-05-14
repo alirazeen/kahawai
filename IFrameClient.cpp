@@ -113,19 +113,19 @@ bool IFrameClient::ShouldSkip()
 bool IFrameClient::Transform(int width, int height)
 {
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::TRANSFORM_START, _currFrameNum);
+	_measurement->AddPhase(Phase::TRANSFORM_START, _numTransformedFrames);
 #endif // MEASUREMENT_OFF
 
 	bool result =  KahawaiClient::Transform(width, height);
-	if (result && (_currFrameNum % _gop == 0))
+	if (result && (_numTransformedFrames % _gop == 0))
 		result = SendTransformPictureEncoder();
 	
 
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::TRANSFORM_END, _currFrameNum);
+	_measurement->AddPhase(Phase::TRANSFORM_END, _numTransformedFrames);
 #endif // MEASUREMENT_OFF
 
-	_currFrameNum++;
+	_numTransformedFrames++;
 	return result;
 }
 
@@ -159,7 +159,6 @@ bool IFrameClient::Show()
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::SHOW_END, _kahawaiFrameNum);
-	_kahawaiFrameNum++;
 #endif // MEASUREMENT_OFF
 
 	return result;
@@ -220,8 +219,18 @@ void IFrameClient::DecodeShow()
 	bool offloading = true;
 	while (offloading)
 	{
+
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase(Phase::KAHAWAI_START, _kahawaiFrameNum);
+#endif // MEASUREMENT_OFF
+
 		offloading &= Decode();
 		offloading &= Show();
+
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase(Phase::KAHAWAI_START, _kahawaiFrameNum);
+		_kahawaiFrameNum++;
+#endif // MEASUREMENT_OFF
 	}
 }
 

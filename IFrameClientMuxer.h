@@ -19,7 +19,8 @@ public:
 
 private:
 
-	//Needed for bookkeeping
+	//We need to know the gop and the current frame number to decide
+	//if we should send an iFrame or a pFrame to the decoder
 	int		_currFrameNum;
 	int		_gop;
 

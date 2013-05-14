@@ -54,8 +54,17 @@ protected:
 
 	//Instrumentation
 	Measurement*		_measurement;
-	int					_gameFrameNum;
-	int					_kahawaiFrameNum;
+
+	//We keep track of separate counters for keeping track of the 
+	//frames rendered so far instead of using existing ones (like 
+	//_renderedFrames in the kahawai base class) because it makes
+	//the logic simpler. We can increment these counters in the correct
+	//places and not worry about whether it will affect the logic anywhere 
+	//else. Given the multi-threaded nature of Kahawai, we have to resort to
+	//multiple frame counters. It's not the most elegant solution but it'll have 
+	//to suffice for now.
+	int					_gameFrameNum; //Number of frames rendered by the game
+	int					_kahawaiFrameNum; //Number of frames rendered by Kahawai
 
 public:
 	KahawaiClient(void);

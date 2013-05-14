@@ -119,7 +119,10 @@ protected:
 	bool				_offloading;
 	int					_fps; //target fps of the game. Normally 60
 	int					_timeStep; // Number of milliseconds per RENDERED frame. 
-	int					_renderedFrames; //total frames rendered so far
+	int					_renderedFrames; //total frames rendered so far by the game 
+										//(but not necessarily by Kahawai since the game and kahawai
+										//run in different threads)
+
 
 	//Kahawai performance profile information
 	unsigned long		_offloadStartTime;
