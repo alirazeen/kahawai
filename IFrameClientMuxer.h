@@ -63,9 +63,9 @@ private:
 	static DWORD WINAPI		AsyncInitLocalSocket(void* Param);
 	bool					InitLocalSocket();
 
-	//Methods to send frames to the local decoder
-	static DWORD WINAPI		AsyncSendFrames(void* Param);
-	void					SendFrames();
+	//Methods to multiplex and send frames to the local decoder
+	static DWORD WINAPI		AsyncMultiplex(void* Param);
+	void					Multiplex();
 
 	//Methods to receive P-frames from the remote server
 	static DWORD WINAPI		AsyncReceivePFrames(void* Param);

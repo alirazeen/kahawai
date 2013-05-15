@@ -83,7 +83,7 @@ bool IFrameClientMuxer::BeginOffload()
 
 	if (threadCreated)
 		//Create the thread that will send frames to the local decoder
-		threadCreated = CreateKahawaiThread(AsyncSendFrames, this);
+		threadCreated = CreateKahawaiThread(AsyncMultiplex, this);
 
 	return threadCreated;
 }
@@ -140,15 +140,15 @@ DWORD WINAPI IFrameClientMuxer::AsyncReceivePFrames(void* Param)
 	return 0;
 }
 
-DWORD WINAPI IFrameClientMuxer::AsyncSendFrames(void* Param)
+DWORD WINAPI IFrameClientMuxer::AsyncMultiplex(void* Param)
 {
 	IFrameClientMuxer* This = (IFrameClientMuxer*) Param;
-	This->SendFrames();
+	This->Multiplex();
 	
 	return 0;
 }
 
-void IFrameClientMuxer::SendFrames()
+void IFrameClientMuxer::Multiplex()
 {
 
 	//Wait for the decoder socket to be created
