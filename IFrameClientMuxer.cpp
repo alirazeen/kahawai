@@ -212,6 +212,8 @@ void IFrameClientMuxer::Multiplex()
 			LeaveCriticalSection(&_pFrameCS);
 		}
 
+
+		_currFrameNum++;
 	}
 
 }
@@ -224,7 +226,6 @@ bool IFrameClientMuxer::SendFrameToLocalDecoder(char* frame, int size)
 		sent += send(_socketToDecoder, frame+sent, size, 0);
 	}
 
-	_currFrameNum++;
 	return true;
 }
 
