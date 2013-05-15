@@ -86,7 +86,7 @@ void KahawaiClient::OffloadAsync()
 	{
 
 #ifndef MEASUREMENT_OFF
-		_measurement->AddPhase(Phase::KAHAWAI_START, _kahawaiFrameNum);
+		_measurement->AddPhase(Phase::KAHAWAI_BEGIN, _kahawaiFrameNum);
 #endif // MEASUREMENT_OFF
 
 		//Exits on error
@@ -129,7 +129,7 @@ int KahawaiClient::GetDisplayedFrames()
 void KahawaiClient::GameStart()
 {
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::GAME_START, _gameFrameNum);
+	_measurement->AddPhase(Phase::GAME_BEGIN, _gameFrameNum);
 #endif // MEASUREMENT_OFF
 }
 

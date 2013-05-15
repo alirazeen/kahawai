@@ -88,7 +88,7 @@ void DeltaClient::OffloadAsync()
 bool DeltaClient::Capture(int width, int height)
 {
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::CAPTURE_START, _gameFrameNum);
+	_measurement->AddPhase(Phase::CAPTURE_BEGIN, _gameFrameNum);
 #endif // MEASUREMENT_OFF
 
 	//Captures at the client resolution
@@ -111,7 +111,7 @@ bool DeltaClient::Capture(int width, int height)
 bool DeltaClient::Transform(int width, int height)
 {
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::TRANSFORM_START, _kahawaiFrameNum);
+	_measurement->AddPhase(Phase::TRANSFORM_BEGIN, _kahawaiFrameNum);
 #endif // MEASUREMENT_OFF
 
 	//transforms the screen captured at the client resolution
@@ -127,7 +127,7 @@ bool DeltaClient::Transform(int width, int height)
 bool DeltaClient::Decode()
 {
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::DECODE_START, _kahawaiFrameNum);
+	_measurement->AddPhase(Phase::DECODE_BEGIN, _kahawaiFrameNum);
 #endif // MEASUREMENT_OFF
 
 	//TODO: LogYUVFrame below should NOT rely on the _renderedFrames counter
@@ -148,7 +148,7 @@ bool DeltaClient::Show()
 {
 
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::SHOW_START, _kahawaiFrameNum);
+	_measurement->AddPhase(Phase::SHOW_BEGIN, _kahawaiFrameNum);
 #endif // MEASUREMENT_OFF
 
 	bool result = _decoder->Show();

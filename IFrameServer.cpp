@@ -65,7 +65,7 @@ bool IFrameServer::Capture(int width, int height)
 {
 
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::CAPTURE_START, _gameFrameNum);
+	_measurement->AddPhase(Phase::CAPTURE_BEGIN, _gameFrameNum);
 #endif // MEASUREMENT_OFF
 
 	bool result = KahawaiServer::Capture(width,height);
@@ -80,7 +80,7 @@ bool IFrameServer::Capture(int width, int height)
 bool IFrameServer::Transform(int width, int height)
 {
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::TRANSFORM_START, _kahawaiFrameNum);
+	_measurement->AddPhase(Phase::TRANSFORM_BEGIN, _kahawaiFrameNum);
 #endif // MEASUREMENT_OFF
 
 	bool result = KahawaiServer::Transform(width,height);
@@ -95,7 +95,7 @@ bool IFrameServer::Transform(int width, int height)
 int IFrameServer::Encode(void** compressedFrame)
 {
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::ENCODE_START, _kahawaiFrameNum);
+	_measurement->AddPhase(Phase::ENCODE_BEGIN, _kahawaiFrameNum);
 #endif // MEASUREMENT_OFF
 
 	if(_currFrameNum%_gop==0) //is it time to encode an I-Frame
@@ -122,7 +122,7 @@ bool IFrameServer::Send(void** compressedFrame, int frameSize)
 {
 
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::SEND_START, _kahawaiFrameNum);
+	_measurement->AddPhase(Phase::SEND_BEGIN, _kahawaiFrameNum);
 #endif // MEASUREMENT_OFF
 
 	if(_currFrameNum%_gop!=0) //We send only the P-frames

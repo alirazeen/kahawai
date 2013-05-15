@@ -23,7 +23,7 @@ void KahawaiServer::OffloadAsync()
 	{
 
 #ifndef MEASUREMENT_OFF
-		_measurement->AddPhase(Phase::KAHAWAI_START, _kahawaiFrameNum);
+		_measurement->AddPhase(Phase::KAHAWAI_BEGIN, _kahawaiFrameNum);
 #endif // MEASUREMENT_OFF
 
 		_offloading	 &=	Transform(_width,_height);
@@ -31,7 +31,7 @@ void KahawaiServer::OffloadAsync()
 		_offloading	 &=	Send(&compressedFrame,frameSize);
 
 #ifndef MEASUREMENT_OFF
-		_measurement->AddPhase(Phase::KAHAWAI_START, _kahawaiFrameNum);
+		_measurement->AddPhase(Phase::KAHAWAI_BEGIN, _kahawaiFrameNum);
 #endif // MEASUREMENT_OFF
 
 		_kahawaiFrameNum++;
@@ -91,7 +91,7 @@ bool KahawaiServer::IsHD()
 void KahawaiServer::GameStart()
 {
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::GAME_START, _gameFrameNum);
+	_measurement->AddPhase(Phase::GAME_BEGIN, _gameFrameNum);
 #endif // MEASUREMENT_OFF
 }
 
