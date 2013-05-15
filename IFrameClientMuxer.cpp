@@ -167,7 +167,7 @@ void IFrameClientMuxer::Multiplex()
 	int bufferSize = -1;
 	while(true)
 	{
-		KahawaiPrintF("Sending out frame: %d\n", _currFrameNum);
+		
 		if (_currFrameNum % _gop == 0)
 		{
 			// Get the next i frame
