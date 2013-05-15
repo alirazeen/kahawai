@@ -167,7 +167,10 @@ void IFrameClientMuxer::Multiplex()
 	int bufferSize = -1;
 	while(true)
 	{
-		
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase(Phase::IFRAME_CLIENT_MULTIPLEX_BEGIN, _currFrameNum);
+#endif // MEASUREMENT_OFF
+
 		if (_currFrameNum % _gop == 0)
 		{
 			// Get the next i frame
@@ -212,6 +215,9 @@ void IFrameClientMuxer::Multiplex()
 			LeaveCriticalSection(&_pFrameCS);
 		}
 
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase(Phase::IFRAME_CLIENT_MULTIPLEX_END, _currFrameNum);
+#endif // MEASUREMENT_OFF
 
 		_currFrameNum++;
 	}
@@ -291,6 +297,13 @@ void IFrameClientMuxer::ReceivePFrame()
 	}
 	WakeConditionVariable(&_pFrameWaitForFrameCV);
 	LeaveCriticalSection(&_pFrameCS);
+}
+
+void IFrameClientMuxer::SetMeasurement(Measurement* measurement)
+{
+#ifndef MEASUREMENT_OFF
+	_measurement = measurement;
+#endif // MEASUREMENT_OFF
 }
 
 #endif

@@ -50,6 +50,7 @@ bool IFrameClient::Initialize()
 #ifndef MEASUREMENT_OFF
 	//Initialize instrumentation class
 	_measurement = new Measurement("iframe_client.csv");
+	_muxerComponent->SetMeasurement(_measurement);
 #endif // MEASUREMENT_OFF
 
 	return true;
@@ -118,8 +119,18 @@ bool IFrameClient::Transform(int width, int height)
 
 	bool result =  KahawaiClient::Transform(width, height);
 	if (result && (_numTransformedFrames % _gop == 0))
+	{
+
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase(Phase::IFRAME_CLIENT_ENCODE_BEGIN, _numTransformedFrames);
+#endif // MEASUREMENT_OFF
+		
 		result = SendTransformPictureEncoder();
-	
+
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase(Phase::IFRAME_CLIENT_ENCODE_END, _numTransformedFrames);
+#endif // MEASUREMENT_OFF
+	}
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::TRANSFORM_END, _numTransformedFrames);

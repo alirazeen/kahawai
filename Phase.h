@@ -44,6 +44,13 @@ public:
 	static const Phase* SHOW_BEGIN;
 	static const Phase* SHOW_END;
 
+	static const Phase* IFRAME_CLIENT_ENCODE_BEGIN;
+	static const Phase* IFRAME_CLIENT_ENCODE_END;
+
+	static const Phase* IFRAME_CLIENT_MULTIPLEX_BEGIN;
+	static const Phase* IFRAME_CLIENT_MULTIPLEX_END;
+
+
 private:
 
 	//No one else can create a new instance of this enum

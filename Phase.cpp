@@ -34,3 +34,9 @@ const Phase* Phase::SEND_END = new Phase("SEND_END");
 
 const Phase* Phase::SHOW_BEGIN = new Phase("SHOW_BEGIN");
 const Phase* Phase::SHOW_END = new Phase("SHOW_END");
+
+const Phase* Phase::IFRAME_CLIENT_ENCODE_BEGIN = new Phase("IFRAME_CLIENT_ENCODE_BEGIN");
+const Phase* Phase::IFRAME_CLIENT_ENCODE_END = new Phase("IFRAME_CLIENT_ENCODE_END");
+
+const Phase* Phase::IFRAME_CLIENT_MULTIPLEX_BEGIN = new Phase("IFRAME_CLIENT_MULTIPLEX_BEGIN");
+const Phase* Phase::IFRAME_CLIENT_MULTIPLEX_END = new Phase("IFRAME_CLIENT_MULTIPLEX_END");

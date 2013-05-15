@@ -1,6 +1,7 @@
 #pragma once
 #include "KahawaiClient.h"
 #include "CircularBuffer.h"
+#include "Measurement.h"
 
 class IFrameClientMuxer
 {
@@ -16,6 +17,9 @@ public:
 
 	//Receive I-frame from the local encoder
 	void		ReceiveIFrame(void* frame, int size);
+
+	//Set the measurement profiler
+	void		SetMeasurement(Measurement* measurement);
 
 private:
 
@@ -73,5 +77,8 @@ private:
 
 	//Send a frame to the local decoder
 	bool		SendFrameToLocalDecoder(char* frame, int size);
+
+	//Instrumentation
+	Measurement* _measurement;
 };
 
