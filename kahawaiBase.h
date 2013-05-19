@@ -53,8 +53,8 @@ typedef byte (*kahawaiTransform)(byte apply,byte patch);
 #define MAX_FRAMES_TO_RUN 6000
 
 #define FRAME_GAP 0
-#define MAX_INPUT_QUEUE_LENGTH_CLIENT 0
-#define MAX_INPUT_QUEUE_LENGTH_SERVER 0
+#define MAX_INPUT_QUEUE_LENGTH_CLIENT 60 //XXX: Why 60? Because some arbitrary number is needed and the game runs at 60 FPS so we'll keep it at 60.
+#define MAX_INPUT_QUEUE_LENGTH_SERVER 60
 
 #define RECONNECTION_WAIT 5000
 
