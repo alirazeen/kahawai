@@ -52,11 +52,10 @@ bool DeltaServer::Initialize()
 	_inputHandler = new InputHandlerServer(_serverPort+PORT_OFFSET_INPUT_HANDLER, _gameName);
 #endif
 
+	char* measurement_file_name;
 	if (_master)
 	{
-#ifndef MEASUREMENT_OFF
-		_measurement = new Measurement("delta_server_master.csv");
-#endif // MEASUREMENT_OFF
+		measurement_file_name = "delta_server_master.csv";
 
 	} else
 	{	//Re-Initialize sws scaling context if slave
@@ -64,10 +63,13 @@ bool DeltaServer::Initialize()
 		_convertCtx = sws_getContext(_clientWidth,_clientHeight,PIX_FMT_BGRA, _width, _height,PIX_FMT_YUV420P, SWS_FAST_BILINEAR,NULL,NULL,NULL);
 		_sourceFrame = new uint8_t[_clientWidth*_clientWidth*SOURCE_BITS_PER_PIXEL];
 
-#ifndef MEASUREMENT_OFF
-		_measurement = new Measurement("delta_server_slave.csv");
-#endif // MEASUREMENT_OFF
+		measurement_file_name = "delta_server_slave.csv";
 	}
+
+#ifndef MEASUREMENT_OFF
+	_measurement = new Measurement(measurement_file_name);
+	_inputHandler->SetMeasurement(_measurement);
+#endif // MEASUREMENT_OFF
 
 	return true;
 }
@@ -365,6 +367,11 @@ bool DeltaServer::IsHD()
  */
 void* DeltaServer::HandleInput(void*)
 {
+
+#ifndef MEASUREMENT_OFF
+	_inputHandler->SetFrameNum(_gameFrameNum);
+#endif // MEASUREMENT_OFF
+
 	if(!ShouldHandleInput())
 		return _inputHandler->GetEmptyCommand();
 

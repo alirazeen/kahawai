@@ -45,7 +45,10 @@ InputHandlerClient::InputHandlerClient(char* serverIP, int port, char* gameName)
 	:_port(port),
 	_serverIP(serverIP),
 	_inputSocket(INVALID_SOCKET),
-	_connected(false)
+	_connected(false),
+	_frameNum(0),
+	_numReceivedInput(0),
+	_numSentInput(0)
 {
 
 	//Obtain the game specific serializer
@@ -66,6 +69,19 @@ InputHandlerClient::InputHandlerClient(char* serverIP, int port, char* gameName)
 
 }
 
+void InputHandlerClient::SetMeasurement(Measurement* measurement)
+{
+#ifndef MEASUREMENT_OFF
+	_measurement = measurement;
+#endif // MEASUREMENT_OFF
+}
+
+void InputHandlerClient::SetFrameNum(int frameNum)
+{
+#ifndef MEASUREMENT_OFF
+	_frameNum = frameNum;
+#endif // MEASUREMENT_OFF
+}
 
 InputHandlerClient::~InputHandlerClient(void)
 {
@@ -102,12 +118,21 @@ void InputHandlerClient::SendCommandsAsync()
 		WakeConditionVariable(&_inputFullCV);
 		LeaveCriticalSection(&_inputBufferCS);
 
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase(Phase::INPUT_CLIENT_SEND_BEGIN, FRAME_NUM_NOT_APPLICABLE, "InputNum: %d",_numSentInput);
+#endif // MEASUREMENT_OFF
+
+		int result = send(_inputSocket,command,_commandLength,0);
 		//Send the command to the server
-		if(send(_inputSocket,command,_commandLength,0)==SOCKET_ERROR)
+		if (result == SOCKET_ERROR)
 		{
 			KahawaiLog("Unable to send input to server", KahawaiError);
-
 		}
+
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase(Phase::INPUT_CLIENT_SEND_END, FRAME_NUM_NOT_APPLICABLE, "InputNum: %d", _numSentInput);
+#endif // MEASUREMENT_OFF
+		_numSentInput++;
 
 		delete[] command;
 		command = NULL;
@@ -145,7 +170,13 @@ void InputHandlerClient::SendCommand(void* command)
 		{
 			SleepConditionVariableCS(&_inputFullCV,&_inputBufferCS,INFINITE);
 		}
+
 		_commandQueue.push(copyCommand);
+
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase(Phase::INPUT_CLIENT_RECEIVE, _frameNum, "InputNum: %d", _numReceivedInput);
+#endif // MEASUREMENT_OFF
+		_numReceivedInput++;
 	}
 	WakeConditionVariable(&_inputReadyCV);
 	LeaveCriticalSection(&_inputBufferCS);

@@ -10,6 +10,7 @@
 using namespace std;
 
 #define MAX_RECORDS_BEFORE_FLUSH 100
+#define FRAME_NUM_NOT_APPLICABLE -1
 
 class Measurement
 {

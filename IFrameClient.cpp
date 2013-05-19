@@ -51,6 +51,7 @@ bool IFrameClient::Initialize()
 	//Initialize instrumentation class
 	_measurement = new Measurement("iframe_client.csv");
 	_muxerComponent->SetMeasurement(_measurement);
+	_inputHandler->SetMeasurement(_measurement);
 #endif // MEASUREMENT_OFF
 
 	return true;
@@ -177,7 +178,9 @@ bool IFrameClient::Show()
 
 void* IFrameClient::HandleInput(void* inputCommand)
 {
-
+#ifndef MEASUREMENT_OFF
+	_inputHandler->SetFrameNum(_gameFrameNum);
+#endif // MEASUREMENT_OFF
 
 	//Free memory from previous invocations
 	if(_lastCommand != NULL)

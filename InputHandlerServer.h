@@ -3,6 +3,7 @@
 #ifdef KAHAWAI
 #include "InputSerializer.h"
 #include <queue>
+#include "Measurement.h"
 using namespace std;
 
  //The max size in bytes of each command representation
@@ -24,6 +25,10 @@ public:
 	size_t					GetCommandLength() {return _serializer->GetCommandSize();}
 	bool					Finalize();
 
+	//Instrumentation
+	void					SetMeasurement(Measurement* measurement);
+	void					SetFrameNum(int frameNum);
+
 private:
 	void					ReceiveCommandsAsync();
 	//Communication
@@ -40,6 +45,12 @@ private:
 
 	//Serialization
 	InputSerializer*		_serializer;
+
+	//Instrumentation
+	Measurement*			_measurement;
+	int						_frameNum;
+	int						_numReceivedInput;
+	int						_numSentInput;
 };
 
 #endif

@@ -58,6 +58,7 @@ bool DeltaClient::Initialize()
 #ifndef MEASUREMENT_OFF
 	//Initialize instrumentation class
 	_measurement = new Measurement("delta_client.csv");
+	_inputHandler->SetMeasurement(_measurement);
 #endif // MEASUREMENT_OFF
 
 	return true;
@@ -169,6 +170,11 @@ bool DeltaClient::Show()
 
 void* DeltaClient::HandleInput(void* inputCommand)
 {
+
+#ifndef MEASUREMENT_OFF
+	_inputHandler->SetFrameNum(_gameFrameNum);
+#endif // MEASUREMENT_OFF
+
 	//Free memory from previous invocations
 	if(_lastCommand != NULL)
 	{

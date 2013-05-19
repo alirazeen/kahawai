@@ -51,6 +51,20 @@ public:
 	static const Phase* IFRAME_CLIENT_MULTIPLEX_END;
 
 
+	//From the client's perspective, receiving an input
+	//means receiving it from the game and sending an input
+	//means sending it to the cloud server
+	static const Phase* INPUT_CLIENT_RECEIVE;
+	static const Phase* INPUT_CLIENT_SEND_BEGIN;
+	static const Phase* INPUT_CLIENT_SEND_END;
+
+	//From the server's perspective, receiving an input
+	//means receiving it from the client and sending an input
+	//means sending it to the game
+	static const Phase* INPUT_SERVER_RECEIVE_BEGIN;
+	static const Phase* INPUT_SERVER_RECEIVE_END;
+	static const Phase* INPUT_SERVER_SEND;
+
 private:
 
 	//No one else can create a new instance of this enum

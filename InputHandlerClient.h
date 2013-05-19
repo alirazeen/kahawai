@@ -3,6 +3,7 @@
 #ifdef KAHAWAI
 #include "InputSerializer.h"
 #include <queue>
+#include "Measurement.h"
 using namespace std;
 
 class InputHandlerClient
@@ -19,6 +20,9 @@ public:
 	bool					Connect();
 	bool					Finalize();
 	bool					IsConnected();
+
+	void					SetMeasurement(Measurement* measurement);
+	void					SetFrameNum(int frameNum);
 
 private:
 	void					SendCommandsAsync();
@@ -41,6 +45,10 @@ private:
 
 	int						_commandLength;
 
-
+	//Instrumentation
+	Measurement*			_measurement;
+	int						_frameNum;
+	int						_numReceivedInput;
+	int						_numSentInput;
 };
 #endif

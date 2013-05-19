@@ -36,6 +36,7 @@ bool IFrameServer::Initialize()
 
 #ifndef MEASUREMENT_OFF
 	_measurement = new Measurement("iframe_server.csv");
+	_inputHandler->SetMeasurement(_measurement);
 #endif // MEASUREMENT_OFF
 
 	return (_encoder!=NULL && _inputHandler!=NULL);
@@ -162,7 +163,9 @@ bool IFrameServer::Send(void** compressedFrame, int frameSize)
 //////////////////////////////////////////////////////////////////////////
 void* IFrameServer::HandleInput(void* input)
 {
-	
+#ifndef MEASUREMENT_OFF
+	_inputHandler->SetFrameNum(_gameFrameNum);
+#endif // MEASUREMENT_OFF
 	if(!ShouldHandleInput())
 		return _inputHandler->GetEmptyCommand();
 
