@@ -12,7 +12,7 @@ Measurement::~Measurement()
 	_measurementFile.close();
 }
 
-void Measurement::AddPhase(const Phase* phase, int frameNum)
+void Measurement::AddPhase(const Phase* phase, int frameNum, char* extraFmt, ...)
 {
 	DWORD time = timeGetTime();
 	
@@ -21,6 +21,13 @@ void Measurement::AddPhase(const Phase* phase, int frameNum)
 	record->frameNum = frameNum;
 	record->time = time;
 
+	//Copy the extra phase tag information over
+	int extraLen = 2048; //XXX: More sloppy programming? How long should this really be?
+	record->extra = new char[extraLen]; 
+	va_list extraArgs;
+	va_start(extraArgs, extraFmt);
+	vsprintf_s(record->extra, extraLen, extraFmt, extraArgs);
+	
 	EnterCriticalSection(&_recordsCS);
 	_phaseRecords.push(record);
 
@@ -34,9 +41,9 @@ void Measurement::Flush()
 {
 	EnterCriticalSection(&_recordsCS);
 	{
-		//Sloppy programming? We just need a ``big enough''
+		//XXX: Sloppy programming? We just need a ``big enough''
 		//char buffer
-		char line[2048];
+		char line[4096];
 
 		while(!_phaseRecords.empty())
 		{
@@ -44,7 +51,7 @@ void Measurement::Flush()
 			_phaseRecords.pop();
 
 			strcpy(line, "");
-			sprintf_s(line, "%s, %d, %ld\n", record->phase->_str, record->frameNum, record->time);
+			sprintf_s(line, "%s, %d, %s, %ld\n", record->phase->_str, record->frameNum, record->extra, record->time);
 			WriteMeasurementLine(line);
 
 			delete record;

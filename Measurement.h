@@ -18,7 +18,7 @@ public:
 	Measurement(char* filename);
 	~Measurement();
 
-	void AddPhase(const Phase* phase, int frameNum);
+	void AddPhase(const Phase* phase, int frameNum, char* extraFmt = "", ...);
 	void Flush();
 
 private:
@@ -28,7 +28,21 @@ private:
 		const Phase* phase;
 		int frameNum;
 		DWORD time;
+		char* extra;
 
+		PhaseRecord()
+		{
+			extra = NULL;
+		}
+
+		~PhaseRecord()
+		{
+			if (extra != NULL)
+			{
+				delete[] extra;
+				extra = NULL;
+			}
+		}
 	};
 
 	queue<PhaseRecord*> _phaseRecords;
