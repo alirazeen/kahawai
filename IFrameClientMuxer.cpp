@@ -96,7 +96,8 @@ bool IFrameClientMuxer::InitSocketToServer()
 	{
 		_socketToServer = CreateSocketToServer(_serverIP, _serverPort);
 #ifdef WIN32
-		Sleep(5000);
+		if (_socketToServer == INVALID_SOCKET)
+			Sleep(5000);
 #endif
 	}
 

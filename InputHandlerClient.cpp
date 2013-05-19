@@ -17,7 +17,8 @@ bool InputHandlerClient::Connect()
 	{
 		_inputSocket = CreateSocketToServer(_serverIP,_port);
 #ifdef WIN32
-		Sleep(5000);
+		if (_inputSocket == INVALID_SOCKET)
+			Sleep(5000);
 #endif
 	}
 
