@@ -18,7 +18,7 @@ bool InputHandlerClient::Connect()
 		_inputSocket = CreateSocketToServer(_serverIP,_port);
 #ifdef WIN32
 		if (_inputSocket == INVALID_SOCKET)
-			Sleep(5000);
+			Sleep(RECONNECTION_WAIT);
 #endif
 	}
 
@@ -141,7 +141,7 @@ void InputHandlerClient::SendCommand(void* command)
 
 	EnterCriticalSection(&_inputBufferCS);
 	{
-		while(_commandQueue.size()>3)//TODO: Check what is a reasonable queue length
+		while(_commandQueue.size()>MAX_INPUT_QUEUE_LENGTH_CLIENT)//TODO: Check what is a reasonable queue length
 		{
 			SleepConditionVariableCS(&_inputFullCV,&_inputBufferCS,INFINITE);
 		}

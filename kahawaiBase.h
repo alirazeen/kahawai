@@ -53,6 +53,10 @@ typedef byte (*kahawaiTransform)(byte apply,byte patch);
 #define MAX_FRAMES_TO_RUN 6000
 
 #define FRAME_GAP 0
+#define MAX_INPUT_QUEUE_LENGTH_CLIENT 0
+#define MAX_INPUT_QUEUE_LENGTH_SERVER 0
+
+#define RECONNECTION_WAIT 5000
 
 enum ENCODING_MODE { DeltaEncoding, IPFrame, H264};
 enum CAPTURE_MODE { OpenGL, DirectX};

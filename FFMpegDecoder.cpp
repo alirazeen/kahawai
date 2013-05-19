@@ -177,7 +177,7 @@ bool FFMpegDecoder::LoadVideoStream()
 		opened = avformat_open_input(&_pFormatCtx, _URL, NULL, NULL);
 #ifdef WIN32
 		if (opened != 0)
-			Sleep(5000);
+			Sleep(RECONNECTION_WAIT);
 #endif
 	}
 

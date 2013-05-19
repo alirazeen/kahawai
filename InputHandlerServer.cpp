@@ -34,7 +34,7 @@ void InputHandlerServer::ReceiveCommandsAsync()
 
 		EnterCriticalSection(&_inputBufferCS);
 		{
-			while(_commandQueue.size()>3)
+			while(_commandQueue.size()>MAX_INPUT_QUEUE_LENGTH_SERVER)
 			{
 				SleepConditionVariableCS(&_inputFullCV,&_inputBufferCS,INFINITE);
 			}
