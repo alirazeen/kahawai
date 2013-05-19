@@ -31,7 +31,7 @@ void KahawaiServer::OffloadAsync()
 		_offloading	 &=	Send(&compressedFrame,frameSize);
 
 #ifndef MEASUREMENT_OFF
-		_measurement->AddPhase(Phase::KAHAWAI_BEGIN, _kahawaiFrameNum);
+		_measurement->AddPhase(Phase::KAHAWAI_END, _kahawaiFrameNum);
 #endif // MEASUREMENT_OFF
 
 		_kahawaiFrameNum++;
