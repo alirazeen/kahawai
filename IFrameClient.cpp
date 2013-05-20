@@ -112,14 +112,25 @@ bool IFrameClient::ShouldSkip()
 	return (0 != _renderedFrames % _gop);
 }
 
+bool IFrameClient::Capture(int width, int height)
+{
+	bool result = true;
+	if (!ShouldSkip())
+		result = KahawaiClient::Capture(width,height);
+	else
+		_renderedFrames++;
+
+	return result;
+}
+
 bool IFrameClient::Transform(int width, int height)
 {
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::TRANSFORM_BEGIN, _numTransformedFrames);
 #endif // MEASUREMENT_OFF
 
-	bool result =  KahawaiClient::Transform(width, height);
-	if (result && (_numTransformedFrames % _gop == 0))
+	bool result = KahawaiClient::Transform(width, height);
+	if (result)
 	{
 
 #ifndef MEASUREMENT_OFF
@@ -137,7 +148,7 @@ bool IFrameClient::Transform(int width, int height)
 	_measurement->AddPhase(Phase::TRANSFORM_END, _numTransformedFrames);
 #endif // MEASUREMENT_OFF
 
-	_numTransformedFrames++;
+	_numTransformedFrames += _gop;
 	return result;
 }
 
