@@ -116,7 +116,17 @@ bool IFrameClient::Capture(int width, int height)
 {
 	bool result = true;
 	if (!ShouldSkip())
+	{
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase(Phase::CAPTURE_BEGIN,_renderedFrames);
+#endif // MEASUREMENT_OFF
+
 		result = KahawaiClient::Capture(width,height);
+
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase(Phase::CAPTURE_END,_renderedFrames);
+#endif // MEASUREMENT_OFF
+	}
 	else
 		_renderedFrames++;
 
