@@ -3,7 +3,8 @@
 #include "IFrameClientMuxer.h"
 
 // Number of buffers to create in the circular buffer
-#define NUM_BUFFERS 10
+#define NUM_IFRAME_BUFFERS 1 // This should only be 1. We do not want the client to produce I-frames faster than the server
+#define NUM_PFRAME_BUFFERS 10
 
 IFrameClientMuxer::IFrameClientMuxer(void)
 	:_socketToServer(INVALID_SOCKET),
@@ -62,8 +63,8 @@ bool IFrameClientMuxer::Initialize(ConfigReader* configReader)
 	_iFrameMaxSize = height * width * DEFAULT_BIT_DEPTH;
 	_pFrameMaxSize = height * width * DEFAULT_BIT_DEPTH * _gop;
 
-	_iFrameBuffers = new CircularBuffer(_iFrameMaxSize, NUM_BUFFERS);
-	_pFrameBuffers = new CircularBuffer(_pFrameMaxSize, NUM_BUFFERS);
+	_iFrameBuffers = new CircularBuffer(_iFrameMaxSize, NUM_IFRAME_BUFFERS);
+	_pFrameBuffers = new CircularBuffer(_pFrameMaxSize, NUM_PFRAME_BUFFERS);
 
 	return true;
 }
