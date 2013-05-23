@@ -169,7 +169,8 @@ bool DeltaClient::Show()
 
 void DeltaClient::WaitForInputHandling()
 {
-	// Nothing to do for delta. 
+	//With delta, the client is safe to proceed and collect inputs each frame,
+	//since this technique inherently synchronizes on each frame.
 }
 
 void* DeltaClient::HandleInput(void* inputCommand)

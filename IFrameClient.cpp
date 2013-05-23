@@ -204,8 +204,27 @@ bool IFrameClient::Show()
 
 void IFrameClient::WaitForInputHandling()
 {
+	//In the ordinary case, the client can potentially progress through the game
+	//at a quicker pace than the server, as the client runs the render phase
+	//only for IFrames, and runs just the logic phase for the P frames. The server,
+	//on the other hand, runs both the logic/render phase for both I and P frames.
+	//
+	//However, we should disallow this. The client cannot progress through the game
+	//at a quicker pace. When it is running the logic for a frame N, which entails
+	//collecting the input from the user, it must not be allowed to progress if the
+	//user has not seen the frame N-1.
+	//
+	//In a given frame, an input from the user makes sense semantically only if the
+	//user has seen the previous frame. Hence, we should wait until the user has
+	//seen the previous frame before allowing inputs to be collected. This method will
+	//perform that wait
 	EnterCriticalSection(&_inputCS);
 	{
+		//We only do the wait after FFMPEG_DECODER_WARMUP number of frames have passed
+		//If FFMPEG_DECODER_WARMUP is set to 0, then a deadlock will arise because
+		//the decoder is waiting for more frames in its buffer before displaying
+		//what it already has and the game cannot proceed to produce more frames
+		//because it is waiting for the input to be ready.
 		if (_gameFrameNum > FFMPEG_DECODER_WARMUP && _gameFrameNum > _kahawaiFrameNum-1)
 			SleepConditionVariableCS(&_showDoneCV, &_inputCS, INFINITE);
 	}

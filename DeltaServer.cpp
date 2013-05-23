@@ -362,7 +362,8 @@ bool DeltaServer::IsHD()
 
 void DeltaServer::WaitForInputHandling()
 {
-	// Nothing to do here
+	//With delta, the client is safe to proceed and collect inputs each frame,
+	//since this technique inherently synchronizes on each frame.
 }
 
 /**
