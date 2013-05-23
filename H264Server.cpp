@@ -51,6 +51,11 @@ bool H264Server::Send(void** compressedFrame,int frameSize)
 //////////////////////////////////////////////////////////////////////////
 //Input Handling (NO OP)
 //////////////////////////////////////////////////////////////////////////
+void H264Server::WaitForInputHandling()
+{
+	// Nothing to do
+}
+
 void* H264Server::HandleInput(void* input)
 {
 	//H264 version doesn't handle input as just sends video

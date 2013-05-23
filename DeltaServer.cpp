@@ -360,6 +360,11 @@ bool DeltaServer::IsHD()
 //////////////////////////////////////////////////////////////////////////
 
 
+void DeltaServer::WaitForInputHandling()
+{
+	// Nothing to do here
+}
+
 /**
  * Receives input from the client and applies it to the server state
  * @param Server input is ALWAYS discarded

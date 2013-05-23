@@ -61,6 +61,11 @@ bool H264Client::StopOffload()
 //Input Handling (NO OP)
 //////////////////////////////////////////////////////////////////////////
 
+void H264Client::WaitForInputHandling()
+{
+	// Nothing to do
+}
+
 void* H264Client::HandleInput(void* inputCommand)
 {
 	//Overrides KahawaiClient by not doing anything.

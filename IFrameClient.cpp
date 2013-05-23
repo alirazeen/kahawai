@@ -5,12 +5,17 @@
 // Supported decoders
 #include "FFMpegDecoder.h"
 
+#define FFMPEG_DECODER_WARMUP 60
+
 IFrameClient::IFrameClient(void) :
 	_lastCommand(NULL),
 	_numTransformedFrames(0)
 {
 	_encoderComponent = new IFrameClientEncoder();
 	_muxerComponent = new IFrameClientMuxer();
+
+	InitializeCriticalSection(&_inputCS);
+	InitializeConditionVariable(&_showDoneCV);
 }
 
 
@@ -197,6 +202,16 @@ bool IFrameClient::Show()
 	return result;
 }
 
+void IFrameClient::WaitForInputHandling()
+{
+	EnterCriticalSection(&_inputCS);
+	{
+		if (_gameFrameNum > FFMPEG_DECODER_WARMUP && _gameFrameNum > _kahawaiFrameNum-1)
+			SleepConditionVariableCS(&_showDoneCV, &_inputCS, INFINITE);
+	}
+	LeaveCriticalSection(&_inputCS);
+}
+
 void* IFrameClient::HandleInput(void* inputCommand)
 {
 #ifndef MEASUREMENT_OFF
@@ -265,7 +280,13 @@ void IFrameClient::DecodeShow()
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::KAHAWAI_END, _kahawaiFrameNum);
 #endif // MEASUREMENT_OFF
-		_kahawaiFrameNum++;
+
+		EnterCriticalSection(&_inputCS);
+		{
+			_kahawaiFrameNum++;
+		}
+		WakeConditionVariable(&_showDoneCV);
+		LeaveCriticalSection(&_inputCS);
 	}
 }
 

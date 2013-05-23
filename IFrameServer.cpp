@@ -161,6 +161,11 @@ bool IFrameServer::Send(void** compressedFrame, int frameSize)
 //////////////////////////////////////////////////////////////////////////
 //Input Handling
 //////////////////////////////////////////////////////////////////////////
+void IFrameServer::WaitForInputHandling()
+{
+	// Nothing to do
+}
+
 void* IFrameServer::HandleInput(void* input)
 {
 #ifndef MEASUREMENT_OFF

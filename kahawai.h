@@ -15,6 +15,7 @@ public:
 	//Kahawai Public interface (Must be implemented by derived classes)
 	//////////////////////////////////////////////////////////////////////////
 	//Input Handling
+	virtual void		WaitForInputHandling()=0;
 	virtual void*		HandleInput(void* input)=0;
 	virtual int			GetFirstInputFrame()=0; //returns the number of the first frame to receive input
 	virtual int			GetDisplayedFrames()=0;

@@ -16,6 +16,7 @@ protected:
 	bool		StopOffload();
 
 	int			GetFirstInputFrame();
+	void		WaitForInputHandling();
 	void*		HandleInput(void* inputCommand);
 
 

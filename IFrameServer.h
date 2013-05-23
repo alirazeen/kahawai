@@ -21,6 +21,7 @@ protected:
 	bool	Send(void** compressedFrame, int frameSize);
 
 	//Input Handling (NO OP)
+	void	WaitForInputHandling();
 	void*	HandleInput(void* input);
 	int		GetFirstInputFrame();
 

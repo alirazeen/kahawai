@@ -167,6 +167,10 @@ bool DeltaClient::Show()
 //INPUT Handling
 //////////////////////////////////////////////////////////////////////////
 
+void DeltaClient::WaitForInputHandling()
+{
+	// Nothing to do for delta. 
+}
 
 void* DeltaClient::HandleInput(void* inputCommand)
 {
