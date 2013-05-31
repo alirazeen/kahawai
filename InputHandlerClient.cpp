@@ -119,7 +119,7 @@ void InputHandlerClient::SendCommandsAsync()
 		LeaveCriticalSection(&_inputBufferCS);
 
 #ifndef MEASUREMENT_OFF
-		_measurement->AddPhase(Phase::INPUT_CLIENT_SEND_BEGIN, FRAME_NUM_NOT_APPLICABLE, "InputNum: %d",_numSentInput);
+		_measurement->AddPhase(Phase::INPUT_CLIENT_SEND_BEGIN, _numSentInput, "InputNum: %d",_numSentInput);
 #endif // MEASUREMENT_OFF
 
 		int result = send(_inputSocket,command,_commandLength,0);
@@ -130,7 +130,7 @@ void InputHandlerClient::SendCommandsAsync()
 		}
 
 #ifndef MEASUREMENT_OFF
-		_measurement->AddPhase(Phase::INPUT_CLIENT_SEND_END, FRAME_NUM_NOT_APPLICABLE, "InputNum: %d", _numSentInput);
+		_measurement->AddPhase(Phase::INPUT_CLIENT_SEND_END, _numSentInput, "InputNum: %d", _numSentInput);
 #endif // MEASUREMENT_OFF
 		_numSentInput++;
 

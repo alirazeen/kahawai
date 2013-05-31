@@ -14,7 +14,7 @@ void InputHandlerServer::ReceiveCommandsAsync()
 	{
 
 #ifndef MEASUREMENT_OFF
-		_measurement->AddPhase(Phase::INPUT_SERVER_RECEIVE_BEGIN, FRAME_NUM_NOT_APPLICABLE,"InputNum: %d", _numReceivedInput);
+		_measurement->AddPhase(Phase::INPUT_SERVER_RECEIVE_BEGIN, _numReceivedInput,"InputNum: %d", _numReceivedInput);
 #endif // MEASUREMENT_OFF
 
 		char* command = new char[KAHAWAI_INPUT_COMMAND_BUFFER];
@@ -46,7 +46,7 @@ void InputHandlerServer::ReceiveCommandsAsync()
 			_commandQueue.push(command);			
 
 #ifndef MEASUREMENT_OFF
-			_measurement->AddPhase(Phase::INPUT_SERVER_RECEIVE_END,FRAME_NUM_NOT_APPLICABLE,"InputNum: %d",_numReceivedInput);
+			_measurement->AddPhase(Phase::INPUT_SERVER_RECEIVE_END,_numReceivedInput,"InputNum: %d",_numReceivedInput);
 #endif // MEASUREMENT_OFF
 			_numReceivedInput++;
 		}
