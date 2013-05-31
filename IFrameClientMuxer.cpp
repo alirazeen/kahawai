@@ -169,12 +169,15 @@ void IFrameClientMuxer::Multiplex()
 	int bufferSize = -1;
 	while(true)
 	{
-#ifndef MEASUREMENT_OFF
-		_measurement->AddPhase(Phase::IFRAME_CLIENT_MULTIPLEX_BEGIN, _currFrameNum);
-#endif // MEASUREMENT_OFF
+
 
 		if (_currFrameNum % _gop == 0)
 		{
+
+#ifndef MEASUREMENT_OFF
+			_measurement->AddPhase(Phase::IFRAME_MULTIPLEX_IFRAME_BEGIN, _currFrameNum);
+#endif // MEASUREMENT_OFF
+
 			// Get the next i frame
 			EnterCriticalSection(&_iFrameCS);
 			{
@@ -192,10 +195,21 @@ void IFrameClientMuxer::Multiplex()
 				_iFrameBuffers->GetEnd(bufferId);
 			}
 			WakeConditionVariable(&_iFrameWaitForSpaceCV);
+
+#ifndef MEASUREMENT_OFF
+			_measurement->AddPhase(Phase::IFRAME_MULTIPLEX_IFRAME_END, _currFrameNum);
+#endif // MEASUREMENT_OFF
+
 			LeaveCriticalSection(&_iFrameCS);
+
+
 
 		} else 
 		{
+
+#ifndef MEASUREMENT_OFF
+			_measurement->AddPhase(Phase::IFRAME_MULTIPLEX_PFRAME_BEGIN, _currFrameNum);
+#endif // MEASUREMENT_OFF
 
 			// Retrieve a pframe from the circular buffer
 			EnterCriticalSection(&_pFrameCS);
@@ -214,12 +228,17 @@ void IFrameClientMuxer::Multiplex()
 				_pFrameBuffers->GetEnd(bufferId);
 			}
 			WakeConditionVariable(&_pFrameWaitForSpaceCV);
-			LeaveCriticalSection(&_pFrameCS);
-		}
 
 #ifndef MEASUREMENT_OFF
-		_measurement->AddPhase(Phase::IFRAME_CLIENT_MULTIPLEX_END, _currFrameNum);
+			_measurement->AddPhase(Phase::IFRAME_MULTIPLEX_PFRAME_END, _currFrameNum);
 #endif // MEASUREMENT_OFF
+
+			LeaveCriticalSection(&_pFrameCS);
+
+
+		}
+
+
 
 		_currFrameNum++;
 	}

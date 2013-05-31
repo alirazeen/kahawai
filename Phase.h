@@ -47,9 +47,11 @@ public:
 	static const Phase* IFRAME_CLIENT_ENCODE_BEGIN;
 	static const Phase* IFRAME_CLIENT_ENCODE_END;
 
-	static const Phase* IFRAME_CLIENT_MULTIPLEX_BEGIN;
-	static const Phase* IFRAME_CLIENT_MULTIPLEX_END;
+	static const Phase* IFRAME_MULTIPLEX_IFRAME_BEGIN;
+	static const Phase* IFRAME_MULTIPLEX_IFRAME_END;
 
+	static const Phase* IFRAME_MULTIPLEX_PFRAME_BEGIN;
+	static const Phase* IFRAME_MULTIPLEX_PFRAME_END;
 
 	//From the client's perspective, receiving an input
 	//means receiving it from the game and sending an input
