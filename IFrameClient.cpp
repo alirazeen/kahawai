@@ -5,8 +5,6 @@
 // Supported decoders
 #include "FFMpegDecoder.h"
 
-#define FFMPEG_DECODER_WARMUP 60
-
 IFrameClient::IFrameClient(void) :
 	_lastCommand(NULL),
 	_numTransformedFrames(0)
@@ -225,7 +223,7 @@ void IFrameClient::WaitForInputHandling()
 		//the decoder is waiting for more frames in its buffer before displaying
 		//what it already has and the game cannot proceed to produce more frames
 		//because it is waiting for the input to be ready.
-		while (_gameFrameNum > FFMPEG_DECODER_WARMUP && _gameFrameNum > _kahawaiFrameNum+1)
+		while (_gameFrameNum > _kahawaiFrameNum+1)
 			SleepConditionVariableCS(&_showDoneCV, &_inputCS, INFINITE);
 	}
 	LeaveCriticalSection(&_inputCS);
