@@ -13,7 +13,6 @@ public:
 	bool		Initialize();
 	bool		InitializeDecoder();
 	bool		ShouldSkip();
-	void		WaitForInputHandling();
 	void*		HandleInput();
 
 protected:
@@ -60,11 +59,6 @@ private:
 
 	//We will run DecodeShow in a different thread due to reasons explained above.
 	static DWORD WINAPI		AsyncDecodeShow(void* Param);
-	void					DecodeShow();
-
-
-	CRITICAL_SECTION	_inputCS;
-	CONDITION_VARIABLE	_showDoneCV;
-	
+	void					DecodeShow();	
 };
 

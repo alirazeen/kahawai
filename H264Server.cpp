@@ -51,12 +51,6 @@ bool H264Server::Send(void** compressedFrame,int frameSize)
 //////////////////////////////////////////////////////////////////////////
 //Input Handling (NO OP)
 //////////////////////////////////////////////////////////////////////////
-void H264Server::WaitForInputHandling()
-{
-	//In H264, the client just sends inputs blindly to the server
-	//and does not do any local frame processing. So it doesn't need
-	//wait.
-}
 
 void* H264Server::HandleInput()
 {

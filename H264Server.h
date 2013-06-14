@@ -15,7 +15,6 @@ protected:
 	bool	Send(void** compressedFrame, int frameSize);
 
 	//Input Handling
-	void	WaitForInputHandling();
 	void*	HandleInput();
 	int		GetFirstInputFrame();
 

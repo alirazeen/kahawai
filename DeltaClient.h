@@ -24,7 +24,6 @@ protected:
 	bool		Show();
 
 	//Input Handling Profile
-	void		WaitForInputHandling();
 	void*		HandleInput();
 	int			GetFirstInputFrame();
 

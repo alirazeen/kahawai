@@ -17,13 +17,6 @@ public:
 	//Kahawai Public interface (Must be implemented by derived classes)
 	//////////////////////////////////////////////////////////////////////////
 	//Input Handling
-	
-	//This method allows the client to safely wait before proceeding to collect
-	//inputs from the user and send it to the user. This _has_ to be called before
-	//HandleInput so that input semantics are preserved correctly during gameplay,
-	//particularly when the IFrame technique is being used.
-	virtual void		WaitForInputHandling()=0;
-
 	void				SetSampleUserInputFN(PFNSampleUserInput fnSampleUserInput);
 
 	virtual void*		HandleInput()=0;

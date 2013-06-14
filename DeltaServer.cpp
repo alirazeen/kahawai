@@ -359,13 +359,6 @@ bool DeltaServer::IsHD()
 // Input Handling
 //////////////////////////////////////////////////////////////////////////
 
-
-void DeltaServer::WaitForInputHandling()
-{
-	//With delta, the client is safe to proceed and collect inputs each frame,
-	//since this technique inherently synchronizes on each frame.
-}
-
 /**
  * Receives input from the client and applies it to the server state
  * @param Server input is ALWAYS discarded

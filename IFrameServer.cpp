@@ -161,12 +161,6 @@ bool IFrameServer::Send(void** compressedFrame, int frameSize)
 //////////////////////////////////////////////////////////////////////////
 //Input Handling
 //////////////////////////////////////////////////////////////////////////
-void IFrameServer::WaitForInputHandling()
-{
-	//The iFrame server does not need to wait before allowing the game to handle
-	//inputs because the HandleInput implementation will make sure the input sent by
-	//the client is received before the logic stage is processed.
-}
 
 void* IFrameServer::HandleInput()
 {
