@@ -173,12 +173,15 @@ void DeltaClient::WaitForInputHandling()
 	//since this technique inherently synchronizes on each frame.
 }
 
-void* DeltaClient::HandleInput(void* inputCommand)
+void* DeltaClient::HandleInput()
 {
 
 #ifndef MEASUREMENT_OFF
 	_inputHandler->SetFrameNum(_gameFrameNum);
 #endif // MEASUREMENT_OFF
+
+	//Get the actual command
+	void* inputCommand = _fnSampleUserInput();
 
 	//Free memory from previous invocations
 	if(_lastCommand != NULL)
@@ -190,10 +193,9 @@ void* DeltaClient::HandleInput(void* inputCommand)
 
 	//Create a copy of the command to push into the queue
 	size_t cmdLength = _inputHandler->GetCommandLength();
-
 	char* queuedCommand = new char[cmdLength];
 	memcpy(queuedCommand,inputCommand,cmdLength);
-
+	delete inputCommand;
 
 	_localInputQueue.push(queuedCommand);
 	_inputHandler->SendCommand(queuedCommand);

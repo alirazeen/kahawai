@@ -14,7 +14,7 @@ public:
 	bool		InitializeDecoder();
 	bool		ShouldSkip();
 	void		WaitForInputHandling();
-	void*		HandleInput(void*);
+	void*		HandleInput();
 
 protected:
 	int			_gop;

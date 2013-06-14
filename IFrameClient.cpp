@@ -229,11 +229,14 @@ void IFrameClient::WaitForInputHandling()
 	LeaveCriticalSection(&_inputCS);
 }
 
-void* IFrameClient::HandleInput(void* inputCommand)
+void* IFrameClient::HandleInput()
 {
 #ifndef MEASUREMENT_OFF
 	_inputHandler->SetFrameNum(_gameFrameNum);
 #endif // MEASUREMENT_OFF
+
+	//inputCommand = _fnSampleUserInput();
+	void* inputCommand = _fnSampleUserInput();
 
 	//Free memory from previous invocations
 	if(_lastCommand != NULL)
@@ -244,10 +247,9 @@ void* IFrameClient::HandleInput(void* inputCommand)
 
 	//Create a copy of the command to push into the queue
 	size_t cmdLength = _inputHandler->GetCommandLength();
-
 	char* queuedCommand = new char[cmdLength];
 	memcpy(queuedCommand,inputCommand,cmdLength);
-
+	delete inputCommand;
 
 	_localInputQueue.push(queuedCommand);
 	_inputHandler->SendCommand(queuedCommand);

@@ -58,10 +58,10 @@ void H264Server::WaitForInputHandling()
 	//wait.
 }
 
-void* H264Server::HandleInput(void* input)
+void* H264Server::HandleInput()
 {
 	//H264 version doesn't handle input as just sends video
-	return input;
+	return NULL;
 }
 
 int H264Server::GetFirstInputFrame()

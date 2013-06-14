@@ -475,6 +475,11 @@ void Kahawai::SetCaptureMode(CAPTURE_MODE mode)
 	_captureMode = mode;
 }
 
+void Kahawai::SetSampleUserInputFN(PFNSampleUserInput fnSampleUserInput)
+{
+	_fnSampleUserInput = fnSampleUserInput;
+}
+
 int Kahawai::GetWidth()
 {
 	return _width;

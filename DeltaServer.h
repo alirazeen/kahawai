@@ -38,7 +38,7 @@ public:
 	
 	//Input Handling
 	void	WaitForInputHandling();
-	void*	HandleInput(void*);
+	void*	HandleInput();
 	int		GetFirstInputFrame();
 
 

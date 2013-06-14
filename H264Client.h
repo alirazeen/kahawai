@@ -17,7 +17,7 @@ protected:
 
 	int			GetFirstInputFrame();
 	void		WaitForInputHandling();
-	void*		HandleInput(void* inputCommand);
+	void*		HandleInput();
 
 
 };

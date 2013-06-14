@@ -8,6 +8,8 @@
 
 class ConfigReader;
 
+typedef void* (*PFNSampleUserInput)(...);
+
 class Kahawai
 {
 public:
@@ -22,7 +24,9 @@ public:
 	//particularly when the IFrame technique is being used.
 	virtual void		WaitForInputHandling()=0;
 
-	virtual void*		HandleInput(void* input)=0;
+	void				SetSampleUserInputFN(PFNSampleUserInput fnSampleUserInput);
+
+	virtual void*		HandleInput()=0;
 	virtual int			GetFirstInputFrame()=0; //returns the number of the first frame to receive input
 	virtual int			GetDisplayedFrames()=0;
 	virtual bool		IsInputSource()=0;
@@ -152,6 +156,9 @@ protected:
 
 	//Debug Settings
 	bool				_saveCaptures; //Used for measuring quality. save snapshots to disk
+
+	//The function that will grab the user input
+	PFNSampleUserInput	_fnSampleUserInput;
 
 private:
 	//Capture stage synchronization

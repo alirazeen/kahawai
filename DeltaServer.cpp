@@ -371,7 +371,7 @@ void DeltaServer::WaitForInputHandling()
  * @param Server input is ALWAYS discarded
  * @return the command received from the client for the current frame
  */
-void* DeltaServer::HandleInput(void*)
+void* DeltaServer::HandleInput()
 {
 
 #ifndef MEASUREMENT_OFF

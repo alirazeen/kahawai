@@ -168,7 +168,7 @@ void IFrameServer::WaitForInputHandling()
 	//the client is received before the logic stage is processed.
 }
 
-void* IFrameServer::HandleInput(void* input)
+void* IFrameServer::HandleInput()
 {
 #ifndef MEASUREMENT_OFF
 	_inputHandler->SetFrameNum(_gameFrameNum);

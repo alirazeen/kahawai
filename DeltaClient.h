@@ -25,7 +25,7 @@ protected:
 
 	//Input Handling Profile
 	void		WaitForInputHandling();
-	void*		HandleInput(void*);
+	void*		HandleInput();
 	int			GetFirstInputFrame();
 
 private:

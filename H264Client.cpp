@@ -68,10 +68,10 @@ void H264Client::WaitForInputHandling()
 	//wait.
 }
 
-void* H264Client::HandleInput(void* inputCommand)
+void* H264Client::HandleInput()
 {
 	//Overrides KahawaiClient by not doing anything.
-	return inputCommand;
+	return NULL;
 }
 
 int H264Client::GetFirstInputFrame()

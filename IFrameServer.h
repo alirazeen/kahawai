@@ -22,7 +22,7 @@ protected:
 
 	//Input Handling (NO OP)
 	void	WaitForInputHandling();
-	void*	HandleInput(void* input);
+	void*	HandleInput();
 	int		GetFirstInputFrame();
 
 
