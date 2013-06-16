@@ -169,10 +169,7 @@ bool DeltaClient::Show()
 
 void* DeltaClient::HandleInput()
 {
-
-#ifndef MEASUREMENT_OFF
 	_inputHandler->SetFrameNum(_gameFrameNum);
-#endif // MEASUREMENT_OFF
 
 	//Get the actual command
 	void* inputCommand = _fnSampleUserInput();

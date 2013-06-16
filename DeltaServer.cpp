@@ -366,10 +366,7 @@ bool DeltaServer::IsHD()
  */
 void* DeltaServer::HandleInput()
 {
-
-#ifndef MEASUREMENT_OFF
 	_inputHandler->SetFrameNum(_gameFrameNum);
-#endif // MEASUREMENT_OFF
 
 	if(!ShouldHandleInput())
 		return _inputHandler->GetEmptyCommand();

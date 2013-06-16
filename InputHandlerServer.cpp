@@ -14,18 +14,31 @@ void InputHandlerServer::ReceiveCommandsAsync()
 	{
 
 #ifndef MEASUREMENT_OFF
-		_measurement->AddPhase(Phase::INPUT_SERVER_RECEIVE_BEGIN, _numReceivedInput,"InputNum: %d", _numReceivedInput);
+		_measurement->AddPhase(Phase::INPUT_SERVER_RECEIVE_BEGIN, FRAME_NUM_NOT_APPLICABLE, "InputNum: %d", _numReceivedInput);
 #endif // MEASUREMENT_OFF
 
+		int frameNum = -1;
 		char* command = new char[KAHAWAI_INPUT_COMMAND_BUFFER];
-		//Receive the command from the server
+		
+		//First, receive the frame number the command is intended for
 		int receivedBytes = 0;
 		int burst = 1;
-		int size = _serializer->GetCommandSize();
+		int size = sizeof(frameNum);
 
 		while(receivedBytes < size && burst > 0)
 		{
-			burst = recv(_inputSocket,command,size,0);
+			burst = recv(_inputSocket, (char*)&frameNum+receivedBytes, size, 0);
+			receivedBytes += burst;
+		}
+
+		//Receive the command from the server
+		receivedBytes = 0;
+		burst = 1;
+		size = _serializer->GetCommandSize();
+
+		while(receivedBytes < size && burst > 0)
+		{
+			burst = recv(_inputSocket, command+receivedBytes, size, 0);
 			receivedBytes+=burst;
 		}
 
@@ -43,10 +56,11 @@ void InputHandlerServer::ReceiveCommandsAsync()
 				SleepConditionVariableCS(&_inputFullCV,&_inputBufferCS,INFINITE);
 			}
 
-			_commandQueue.push(command);			
+			InputDescriptor* descriptor = new InputDescriptor(frameNum, command);
+			_commandQueue.push(descriptor);			
 
 #ifndef MEASUREMENT_OFF
-			_measurement->AddPhase(Phase::INPUT_SERVER_RECEIVE_END,_numReceivedInput,"InputNum: %d",_numReceivedInput);
+			_measurement->AddPhase(Phase::INPUT_SERVER_RECEIVE_END, frameNum, "InputNum: %d", _numReceivedInput);
 #endif // MEASUREMENT_OFF
 			_numReceivedInput++;
 		}
@@ -72,8 +86,28 @@ bool InputHandlerServer::Finalize()
 	return true;
 }
 
+int InputHandlerServer::PeekCommandFrame()
+{
+	int frameNum = -1;
+
+	EnterCriticalSection(&_inputBufferCS);
+	{
+		while(_commandQueue.empty())
+		{
+			SleepConditionVariableCS(&_inputReadyCV, &_inputBufferCS, INFINITE);
+		}
+
+		InputDescriptor* descriptor = _commandQueue.front();
+		frameNum = descriptor->_frameNum;
+	}
+	LeaveCriticalSection(&_inputBufferCS);
+
+	return frameNum;
+}
+
 void* InputHandlerServer::ReceiveCommand()
 {
+	int frameNum = -1;
 	char* command = NULL;
 
 	EnterCriticalSection(&_inputBufferCS);
@@ -83,9 +117,12 @@ void* InputHandlerServer::ReceiveCommand()
 			SleepConditionVariableCS(&_inputReadyCV,&_inputBufferCS,INFINITE);
 		}
 
-		command = _commandQueue.front();			
-		_commandQueue.pop();
+		InputDescriptor* descriptor = _commandQueue.front();
+		frameNum = descriptor->_frameNum;
 
+		command = (char*) descriptor->_command;			
+		_commandQueue.pop();
+		delete descriptor;
 	}
 
 	WakeConditionVariable(&_inputFullCV);
@@ -94,7 +131,7 @@ void* InputHandlerServer::ReceiveCommand()
 	void* processedCommand = _serializer->Deserialize(command);
 	
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::INPUT_SERVER_SEND,_frameNum,"InputNum: %d",_numSentInput);
+	_measurement->AddPhase(Phase::INPUT_SERVER_SEND, frameNum, "InputNum: %d", _numSentInput);
 #endif // MEASUREMENT_OFF
 	_numSentInput++;
 

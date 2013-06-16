@@ -78,9 +78,7 @@ void InputHandlerClient::SetMeasurement(Measurement* measurement)
 
 void InputHandlerClient::SetFrameNum(int frameNum)
 {
-#ifndef MEASUREMENT_OFF
 	_frameNum = frameNum;
-#endif // MEASUREMENT_OFF
 }
 
 InputHandlerClient::~InputHandlerClient(void)
@@ -99,6 +97,7 @@ DWORD WINAPI InputHandlerClient::AsyncInputHandler(void* Param)
 void InputHandlerClient::SendCommandsAsync()
 {
 	char* command = NULL;
+	int frameNum = -1;
 	_offloading = true;
 
 	while(_offloading)
@@ -110,33 +109,41 @@ void InputHandlerClient::SendCommandsAsync()
 				SleepConditionVariableCS(&_inputReadyCV,&_inputBufferCS,INFINITE);
 			}
 
-			command = _commandQueue.front();			
-			_commandQueue.pop();
+			InputDescriptor* descriptor = _commandQueue.front();
+			command = (char*)descriptor->_command;
+			frameNum = descriptor->_frameNum;
 
+			_commandQueue.pop();
+			delete descriptor;
 		}
 		//Wake the game thread if it is waiting to send more frames.
 		WakeConditionVariable(&_inputFullCV);
 		LeaveCriticalSection(&_inputBufferCS);
 
 #ifndef MEASUREMENT_OFF
-		_measurement->AddPhase(Phase::INPUT_CLIENT_SEND_BEGIN, _numSentInput, "InputNum: %d",_numSentInput);
+		_measurement->AddPhase(Phase::INPUT_CLIENT_SEND_BEGIN, frameNum, "InputNum: %d",_numSentInput);
 #endif // MEASUREMENT_OFF
 
-		int result = send(_inputSocket,command,_commandLength,0);
-		//Send the command to the server
+		int result = send(_inputSocket, (char*)&frameNum, sizeof(frameNum), 0);
+		if (result != SOCKET_ERROR)
+		{
+			result = send(_inputSocket, command, _commandLength, 0); 
+		}
+		
 		if (result == SOCKET_ERROR)
 		{
-			KahawaiLog("Unable to send input to server", KahawaiError);
+			KahawaiLog("Unable to send frame number of input or the input itself to the server", KahawaiError);
 		}
 
 #ifndef MEASUREMENT_OFF
-		_measurement->AddPhase(Phase::INPUT_CLIENT_SEND_END, _numSentInput, "InputNum: %d", _numSentInput);
+		_measurement->AddPhase(Phase::INPUT_CLIENT_SEND_END, frameNum, "InputNum: %d", _numSentInput);
 #endif // MEASUREMENT_OFF
+
 		_numSentInput++;
 
 		delete[] command;
 		command = NULL;
-
+		frameNum = -1;
 	}
 
 }
@@ -171,7 +178,8 @@ void InputHandlerClient::SendCommand(void* command)
 			SleepConditionVariableCS(&_inputFullCV,&_inputBufferCS,INFINITE);
 		}
 
-		_commandQueue.push(copyCommand);
+		InputDescriptor* descriptor = new InputDescriptor(_frameNum, copyCommand);
+		_commandQueue.push(descriptor);
 
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::INPUT_CLIENT_RECEIVE, _frameNum, "InputNum: %d", _numReceivedInput);

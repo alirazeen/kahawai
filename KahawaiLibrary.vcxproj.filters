@@ -239,6 +239,9 @@
     <ClInclude Include="Phase.h">
       <Filter>Kahawai\Measurement</Filter>
     </ClInclude>
+    <ClInclude Include="InputDescriptor.h">
+      <Filter>Kahawai\Input</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\ClassDiagram1.cd" />

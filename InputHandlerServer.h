@@ -2,6 +2,7 @@
 #include "kahawaiBase.h"
 #ifdef KAHAWAI
 #include "InputSerializer.h"
+#include "InputDescriptor.h"
 #include <queue>
 #include "Measurement.h"
 using namespace std;
@@ -20,6 +21,7 @@ public:
 
 	bool					Connect();
 	bool					IsConnected();
+	int						PeekCommandFrame();
 	void*					ReceiveCommand();
 	void*					GetEmptyCommand();		
 	size_t					GetCommandLength() {return _serializer->GetCommandSize();}
@@ -40,7 +42,7 @@ private:
 	CONDITION_VARIABLE		_inputFullCV;
 	CONDITION_VARIABLE		_inputReadyCV;
 	CRITICAL_SECTION		_inputBufferCS;
-	queue<char*>			_commandQueue;
+	queue<InputDescriptor*>	_commandQueue;
 	int						_queueSize;
 
 	//Serialization

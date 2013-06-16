@@ -199,9 +199,7 @@ bool IFrameClient::Show()
 
 void* IFrameClient::HandleInput()
 {
-#ifndef MEASUREMENT_OFF
 	_inputHandler->SetFrameNum(_gameFrameNum);
-#endif // MEASUREMENT_OFF
 
 	//inputCommand = _fnSampleUserInput();
 	void* inputCommand = _fnSampleUserInput();
