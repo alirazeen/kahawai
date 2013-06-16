@@ -38,6 +38,7 @@ protected:
 	bool		Transform(int width, int height);
 	bool		Decode();
 	bool		Show();
+	void		GrabInput();
 
 	//Input Handling Profile
 	int			GetFirstInputFrame();
@@ -53,12 +54,14 @@ private:
 	int			_numTransformedFrames; //Number of frames transformed so far
 
 	//Input-handling variables
-	void*		_lastCommand;
+	void*				_lastCommand;
+	CRITICAL_SECTION	_inputCS;
+	CONDITION_VARIABLE	_inputQueueEmptyCV;
 
 	bool		SendTransformPictureEncoder();
 
 	//We will run DecodeShow in a different thread due to reasons explained above.
 	static DWORD WINAPI		AsyncDecodeShow(void* Param);
-	void					DecodeShow();	
+	void					DecodeShow();
 };
 

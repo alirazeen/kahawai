@@ -169,13 +169,15 @@ void* IFrameServer::HandleInput()
 	if(!ShouldHandleInput())
 		return _inputHandler->GetEmptyCommand();
 
-	_inputHandler->ReceiveCommand();
+	int frameNum = _inputHandler->PeekCommandFrame();
+	return _inputHandler->ReceiveCommand();
 }
 
 
 int IFrameServer::GetFirstInputFrame()
 {
-	return FRAME_GAP;
+	//See comments in IFrameClient::GetFirstInputFrame()
+	return FRAME_GAP+2;
 }
 
 

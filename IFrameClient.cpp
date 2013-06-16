@@ -54,6 +54,8 @@ bool IFrameClient::Initialize()
 	_inputHandler->SetMeasurement(_measurement);
 #endif // MEASUREMENT_OFF
 
+	InitializeCriticalSection(&_inputCS);
+	InitializeConditionVariable(&_inputQueueEmptyCV);
 	return true;
 }
 
@@ -197,13 +199,19 @@ bool IFrameClient::Show()
 	return result;
 }
 
+void IFrameClient::GrabInput()
+{
+	EnterCriticalSection(&_inputCS);
+	{
+		void* inputCommand = _fnSampleUserInput();
+		_localInputQueue.push(inputCommand);
+	}
+	WakeConditionVariable(&_inputQueueEmptyCV);
+	LeaveCriticalSection(&_inputCS);
+}
+
 void* IFrameClient::HandleInput()
 {
-	_inputHandler->SetFrameNum(_gameFrameNum);
-
-	//inputCommand = _fnSampleUserInput();
-	void* inputCommand = _fnSampleUserInput();
-
 	//Free memory from previous invocations
 	if(_lastCommand != NULL)
 	{
@@ -211,35 +219,44 @@ void* IFrameClient::HandleInput()
 		_lastCommand = NULL;
 	}
 
-	//Create a copy of the command to push into the queue
-	size_t cmdLength = _inputHandler->GetCommandLength();
-	char* queuedCommand = new char[cmdLength];
-	memcpy(queuedCommand,inputCommand,cmdLength);
-	delete inputCommand;
+	void* returnVal = NULL;
 
-	_localInputQueue.push(queuedCommand);
-	_inputHandler->SendCommand(queuedCommand);
-
-	if(!ShouldHandleInput())
+	EnterCriticalSection(&_inputCS);
 	{
-		return _inputHandler->GetEmptyCommand();
-	}
-	else
-	{
-		_lastCommand = _localInputQueue.front();
-		_localInputQueue.pop();
-		return _lastCommand;
-	}
+		_inputHandler->SetFrameNum(_gameFrameNum);
 	
+		if(!ShouldHandleInput())
+		{
+			returnVal = _inputHandler->GetEmptyCommand();
+		}
+		else
+		{
+			while (_localInputQueue.empty())
+				SleepConditionVariableCS(&_inputQueueEmptyCV, &_inputCS, INFINITE);
+
+			_lastCommand = _localInputQueue.front();
+			_localInputQueue.pop();
+
+			_inputHandler->SendCommand(_lastCommand);
+			returnVal = _lastCommand;
+		}
+	}
+	LeaveCriticalSection(&_inputCS);
+
+	return returnVal;
 }
 
 int IFrameClient::GetFirstInputFrame()
 {
-	// This is actually the frame gap. 
+	// This is actually the frame gap. There is a +2 because we need to generate and
+	// send at least two frames to the decoder before it starts showing anything. The +2
+	// will avoid a deadlock case where HandleInput() is waiting for an input and the Kahawai
+	// thread is waiting to show at least one frame before grabbing inputs
+
 	// TODO: This should actually be read from a config file
 	// or dynamically determined based on the RTT or some 
 	// combination of the two. It should NOT be a static value
-	return FRAME_GAP;
+	return FRAME_GAP+2;
 }
 
 DWORD WINAPI IFrameClient::AsyncDecodeShow(void* Param)
@@ -261,6 +278,7 @@ void IFrameClient::DecodeShow()
 
 		offloading &= Decode();
 		offloading &= Show();
+		GrabInput();
 
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::KAHAWAI_END, _kahawaiFrameNum);
