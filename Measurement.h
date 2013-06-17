@@ -16,7 +16,7 @@ class Measurement
 {
 public: 
 
-	Measurement(char* filename);
+	Measurement(char* filename, char* headerFmt="", ...);
 	~Measurement();
 
 	void AddPhase(const Phase* phase, int frameNum, char* extraFmt = "", ...);
