@@ -3,6 +3,7 @@
 #include "InputHandlerClient.h"
 #include "config.h"
 #include "Doom3Serializer.h"
+#include "SF4Serializer.h"
 
 //TODO: Abstract input handling to allow game specific and game agnostic input handling
 //Through inheritance is possible to transform this class into "GameSpecificInputHandlerClient" and 
@@ -58,7 +59,7 @@ InputHandlerClient::InputHandlerClient(char* serverIP, int port, char* gameName)
 	}
 	else
 	{
-		KahawaiLog("Input is only supported for the Doom 3 Engine", KahawaiError);
+		_serializer = new SF4Serializer();
 	}
 
 	//Initialize Synchronization

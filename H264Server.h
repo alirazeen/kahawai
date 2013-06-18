@@ -19,5 +19,9 @@ protected:
 	int		GetFirstInputFrame();
 
 
+	bool isClient();
+	bool isSlave();
+	bool isMaster();
+
 };
 

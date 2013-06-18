@@ -3,6 +3,7 @@
 
 #include "InputHandlerServer.h"
 #include "Doom3Serializer.h"
+#include "SF4Serializer.h"
 #include "config.h"
 
 
@@ -178,7 +179,7 @@ InputHandlerServer::InputHandlerServer(int port, char* gameName)
 	}
 	else
 	{
-		KahawaiLog("Input is only supported for the Doom 3 Engine", KahawaiError);
+		_serializer = new SF4Serializer();
 	}
 
 	//Initialize Synchronization

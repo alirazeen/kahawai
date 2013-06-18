@@ -6,6 +6,6 @@ class Capturer
 {
 public:
 	virtual ~Capturer(void) {}
-	virtual uint8_t* CaptureScreen() = 0; 
+	virtual uint8_t* CaptureScreen(void* args) = 0;
 };
 

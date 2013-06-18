@@ -86,14 +86,14 @@ void DeltaClient::OffloadAsync()
  * @param width the width of the screen to be captured
  * @return true if the transformation is successful
  */
-bool DeltaClient::Capture(int width, int height)
+bool DeltaClient::Capture(int width, int height, void* args)
 {
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::CAPTURE_BEGIN, _gameFrameNum);
 #endif // MEASUREMENT_OFF
 
 	//Captures at the client resolution
-	bool result = KahawaiClient::Capture(_clientWidth,_clientHeight);
+	bool result = KahawaiClient::Capture(_clientWidth,_clientHeight, args);
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::CAPTURE_END, _gameFrameNum);

@@ -13,7 +13,7 @@ protected:
 	bool	Initialize();
 
 	//Kahawai life-cycle
-	bool	Capture(int width, int height);
+	bool	Capture(int width, int height, void* args);
 	
 	void	OffloadAsync();
 	bool	Transform(int width, int height);
@@ -24,6 +24,9 @@ protected:
 	void*	HandleInput();
 	int		GetFirstInputFrame();
 
+	bool isClient();
+	bool isSlave();
+	bool isMaster();
 
 	int		_gop;
 	int		_currFrameNum;

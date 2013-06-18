@@ -8,7 +8,7 @@ public:
 	OpenGLCapturer(int width, int height);
 	~OpenGLCapturer(void);
 
-	uint8_t* CaptureScreen();
+	uint8_t* CaptureScreen(void* args);
 private:
 	int _width;
 	int _height;

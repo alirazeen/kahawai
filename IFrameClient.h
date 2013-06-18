@@ -34,7 +34,7 @@ protected:
 	//The current solution is to run Transform in its own thread and to run DecodeShow
 	//in a different thread
 	void		OffloadAsync();
-	bool		Capture(int width, int height);
+	bool		Capture(int width, int height, void* args);
 	bool		Transform(int width, int height);
 	bool		Decode();
 	bool		Show();

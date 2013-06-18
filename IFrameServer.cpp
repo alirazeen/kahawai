@@ -16,7 +16,18 @@ IFrameServer::~IFrameServer(void)
 {
 }
 
+bool IFrameServer::isClient() {
+	return false;
+}
 
+//master and slave are just place holders
+bool IFrameServer::isSlave() {
+	return false;
+}
+
+bool IFrameServer::isMaster() {
+	return false;
+}
 
 bool IFrameServer::Initialize()
 {
@@ -62,14 +73,14 @@ void IFrameServer::OffloadAsync()
 	KahawaiServer::OffloadAsync();
 }
 
-bool IFrameServer::Capture(int width, int height)
+bool IFrameServer::Capture(int width, int height, void* args)
 {
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::CAPTURE_BEGIN, _gameFrameNum);
 #endif // MEASUREMENT_OFF
 
-	bool result = KahawaiServer::Capture(width,height);
+	bool result = KahawaiServer::Capture(width,height, args);
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::CAPTURE_END, _gameFrameNum);

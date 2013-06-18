@@ -5,6 +5,19 @@
 //Supported encoders
 #include "X264Encoder.h"
 
+
+bool DeltaServer::isClient() {
+	return false;
+}
+
+bool DeltaServer::isMaster() {
+	return theMaster;
+}
+
+bool DeltaServer::isSlave() {
+	return theSlave;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Basic Delta encoding transformation
 //////////////////////////////////////////////////////////////////////////
@@ -55,10 +68,15 @@ bool DeltaServer::Initialize()
 	char* measurement_file_name;
 	if (_master)
 	{
+		theMaster = true;
+		theSlave = false;
 		measurement_file_name = "delta_server_master.csv";
 
 	} else
-	{	//Re-Initialize sws scaling context if slave
+	{	
+		theMaster = false;
+		theSlave = true;
+		//Re-Initialize sws scaling context if slave
 		delete[] _sourceFrame;
 		_convertCtx = sws_getContext(_clientWidth,_clientHeight,PIX_FMT_BGRA, _width, _height,PIX_FMT_YUV420P, SWS_FAST_BILINEAR,NULL,NULL,NULL);
 		_sourceFrame = new uint8_t[_clientWidth*_clientWidth*SOURCE_BITS_PER_PIXEL];
@@ -119,13 +137,13 @@ void DeltaServer::OffloadAsync()
 
 }
 
-bool DeltaServer::Capture(int width, int height)
+bool DeltaServer::Capture(int width, int height, void* args)
 {
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::CAPTURE_BEGIN, _gameFrameNum);
 #endif // MEASUREMENT_OFF
 
-	bool result = KahawaiServer::Capture(width, height);
+	bool result = KahawaiServer::Capture(width, height, args);
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::CAPTURE_END, _gameFrameNum);
