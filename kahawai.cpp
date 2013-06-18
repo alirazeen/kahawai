@@ -314,11 +314,11 @@ bool Kahawai::Initialize()
 	_configReader->ReadProperty(CONFIG_OFFLOAD,CONFIG_CAPTURE,captureType);
 	if(_strnicmp(captureType, CONFIG_DIRECTX_CAPTURER,sizeof(CONFIG_DIRECTX_CAPTURER))==0)
 	{
-		_captureMode == DirectX;
+		_captureMode = DirectX;
 	}
 	if(_strnicmp(captureType, CONFIG_OPENGL_CAPTURER,sizeof(CONFIG_OPENGL_CAPTURER))==0)
 	{
-		_captureMode == OpenGL;
+		_captureMode = OpenGL;
 	}
 
 
