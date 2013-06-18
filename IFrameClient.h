@@ -15,6 +15,8 @@ public:
 	bool		ShouldSkip();
 	void*		HandleInput();
 
+	bool		StartOffload();
+
 protected:
 	int			_gop;
 
@@ -57,6 +59,10 @@ private:
 	void*				_lastCommand;
 	CRITICAL_SECTION	_inputCS;
 	CONDITION_VARIABLE	_inputQueueEmptyCV;
+
+	bool				_connectionAttemptDone;
+	CRITICAL_SECTION	_socketCS;
+	CONDITION_VARIABLE	_socketCV;
 
 	bool		SendTransformPictureEncoder();
 

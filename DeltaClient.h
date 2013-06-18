@@ -12,7 +12,7 @@ protected:
 	int			_clientWidth;
 	int			_clientHeight;
 
-
+	bool		StartOffload();
 	bool		Offload(uint8_t* frameBuffer);
 	bool		Initialize();
 
@@ -29,6 +29,10 @@ protected:
 
 private:
 	void*	_lastCommand;
+
+	CRITICAL_SECTION	_socketCS;
+	CONDITION_VARIABLE	_socketCV;
+	bool				_connectionAttemptDone;
 
 };
 

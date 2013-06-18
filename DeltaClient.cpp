@@ -24,7 +24,8 @@ DeltaClient::DeltaClient(void)
 	:KahawaiClient(),
 	_clientHeight(0),
 	_clientWidth(0),
-	_lastCommand(NULL)
+	_lastCommand(NULL),
+	_connectionAttemptDone(false)
 {
 }
 
@@ -61,20 +62,57 @@ bool DeltaClient::Initialize()
 	_inputHandler->SetMeasurement(_measurement);
 #endif // MEASUREMENT_OFF
 
+	InitializeCriticalSection(&_socketCS);
+	InitializeConditionVariable(&_socketCV);
+
 	return true;
+}
+
+bool DeltaClient::StartOffload()
+{
+	bool result = KahawaiClient::StartOffload();
+
+	//Make sure the input handler is connected first
+	//before we allow the game to continue
+	if (result)
+	{
+		EnterCriticalSection(&_socketCS);
+		{
+			while(!_connectionAttemptDone)
+				SleepConditionVariableCS(&_socketCV, &_socketCS, INFINITE);
+		}
+		LeaveCriticalSection(&_socketCS);
+	
+		result = _inputHandler->IsConnected();
+	}
+	
+	return result;
 }
 
 void DeltaClient::OffloadAsync()
 {
 	//Connect input handler to server
+
+	
+	EnterCriticalSection(&_socketCS);
+	{
 #ifndef NO_HANDLE_INPUT
-	if(!_inputHandler==NULL && !_inputHandler->Connect())
+		 _inputHandler->Connect();
+#endif
+		 _connectionAttemptDone = true;
+	}
+	WakeConditionVariable(&_socketCV);
+	LeaveCriticalSection(&_socketCS);
+
+#ifndef NO_HANDLE_INPUT	
+	if(!_inputHandler->IsConnected())
 	{
 		KahawaiLog("Unable to start input handler", KahawaiError);
 		_offloading = false;
 		return;
 	}
 #endif
+
 
 	KahawaiClient::OffloadAsync();
 }
