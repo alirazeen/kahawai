@@ -6,17 +6,23 @@ Measurement::Measurement(char* filename, char* headerFmt, ...)
 	InitMeasurementFile(filename);
 	InitializeCriticalSection(&_recordsCS);
 
-	int headerLen=2048;
-	char* header = new char[headerLen];
-	header[0] = '#';
+	if (strlen(headerFmt) == 0)
+	{
+		WriteMeasurementLine("#\n");
+	} else
+	{
+		int headerLen=2048;
+		char* header = new char[headerLen];
+		header[0] = '#';
 
-	va_list headerArgs;
-	va_start(headerArgs, headerFmt);
-	vsprintf_s(header+1, headerLen-1, headerFmt, headerArgs); //headerLen-1 because the first character is reserved
+		va_list headerArgs;
+		va_start(headerArgs, headerFmt);
+		vsprintf_s(header+1, headerLen-1, headerFmt, headerArgs); //headerLen-1 because the first character is reserved
 
-	WriteMeasurementLine(header);
+		WriteMeasurementLine(header);
 
-	delete[] header;
+		delete[] header;
+	}
 }
 
 Measurement::~Measurement()
