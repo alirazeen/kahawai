@@ -71,6 +71,9 @@ bool DeltaServer::Initialize()
 	_inputHandler->SetMeasurement(_measurement);
 #endif // MEASUREMENT_OFF
 
+	InitializeCriticalSection(&_socketCS);
+	InitializeConditionVariable(&_socketCV);
+
 	return true;
 }
 
@@ -88,6 +91,36 @@ bool DeltaServer::Finalize()
 	return true;
 }
 
+bool DeltaServer::StartOffload()
+{
+	bool result = KahawaiServer::StartOffload();
+	
+	//Make sure the input handler is connected first
+	//before we allow the game to continue
+	if (_master && result && !_connectionAttemptDone)
+	{
+		EnterCriticalSection(&_socketCS);
+		{
+			while(!_connectionAttemptDone)
+				SleepConditionVariableCS(&_socketCV, &_socketCS, INFINITE);
+		}
+		SetEvent(_masterInputEvent);
+		LeaveCriticalSection(&_socketCS);
+
+		result = _inputHandler->IsConnected();
+	} else if (!_master && result)
+	{
+		EnterCriticalSection(&_socketCS);
+		{
+			while(!_masterReady)
+				SleepConditionVariableCS(&_socketCV, &_socketCS, INFINITE);
+		}
+		LeaveCriticalSection(&_socketCS);
+	}
+
+	return result;
+}
+
 /**
  * Executes the server side of the pipeline
  * Defines initialization steps before first frame is offloaded
@@ -101,17 +134,33 @@ void DeltaServer::OffloadAsync()
 	{
 		bool connection = true;
 
+		EnterCriticalSection(&_socketCS);
+		{
 #ifndef NO_HANDLE_INPUT
-		connection = _inputHandler->Connect();
+			connection = _inputHandler->Connect();
 #endif
-		_socketToClient = CreateSocketToClient(_serverPort);
+			_connectionAttemptDone = true;
+		}
+		WakeConditionVariable(&_socketCV);
+		LeaveCriticalSection(&_socketCS);
 
-		if(_socketToClient==INVALID_SOCKET || !connection)
+		_socketToClient = CreateSocketToClient(_serverPort);
+		
+		if (_socketToClient==INVALID_SOCKET || !connection)
 		{
 			KahawaiLog("Unable to create connection to client in DeltaServer::OffloadAsync()", KahawaiError);
 			return;
 		}
 
+	} else
+	{
+		EnterCriticalSection(&_socketCS);
+		{
+			WaitForSingleObject(_masterInputEvent, INFINITE);
+			_masterReady = true;
+		}
+		WakeConditionVariable(&_socketCV);
+		LeaveCriticalSection(&_socketCS);
 	}
 
 
@@ -416,7 +465,9 @@ DeltaServer::DeltaServer(void)
 	_mappedBuffer(NULL),
 	_master(false),
 	_mutex(NULL),
-	_map(NULL)
+	_map(NULL),
+	_connectionAttemptDone(false),
+	_masterReady(false)
 {
 
 }

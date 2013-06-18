@@ -7,7 +7,8 @@
 
 IFrameServer::IFrameServer(void)
 	:_gop(0),
-	_currFrameNum(0)
+	_currFrameNum(0),
+	_connectionAttemptDone(false)
 {
 }
 
@@ -39,17 +40,47 @@ bool IFrameServer::Initialize()
 	_inputHandler->SetMeasurement(_measurement);
 #endif // MEASUREMENT_OFF
 
+	InitializeCriticalSection(&_socketCS);
+	InitializeConditionVariable(&_socketCV);
+
 	return (_encoder!=NULL && _inputHandler!=NULL);
+}
+
+bool IFrameServer::StartOffload()
+{
+	bool result = KahawaiServer::StartOffload();
+
+	if (result)
+	{
+		EnterCriticalSection(&_socketCS);
+		{
+			while(!_connectionAttemptDone)
+				SleepConditionVariableCS(&_socketCV, &_socketCS, INFINITE);
+		}
+		LeaveCriticalSection(&_socketCS);
+
+#ifndef NO_HANDLE_INPUT
+		result = _inputHandler->IsConnected();
+#endif // NO_HANDLE_INPUT
+	}
+
+	return result;
 }
 
 void IFrameServer::OffloadAsync()
 {
 	bool connection = false;
 
-	//Initialize input handler
+	EnterCriticalSection(&_socketCS);
+	{
+		//Initialize input handler
 #ifndef NO_HANDLE_INPUT
-	connection = _inputHandler->Connect();
+		connection = _inputHandler->Connect();
 #endif
+		_connectionAttemptDone = true;
+	}
+	WakeConditionVariable(&_socketCV);
+	LeaveCriticalSection(&_socketCS);
 
 	_socketToClient = CreateSocketToClient(_serverPort);
 

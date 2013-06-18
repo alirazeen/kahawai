@@ -26,6 +26,8 @@ public:
 	DeltaServer(void);
 	~DeltaServer(void);
 
+	bool	StartOffload();
+
 	//Lifecycle methods
 	void	OffloadAsync();
 	bool	Initialize();
@@ -47,6 +49,11 @@ public:
 
 private:
 	bool	InitMapping();
+
+	bool				_masterReady;
+	bool				_connectionAttemptDone;
+	CRITICAL_SECTION	_socketCS;
+	CONDITION_VARIABLE	_socketCV;
 
 };
 
