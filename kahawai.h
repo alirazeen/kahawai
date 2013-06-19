@@ -8,7 +8,7 @@
 
 class ConfigReader;
 
-typedef void* (*PFNSampleUserInput)(...);
+typedef void* (*PFNSampleUserInput)();
 
 class Kahawai
 {
