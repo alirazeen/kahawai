@@ -26,7 +26,7 @@ bool IFrameServer::isSlave() {
 }
 
 bool IFrameServer::isMaster() {
-	return false;
+	return true;
 }
 
 bool IFrameServer::Initialize()
