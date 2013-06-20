@@ -50,7 +50,7 @@ bool IFrameClient::Initialize()
 	
 #ifndef MEASUREMENT_OFF
 	//Initialize instrumentation class
-	_measurement = new Measurement("iframe_client.csv", "gop=%d", _gop);
+	_measurement = new Measurement("iframe_client.csv", "gop=%d\n", _gop);
 	_muxerComponent->SetMeasurement(_measurement);
 	_inputHandler->SetMeasurement(_measurement);
 #endif // MEASUREMENT_OFF

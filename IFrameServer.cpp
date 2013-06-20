@@ -36,7 +36,7 @@ bool IFrameServer::Initialize()
 #endif
 
 #ifndef MEASUREMENT_OFF
-	_measurement = new Measurement("iframe_server.csv", "gop=%d", _gop);
+	_measurement = new Measurement("iframe_server.csv", "gop=%d\n", _gop);
 	_inputHandler->SetMeasurement(_measurement);
 #endif // MEASUREMENT_OFF
 
