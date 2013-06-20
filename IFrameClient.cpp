@@ -310,10 +310,28 @@ void IFrameClient::DecodeShow()
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::KAHAWAI_BEGIN, _kahawaiFrameNum);
 #endif // MEASUREMENT_OFF
+		
+		//Ok, this is tricky. You would think that GrabInput() should appear
+		//AFTER the call to Show(), but that is incorrect. Think about it. A frame X
+		//is displayed on the screen until Decode/Show is done for frame X+1.
+		//
+		//Therefore, to grab the user's reaction to frame X, we should grab it when
+		//frame X+1 is shown. The user has had time to view frame X and her
+		//corresponding reaction is grabbed correctly if we do GrabInput() just before
+		//decoding/showing frame X+1.
+		//
+		//On the OTHER hand, if we do GrabInput() AFTER the call to Show(), we're
+		//grabbing inputs BEFORE the user has had time to properly observe a frame X.
+		//
+		//This is why in terms of line ordering, GrabInput() appears before Decode/Show.
+		//Note that the _kahawaiFrameNum > FRAME_GAP, ensures that we correctly
+		//collect an input for frame X when frame X+1 is about to be decoded/shown.
+		if (_kahawaiFrameNum > FRAME_GAP)
+			GrabInput();
 
 		offloading &= Decode();
 		offloading &= Show();
-		GrabInput();
+		
 
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::KAHAWAI_END, _kahawaiFrameNum);
