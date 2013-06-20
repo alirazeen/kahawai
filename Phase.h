@@ -53,6 +53,9 @@ public:
 	static const Phase* IFRAME_MULTIPLEX_PFRAME_BEGIN;
 	static const Phase* IFRAME_MULTIPLEX_PFRAME_END;
 
+	//Applicable only to the IFrame technique
+	static const Phase* INPUT_GRAB;
+
 	//From the client's perspective, receiving an input
 	//means receiving it from the game and sending an input
 	//means sending it to the cloud server

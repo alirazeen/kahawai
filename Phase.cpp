@@ -44,6 +44,8 @@ const Phase* Phase::IFRAME_MULTIPLEX_IFRAME_END = new Phase("IFRAME_MULTIPLEX_IF
 const Phase* Phase::IFRAME_MULTIPLEX_PFRAME_BEGIN = new Phase("IFRAME_MULTIPLEX_PFRAME_BEGIN");
 const Phase* Phase::IFRAME_MULTIPLEX_PFRAME_END = new Phase("IFRAME_MULTIPLEX_PFRAME_END");
 
+const Phase* Phase::INPUT_GRAB = new Phase("INPUT_GRAB");
+
 const Phase* Phase::INPUT_CLIENT_RECEIVE = new Phase("INPUT_CLIENT_RECEIVE");
 const Phase* Phase::INPUT_CLIENT_SEND_BEGIN = new Phase("INPUT_CLIENT_SEND_BEGIN");
 const Phase* Phase::INPUT_CLIENT_SEND_END = new Phase("INPUT_CLIENT_SEND_END");

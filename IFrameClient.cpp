@@ -239,6 +239,7 @@ void IFrameClient::GrabInput()
 	{
 		void* inputCommand = _fnSampleUserInput();
 		_localInputQueue.push(inputCommand);
+		_measurement->AddPhase(Phase::INPUT_GRAB,FRAME_NUM_NOT_APPLICABLE);
 	}
 	WakeConditionVariable(&_inputQueueEmptyCV);
 	LeaveCriticalSection(&_inputCS);
