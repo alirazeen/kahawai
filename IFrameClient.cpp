@@ -283,15 +283,13 @@ void* IFrameClient::HandleInput()
 
 int IFrameClient::GetFirstInputFrame()
 {
-	// This is actually the frame gap. There is a +2 because we need to generate and
-	// send at least two frames to the decoder before it starts showing anything. The +2
-	// will avoid a deadlock case where HandleInput() is waiting for an input and the Kahawai
-	// thread is waiting to show at least one frame before grabbing inputs
+	//TODO: Comment this properly. There is a relationship between the +3 and
+	//the +1 in DecodeShow(). This relationship needs to be properly documented
 
 	// TODO: This should actually be read from a config file
 	// or dynamically determined based on the RTT or some 
 	// combination of the two. It should NOT be a static value
-	return FRAME_GAP+2;
+	return FRAME_GAP+3;
 }
 
 DWORD WINAPI IFrameClient::AsyncDecodeShow(void* Param)
@@ -326,7 +324,7 @@ void IFrameClient::DecodeShow()
 		//This is why in terms of line ordering, GrabInput() appears before Decode/Show.
 		//Note that the _kahawaiFrameNum > FRAME_GAP, ensures that we correctly
 		//collect an input for frame X when frame X+1 is about to be decoded/shown.
-		if (_kahawaiFrameNum > FRAME_GAP)
+		if (_kahawaiFrameNum > FRAME_GAP+1)
 			GrabInput();
 
 		offloading &= Decode();
