@@ -8,6 +8,7 @@ public:
 	IFrameServer(void);
 	~IFrameServer(void);
 
+	bool StartOffload();
 protected:
 
 	bool	Initialize();
@@ -30,5 +31,11 @@ protected:
 
 	int		_gop;
 	int		_currFrameNum;
+
+private:
+
+	bool				_connectionAttemptDone;
+	CRITICAL_SECTION	_socketCS;
+	CONDITION_VARIABLE	_socketCV;
 };
 
