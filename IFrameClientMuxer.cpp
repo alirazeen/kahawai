@@ -175,7 +175,7 @@ void IFrameClientMuxer::Multiplex()
 		{
 
 #ifndef MEASUREMENT_OFF
-			_measurement->AddPhase(Phase::IFRAME_MULTIPLEX_IFRAME_BEGIN, _currFrameNum);
+			_measurement->AddPhase(Phase::MULTIPLEX_IFRAME_BEGIN, _currFrameNum);
 #endif // MEASUREMENT_OFF
 
 			// Get the next i frame
@@ -185,6 +185,10 @@ void IFrameClientMuxer::Multiplex()
 					SleepConditionVariableCS(&_iFrameWaitForFrameCV, &_iFrameCS, INFINITE);
 			}
 			LeaveCriticalSection(&_iFrameCS);
+
+#ifndef MEASUREMENt_OFF
+			_measurement->AddPhase(Phase::MULTIPLEX_IFRAME_RECEIVED, _currFrameNum);
+#endif // MEASUREMENT_OFF
 
 			// Send out the i frame
 			SendFrameToLocalDecoder((char*)buffer, bufferSize);
@@ -197,7 +201,7 @@ void IFrameClientMuxer::Multiplex()
 			WakeConditionVariable(&_iFrameWaitForSpaceCV);
 
 #ifndef MEASUREMENT_OFF
-			_measurement->AddPhase(Phase::IFRAME_MULTIPLEX_IFRAME_END, _currFrameNum);
+			_measurement->AddPhase(Phase::MULTIPLEX_IFRAME_END, _currFrameNum);
 #endif // MEASUREMENT_OFF
 
 			LeaveCriticalSection(&_iFrameCS);
@@ -208,7 +212,7 @@ void IFrameClientMuxer::Multiplex()
 		{
 
 #ifndef MEASUREMENT_OFF
-			_measurement->AddPhase(Phase::IFRAME_MULTIPLEX_PFRAME_BEGIN, _currFrameNum);
+			_measurement->AddPhase(Phase::MULTIPLEX_PFRAME_BEGIN, _currFrameNum);
 #endif // MEASUREMENT_OFF
 
 			// Retrieve a pframe from the circular buffer
@@ -218,6 +222,10 @@ void IFrameClientMuxer::Multiplex()
 					SleepConditionVariableCS(&_pFrameWaitForFrameCV, &_pFrameCS, INFINITE);
 			}
 			LeaveCriticalSection(&_pFrameCS);
+
+#ifndef MEASUREMENT_OFF
+			_measurement->AddPhase(Phase::MULTIPLEX_PFRAME_RECEIVED, _currFrameNum);
+#endif // MEASUREMENT_OFF
 
 			// Now that we have a pFrame buffer, send it out to the local decoder
 			SendFrameToLocalDecoder((char*)buffer, bufferSize);
@@ -230,7 +238,7 @@ void IFrameClientMuxer::Multiplex()
 			WakeConditionVariable(&_pFrameWaitForSpaceCV);
 
 #ifndef MEASUREMENT_OFF
-			_measurement->AddPhase(Phase::IFRAME_MULTIPLEX_PFRAME_END, _currFrameNum);
+			_measurement->AddPhase(Phase::MULTIPLEX_PFRAME_END, _currFrameNum);
 #endif // MEASUREMENT_OFF
 
 			LeaveCriticalSection(&_pFrameCS);
