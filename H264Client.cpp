@@ -89,9 +89,9 @@ void H264Client::OffloadAsync()
  *  H264 Client does not need to capture the screen
  *  Overrides default behavior (doing nothing)
  */
-bool H264Client::Capture(int width, int height)
+bool H264Client::Capture(int width, int height, void *args)
 {
-	bool result = KahawaiClient::Capture(width, height);
+	bool result = KahawaiClient::Capture(width, height, args);
 	return true;
 }
 
