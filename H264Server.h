@@ -32,5 +32,9 @@ private:
 	CONDITION_VARIABLE	_inputSocketCV;
 
 
+	bool isClient();
+	bool isSlave();
+	bool isMaster();
+
 };
 
