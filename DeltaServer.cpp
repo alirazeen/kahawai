@@ -71,8 +71,8 @@ bool DeltaServer::Initialize()
 	_inputHandler->SetMeasurement(_measurement);
 #endif
 
-	InitializeCriticalSection(&_socketCS);
-	InitializeConditionVariable(&_socketCV);
+	InitializeCriticalSection(&_inputSocketCS);
+	InitializeConditionVariable(&_inputSocketCV);
 
 	return true;
 }
@@ -94,29 +94,41 @@ bool DeltaServer::Finalize()
 bool DeltaServer::StartOffload()
 {
 	bool result = KahawaiServer::StartOffload();
-	
-	//Make sure the input handler is connected first
-	//before we allow the game to continue
-	if (_master && result && !_connectionAttemptDone)
+
+#ifndef NO_HANDLE_INPUT
+	//Make sure the input handler is connected first before we allow 
+	//the delta master and slave to continue. The synchronization logic
+	//here is complicated because:
+	//
+	// 1) There is a delta master and there is a delta slave
+	// 2) Only the master connects to the client input handler
+	// 3) The slave has to wait for the master to finish connecting
+	// 4) The slave and the master are _separate_ class instances
+	// 5) As a consequence of 4), there are twp independent critical sections with the 
+	//    same name, _inputSocketCS, and also independent condition variables
+	// 6) The one thing that both the master and the slave share is the _masterInputEvent HANDLE
+
+	if (_master && result && !_inputConnectionDone)
 	{
-		EnterCriticalSection(&_socketCS);
+		EnterCriticalSection(&_inputSocketCS);
 		{
-			while(!_connectionAttemptDone)
-				SleepConditionVariableCS(&_socketCV, &_socketCS, INFINITE);
+			while(!_inputConnectionDone)
+				SleepConditionVariableCS(&_inputSocketCV, &_inputSocketCS, INFINITE);
 		}
 		SetEvent(_masterInputEvent);
-		LeaveCriticalSection(&_socketCS);
+		LeaveCriticalSection(&_inputSocketCS);
 
 		result = _inputHandler->IsConnected();
 	} else if (!_master && result)
 	{
-		EnterCriticalSection(&_socketCS);
+		EnterCriticalSection(&_inputSocketCS);
 		{
-			while(!_masterReady)
-				SleepConditionVariableCS(&_socketCV, &_socketCS, INFINITE);
+			while(!_masterInputReady)
+				SleepConditionVariableCS(&_inputSocketCV, &_inputSocketCS, INFINITE);
 		}
-		LeaveCriticalSection(&_socketCS);
+		LeaveCriticalSection(&_inputSocketCS);
 	}
+#endif
 
 	return result;
 }
@@ -132,21 +144,25 @@ void DeltaServer::OffloadAsync()
 	//Create socket and input connection to client (if master)
 	if(_master)
 	{
-		bool connection = true;
-
-		EnterCriticalSection(&_socketCS);
-		{
 #ifndef NO_HANDLE_INPUT
-			connection = _inputHandler->Connect();
-#endif
-			_connectionAttemptDone = true;
+		EnterCriticalSection(&_inputSocketCS);
+		{
+			_inputHandler->Connect();
+			_inputConnectionDone = true;
 		}
-		WakeConditionVariable(&_socketCV);
-		LeaveCriticalSection(&_socketCS);
+		WakeConditionVariable(&_inputSocketCV);
+		LeaveCriticalSection(&_inputSocketCS);
+
+		if(!_inputHandler->IsConnected())
+		{
+			KahawaiLog("Unable to start input handler", KahawaiError);
+			_offloading = false;
+			return;
+		}
+#endif
 
 		_socketToClient = CreateSocketToClient(_serverPort);
-		
-		if (_socketToClient==INVALID_SOCKET || !connection)
+		if (_socketToClient==INVALID_SOCKET)
 		{
 			KahawaiLog("Unable to create connection to client in DeltaServer::OffloadAsync()", KahawaiError);
 			return;
@@ -154,13 +170,15 @@ void DeltaServer::OffloadAsync()
 
 	} else
 	{
-		EnterCriticalSection(&_socketCS);
+#ifndef NO_HANDLE_INPUT
+		EnterCriticalSection(&_inputSocketCS);
 		{
 			WaitForSingleObject(_masterInputEvent, INFINITE);
-			_masterReady = true;
+			_masterInputReady = true;
 		}
-		WakeConditionVariable(&_socketCV);
-		LeaveCriticalSection(&_socketCS);
+		WakeConditionVariable(&_inputSocketCV);
+		LeaveCriticalSection(&_inputSocketCS);
+#endif
 	}
 
 
@@ -466,8 +484,8 @@ DeltaServer::DeltaServer(void)
 	_master(false),
 	_mutex(NULL),
 	_map(NULL),
-	_connectionAttemptDone(false),
-	_masterReady(false)
+	_inputConnectionDone(false),
+	_masterInputReady(false)
 {
 
 }

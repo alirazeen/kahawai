@@ -28,9 +28,9 @@ protected:
 private:
 	void*	_lastCommand;
 
-	CRITICAL_SECTION	_socketCS;
-	CONDITION_VARIABLE	_socketCV;
-	bool				_connectionAttemptDone;
+	CRITICAL_SECTION	_inputSocketCS;
+	CONDITION_VARIABLE	_inputSocketCV;
+	bool				_inputConnectionDone;
 
 };
 

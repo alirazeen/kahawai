@@ -7,7 +7,7 @@
 
 H264Server::H264Server(void)
 	:KahawaiServer(),
-	_connectionAttemptDone(false)
+	_inputConnectionDone(false)
 {
 }
 
@@ -34,8 +34,8 @@ bool H264Server::Initialize()
 	_inputHandler->SetMeasurement(_measurement);
 #endif
 
-	InitializeCriticalSection(&_socketCS);
-	InitializeConditionVariable(&_socketCV);
+	InitializeCriticalSection(&_inputSocketCS);
+	InitializeConditionVariable(&_inputSocketCV);
 
 	return true;
 }
@@ -44,46 +44,50 @@ bool H264Server::StartOffload()
 {
 	bool result = KahawaiServer::StartOffload();
 
-	if (result) //TODO && !_connectionAttemptDone
-	{
-		EnterCriticalSection(&_socketCS);
-		{
-			while(!_connectionAttemptDone)
-				SleepConditionVariableCS(&_socketCV, &_socketCS, INFINITE);
-		}
-		LeaveCriticalSection(&_socketCS);
-
 #ifndef NO_HANDLE_INPUT
+	if (result)
+	{
+		EnterCriticalSection(&_inputSocketCS);
+		{
+			while(!_inputConnectionDone)
+				SleepConditionVariableCS(&_inputSocketCV, &_inputSocketCS, INFINITE);
+		}
+		LeaveCriticalSection(&_inputSocketCS);
+
 		result = _inputHandler->IsConnected();
-#endif
 	}
+#endif
 
 	return result;
 }
 
 void H264Server::OffloadAsync()
 {
-	bool connection = false; //TODO deltaserver inits this to true
-	EnterCriticalSection(&_socketCS);
+#ifndef NO_HANDLE_INPUT	
+	EnterCriticalSection(&_inputSocketCS);
 	{
-#ifndef NO_HANDLE_INPUT
-		connection = _inputHandler->Connect();
-#endif
-		_connectionAttemptDone = true;
+		_inputHandler->Connect();
+		_inputConnectionDone = true;
 	}
-	WakeConditionVariable(&_socketCV);
-	LeaveCriticalSection(&_socketCS);
+	WakeConditionVariable(&_inputSocketCV);
+	LeaveCriticalSection(&_inputSocketCS);
+
+	if(!_inputHandler->IsConnected())
+	{
+		KahawaiLog("Unable to start input handler", KahawaiError);
+		_offloading = false;
+		return;
+	}
+#endif
 
 	_socketToClient = CreateSocketToClient(_serverPort);
-
-	if(_socketToClient==INVALID_SOCKET || !connection)
+	if(_socketToClient==INVALID_SOCKET)
 	{
 		KahawaiLog("Unable to create connection to client", KahawaiError);
 		return;
 	}
 
 	KahawaiServer::OffloadAsync();
-
 }
 
 int H264Server::Encode(void** compressedFrame)

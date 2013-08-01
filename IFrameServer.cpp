@@ -8,7 +8,7 @@
 IFrameServer::IFrameServer(void)
 	:_gop(0),
 	_currFrameNum(0),
-	_connectionAttemptDone(false)
+	_inputConnectionDone(false)
 {
 }
 
@@ -40,8 +40,8 @@ bool IFrameServer::Initialize()
 	_inputHandler->SetMeasurement(_measurement);
 #endif
 
-	InitializeCriticalSection(&_socketCS);
-	InitializeConditionVariable(&_socketCV);
+	InitializeCriticalSection(&_inputSocketCS);
+	InitializeConditionVariable(&_inputSocketCV);
 
 	return (_encoder!=NULL && _inputHandler!=NULL);
 }
@@ -50,41 +50,44 @@ bool IFrameServer::StartOffload()
 {
 	bool result = KahawaiServer::StartOffload();
 
+#ifndef NO_HANDLE_INPUT
 	if (result)
 	{
-		EnterCriticalSection(&_socketCS);
+		EnterCriticalSection(&_inputSocketCS);
 		{
-			while(!_connectionAttemptDone)
-				SleepConditionVariableCS(&_socketCV, &_socketCS, INFINITE);
+			while(!_inputConnectionDone)
+				SleepConditionVariableCS(&_inputSocketCV, &_inputSocketCS, INFINITE);
 		}
-		LeaveCriticalSection(&_socketCS);
-
-#ifndef NO_HANDLE_INPUT
+		LeaveCriticalSection(&_inputSocketCS);
 		result = _inputHandler->IsConnected();
-#endif // NO_HANDLE_INPUT
 	}
+#endif
 
 	return result;
 }
 
 void IFrameServer::OffloadAsync()
 {
-	bool connection = false;
 
-	EnterCriticalSection(&_socketCS);
-	{
-		//Initialize input handler
 #ifndef NO_HANDLE_INPUT
-		connection = _inputHandler->Connect();
-#endif
-		_connectionAttemptDone = true;
+	EnterCriticalSection(&_inputSocketCS);
+	{
+		_inputHandler->Connect();
+		_inputConnectionDone = true;
 	}
-	WakeConditionVariable(&_socketCV);
-	LeaveCriticalSection(&_socketCS);
+	WakeConditionVariable(&_inputSocketCV);
+	LeaveCriticalSection(&_inputSocketCS);
+
+	if(!_inputHandler->IsConnected())
+	{
+		KahawaiLog("Unable to start input handler", KahawaiError);
+		_offloading = false;
+		return;
+	}
+#endif
 
 	_socketToClient = CreateSocketToClient(_serverPort);
-
-	if(_socketToClient==INVALID_SOCKET || !connection)
+	if(_socketToClient==INVALID_SOCKET)
 	{
 		KahawaiLog("Unable to create connection to client in IFrameServer::OffloadAsync()", KahawaiError);
 		return;

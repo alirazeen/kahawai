@@ -50,10 +50,10 @@ public:
 private:
 	bool	InitMapping();
 
-	bool				_masterReady;
-	bool				_connectionAttemptDone;
-	CRITICAL_SECTION	_socketCS;
-	CONDITION_VARIABLE	_socketCV;
+	bool				_masterInputReady;
+	bool				_inputConnectionDone;
+	CRITICAL_SECTION	_inputSocketCS;
+	CONDITION_VARIABLE	_inputSocketCV;
 
 };
 

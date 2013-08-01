@@ -60,9 +60,9 @@ private:
 	CRITICAL_SECTION	_inputCS;
 	CONDITION_VARIABLE	_inputQueueEmptyCV;
 
-	bool				_connectionAttemptDone;
-	CRITICAL_SECTION	_socketCS;
-	CONDITION_VARIABLE	_socketCV;
+	bool				_inputConnectionDone;
+	CRITICAL_SECTION	_inputSocketCS;
+	CONDITION_VARIABLE	_inputSocketCV;
 
 	bool		SendTransformPictureEncoder();
 

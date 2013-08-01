@@ -8,7 +8,7 @@
 IFrameClient::IFrameClient(void) :
 	_lastCommand(NULL),
 	_numTransformedFrames(0),
-	_connectionAttemptDone(false)
+	_inputConnectionDone(false)
 {
 	_encoderComponent = new IFrameClientEncoder();
 	_muxerComponent = new IFrameClientMuxer();
@@ -58,8 +58,8 @@ bool IFrameClient::Initialize()
 	InitializeCriticalSection(&_inputCS);
 	InitializeConditionVariable(&_inputQueueEmptyCV);
 
-	InitializeCriticalSection(&_socketCS);
-	InitializeConditionVariable(&_socketCV);
+	InitializeCriticalSection(&_inputSocketCS);
+	InitializeConditionVariable(&_inputSocketCV);
 	return true;
 }
 
@@ -91,43 +91,41 @@ bool IFrameClient::StartOffload()
 {
 	bool result = KahawaiClient::StartOffload();
 
+#ifndef NO_HANDLE_INPUT
 	if (result)
 	{
-		EnterCriticalSection(&_socketCS);
+		EnterCriticalSection(&_inputSocketCS);
 		{
-			while (!_connectionAttemptDone)
-				SleepConditionVariableCS(&_socketCV, &_socketCS, INFINITE);
+			while (!_inputConnectionDone)
+				SleepConditionVariableCS(&_inputSocketCV, &_inputSocketCS, INFINITE);
 		}
-		LeaveCriticalSection(&_socketCS);
-#ifndef NO_HANDLE_INPUT
+		LeaveCriticalSection(&_inputSocketCS);
 		result = _inputHandler->IsConnected();
-#endif // NO_HANDLE_INPUT
 	}
+#endif
 
 	return result;
 }
 
 void IFrameClient::OffloadAsync()
 {
+#ifndef NO_HANDLE_INPUT
 	//Connect input handler to server
-	EnterCriticalSection(&_socketCS);
+	EnterCriticalSection(&_inputSocketCS);
 	{
-#ifndef NO_HANDLE_INPUT
 		_inputHandler->Connect();
-#endif // NO_HANDLE_INPUT
-		_connectionAttemptDone = true;
+		_inputConnectionDone = true;
 	}
-	WakeConditionVariable(&_socketCV);
-	LeaveCriticalSection(&_socketCS);
+	WakeConditionVariable(&_inputSocketCV);
+	LeaveCriticalSection(&_inputSocketCS);
 
-#ifndef NO_HANDLE_INPUT
 	if(!_inputHandler->IsConnected())
 	{
 		KahawaiLog("Unable to start input handler", KahawaiError);
 		_offloading = false;
 		return;
 	}
-#endif // NO_HANDLE_INPUT
+#endif
 
 	_muxerComponent->BeginOffload();
 	CreateKahawaiThread(AsyncDecodeShow, this);

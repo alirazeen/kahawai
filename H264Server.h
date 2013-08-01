@@ -23,8 +23,8 @@ protected:
 
 
 private:
-	bool				_connectionAttemptDone;
-	CRITICAL_SECTION	_socketCS;
-	CONDITION_VARIABLE	_socketCV;
+	bool				_inputConnectionDone;
+	CRITICAL_SECTION	_inputSocketCS;
+	CONDITION_VARIABLE	_inputSocketCV;
 };
 

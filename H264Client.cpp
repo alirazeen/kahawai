@@ -6,7 +6,7 @@
 H264Client::H264Client(void)
 	:KahawaiClient(),
 	_lastCommand(NULL),
-	_connectionAttemptDone(false)
+	_inputConnectionDone(false)
 {
 }
 
@@ -32,8 +32,8 @@ bool H264Client::Initialize()
 	_inputHandler->SetMeasurement(_measurement);
 #endif
 
-	InitializeCriticalSection(&_socketCS);
-	InitializeConditionVariable(&_socketCV);
+	InitializeCriticalSection(&_inputSocketCS);
+	InitializeConditionVariable(&_inputSocketCV);
 
 	return true;
 }
@@ -42,39 +42,38 @@ bool H264Client::StartOffload()
 {
 	bool result = KahawaiClient::StartOffload();
 
+#ifndef NO_HANDLE_INPUT
 	//Make sure the input handler is connected first
 	//before we allow the game to continue
 	if (result)
 	{
-		EnterCriticalSection(&_socketCS);
+		EnterCriticalSection(&_inputSocketCS);
 		{
-			while(!_connectionAttemptDone)
-				SleepConditionVariableCS(&_socketCV, &_socketCS, INFINITE);
+			while(!_inputConnectionDone)
+				SleepConditionVariableCS(&_inputSocketCV, &_inputSocketCS, INFINITE);
 		}
-		LeaveCriticalSection(&_socketCS);
+		LeaveCriticalSection(&_inputSocketCS);
 
-#ifndef NO_HANDLE_INPUT
 		result = _inputHandler->IsConnected();
-#endif
 	}
-	
+#endif
+
+
 	return result;
 }
 
 void H264Client::OffloadAsync()
 {
+#ifndef NO_HANDLE_INPUT
 	//Connect input handler to server
-	EnterCriticalSection(&_socketCS);
+	EnterCriticalSection(&_inputSocketCS);
 	{
-#ifndef NO_HANDLE_INPUT
 		_inputHandler->Connect();
-#endif
-		_connectionAttemptDone = true;
+		_inputConnectionDone = true;
 	}
-	WakeConditionVariable(&_socketCV);
-	LeaveCriticalSection(&_socketCS);
+	WakeConditionVariable(&_inputSocketCV);
+	LeaveCriticalSection(&_inputSocketCS);
 
-#ifndef NO_HANDLE_INPUT
 	if(!_inputHandler->IsConnected())
 	{
 		KahawaiLog("Unable to start input handler", KahawaiError);
