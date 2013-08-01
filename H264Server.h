@@ -31,10 +31,5 @@ private:
 	CRITICAL_SECTION	_inputSocketCS;
 	CONDITION_VARIABLE	_inputSocketCV;
 
-
-	bool isClient();
-	bool isSlave();
-	bool isMaster();
-
 };
 
