@@ -73,7 +73,7 @@ void InputHandlerClient::SetMeasurement(Measurement* measurement)
 {
 #ifndef MEASUREMENT_OFF
 	_measurement = measurement;
-#endif // MEASUREMENT_OFF
+#endif
 }
 
 void InputHandlerClient::SetFrameNum(int frameNum)
@@ -122,7 +122,7 @@ void InputHandlerClient::SendCommandsAsync()
 
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::INPUT_CLIENT_SEND_BEGIN, frameNum, "InputNum=%d",_numSentInput);
-#endif // MEASUREMENT_OFF
+#endif
 
 		int result = send(_inputSocket, (char*)&frameNum, sizeof(frameNum), 0);
 		if (result != SOCKET_ERROR)
@@ -137,7 +137,7 @@ void InputHandlerClient::SendCommandsAsync()
 
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::INPUT_CLIENT_SEND_END, frameNum, "InputNum=%d", _numSentInput);
-#endif // MEASUREMENT_OFF
+#endif
 
 		_numSentInput++;
 
@@ -183,7 +183,7 @@ void InputHandlerClient::SendCommand(void* command)
 
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::INPUT_CLIENT_RECEIVE, _frameNum, "InputNum=%d", _numReceivedInput);
-#endif // MEASUREMENT_OFF
+#endif
 		_numReceivedInput++;
 	}
 	WakeConditionVariable(&_inputReadyCV);

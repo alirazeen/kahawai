@@ -87,7 +87,7 @@ void KahawaiClient::OffloadAsync()
 
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::KAHAWAI_BEGIN, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 		//Exits on error
 		_offloading &= Transform(_width,_height);
@@ -96,7 +96,7 @@ void KahawaiClient::OffloadAsync()
 
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::KAHAWAI_END, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 		_kahawaiFrameNum++;
 	}
 	/////////////////////////////////////////////////////////////////////////
@@ -130,14 +130,14 @@ void KahawaiClient::GameStart()
 {
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::GAME_BEGIN, _gameFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 }
 
 void KahawaiClient::GameEnd()
 {
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::GAME_END, _gameFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 	_gameFrameNum++;
 }
 

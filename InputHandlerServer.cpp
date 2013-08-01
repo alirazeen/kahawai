@@ -15,7 +15,7 @@ void InputHandlerServer::ReceiveCommandsAsync()
 
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::INPUT_SERVER_RECEIVE_BEGIN, FRAME_NUM_NOT_APPLICABLE, "InputNum=%d", _numReceivedInput);
-#endif // MEASUREMENT_OFF
+#endif
 
 		int frameNum = -1;
 		char* command = new char[KAHAWAI_INPUT_COMMAND_BUFFER];
@@ -61,7 +61,7 @@ void InputHandlerServer::ReceiveCommandsAsync()
 
 #ifndef MEASUREMENT_OFF
 			_measurement->AddPhase(Phase::INPUT_SERVER_RECEIVE_END, frameNum, "InputNum=%d", _numReceivedInput);
-#endif // MEASUREMENT_OFF
+#endif
 			_numReceivedInput++;
 		}
 		WakeConditionVariable(&_inputReadyCV);
@@ -132,7 +132,7 @@ void* InputHandlerServer::ReceiveCommand()
 	
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::INPUT_SERVER_SEND, frameNum, "InputNum=%d", _numSentInput);
-#endif // MEASUREMENT_OFF
+#endif
 	_numSentInput++;
 
 	delete[] command;

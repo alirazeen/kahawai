@@ -38,7 +38,7 @@ bool IFrameServer::Initialize()
 #ifndef MEASUREMENT_OFF
 	_measurement = new Measurement("iframe_server.csv", "gop=%d\n", _gop);
 	_inputHandler->SetMeasurement(_measurement);
-#endif // MEASUREMENT_OFF
+#endif
 
 	InitializeCriticalSection(&_socketCS);
 	InitializeConditionVariable(&_socketCV);
@@ -98,13 +98,13 @@ bool IFrameServer::Capture(int width, int height)
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::CAPTURE_BEGIN, _gameFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	bool result = KahawaiServer::Capture(width,height);
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::CAPTURE_END, _gameFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	return result;
 }
@@ -113,13 +113,13 @@ bool IFrameServer::Transform(int width, int height)
 {
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::TRANSFORM_BEGIN, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	bool result = KahawaiServer::Transform(width,height);
 	
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::TRANSFORM_END, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	return result;
 }
@@ -128,7 +128,7 @@ int IFrameServer::Encode(void** compressedFrame)
 {
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::ENCODE_BEGIN, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	if(_currFrameNum%_gop==0) //is it time to encode an I-Frame
 	{
@@ -145,7 +145,7 @@ int IFrameServer::Encode(void** compressedFrame)
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::ENCODE_END, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	return result;
 }
@@ -155,7 +155,7 @@ bool IFrameServer::Send(void** compressedFrame, int frameSize)
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::SEND_BEGIN, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	if(_currFrameNum%_gop!=0) //We send only the P-frames
 	{
@@ -183,7 +183,7 @@ bool IFrameServer::Send(void** compressedFrame, int frameSize)
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::SEND_END, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	_currFrameNum++;
 	return true;

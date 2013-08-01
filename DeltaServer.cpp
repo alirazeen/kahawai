@@ -69,7 +69,7 @@ bool DeltaServer::Initialize()
 #ifndef MEASUREMENT_OFF
 	_measurement = new Measurement(measurement_file_name);
 	_inputHandler->SetMeasurement(_measurement);
-#endif // MEASUREMENT_OFF
+#endif
 
 	InitializeCriticalSection(&_socketCS);
 	InitializeConditionVariable(&_socketCV);
@@ -172,13 +172,13 @@ bool DeltaServer::Capture(int width, int height)
 {
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::CAPTURE_BEGIN, _gameFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	bool result = KahawaiServer::Capture(width, height);
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::CAPTURE_END, _gameFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	return result;
 }
@@ -195,13 +195,13 @@ bool DeltaServer::Transform(int width, int height)
 {
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::TRANSFORM_BEGIN, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	bool result = KahawaiServer::Transform(_width, _height);
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::TRANSFORM_END, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	return result;
 }
@@ -218,7 +218,7 @@ int DeltaServer::Encode(void** transformedFrame)
 {
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::ENCODE_BEGIN, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	int result = 0;
 	if(_master)
@@ -238,7 +238,7 @@ int DeltaServer::Encode(void** transformedFrame)
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::ENCODE_END, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 
 	return result;
@@ -256,7 +256,7 @@ bool DeltaServer::Send(void** compressedFrame, int frameSize)
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::SEND_BEGIN, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	if(_master)
 	{
@@ -279,7 +279,7 @@ bool DeltaServer::Send(void** compressedFrame, int frameSize)
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::SEND_END, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	return true;
 }

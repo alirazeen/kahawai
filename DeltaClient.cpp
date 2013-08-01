@@ -60,7 +60,7 @@ bool DeltaClient::Initialize()
 	//Initialize instrumentation class
 	_measurement = new Measurement("delta_client.csv");
 	_inputHandler->SetMeasurement(_measurement);
-#endif // MEASUREMENT_OFF
+#endif
 
 	InitializeCriticalSection(&_socketCS);
 	InitializeConditionVariable(&_socketCV);
@@ -128,14 +128,14 @@ bool DeltaClient::Capture(int width, int height)
 {
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::CAPTURE_BEGIN, _gameFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	//Captures at the client resolution
 	bool result = KahawaiClient::Capture(_clientWidth,_clientHeight);
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::CAPTURE_END, _gameFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 	return result;
 }
 
@@ -151,14 +151,14 @@ bool DeltaClient::Transform(int width, int height)
 {
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::TRANSFORM_BEGIN, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	//transforms the screen captured at the client resolution
 	bool result = KahawaiClient::Transform(_clientWidth, _clientHeight);
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::TRANSFORM_END, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	return result;
 }
@@ -167,7 +167,7 @@ bool DeltaClient::Decode()
 {
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::DECODE_BEGIN, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	//TODO: LogYUVFrame below should NOT rely on the _renderedFrames counter
 	//since that is incremented in the game thread while Decode() runs in the
@@ -178,7 +178,7 @@ bool DeltaClient::Decode()
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::DECODE_END, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	return result;
 }
@@ -188,13 +188,13 @@ bool DeltaClient::Show()
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::SHOW_BEGIN, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	bool result = _decoder->Show();
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::SHOW_END, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	return result;
 }

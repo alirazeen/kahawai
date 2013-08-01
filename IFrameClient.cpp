@@ -53,7 +53,7 @@ bool IFrameClient::Initialize()
 	_measurement = new Measurement("iframe_client.csv", "gop=%d\n", _gop);
 	_muxerComponent->SetMeasurement(_measurement);
 	_inputHandler->SetMeasurement(_measurement);
-#endif // MEASUREMENT_OFF
+#endif
 
 	InitializeCriticalSection(&_inputCS);
 	InitializeConditionVariable(&_inputQueueEmptyCV);
@@ -155,13 +155,13 @@ bool IFrameClient::Capture(int width, int height)
 	{
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::CAPTURE_BEGIN,_renderedFrames);
-#endif // MEASUREMENT_OFF
+#endif
 
 		result = KahawaiClient::Capture(width,height);
 
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::CAPTURE_END,_renderedFrames);
-#endif // MEASUREMENT_OFF
+#endif
 	}
 	else
 		_renderedFrames++;
@@ -173,7 +173,7 @@ bool IFrameClient::Transform(int width, int height)
 {
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::TRANSFORM_BEGIN, _numTransformedFrames);
-#endif // MEASUREMENT_OFF
+#endif
 
 	bool result = KahawaiClient::Transform(width, height);
 	if (result)
@@ -181,18 +181,18 @@ bool IFrameClient::Transform(int width, int height)
 
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::IFRAME_CLIENT_ENCODE_BEGIN, _numTransformedFrames);
-#endif // MEASUREMENT_OFF
+#endif
 		
 		result = SendTransformPictureEncoder();
 
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::IFRAME_CLIENT_ENCODE_END, _numTransformedFrames);
-#endif // MEASUREMENT_OFF
+#endif
 	}
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::TRANSFORM_END, _numTransformedFrames);
-#endif // MEASUREMENT_OFF
+#endif
 
 	_numTransformedFrames += _gop;
 	return result;
@@ -207,13 +207,13 @@ bool IFrameClient::Decode()
 {
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::DECODE_BEGIN, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	bool result = _decoder->Decode();
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::DECODE_END, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	return result;
 }
@@ -222,13 +222,13 @@ bool IFrameClient::Show()
 {
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::SHOW_BEGIN, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	bool result = _decoder->Show();
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::SHOW_END, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	return result;
 }
@@ -307,7 +307,7 @@ void IFrameClient::DecodeShow()
 
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::KAHAWAI_BEGIN, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 		
 		//Ok, this is tricky. You would think that GrabInput() should appear
 		//AFTER the call to Show(), but that is incorrect. Think about it. A frame X
@@ -333,7 +333,7 @@ void IFrameClient::DecodeShow()
 
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::KAHAWAI_END, _kahawaiFrameNum);
-#endif // MEASUREMENT_OFF
+#endif
 
 	
 		_kahawaiFrameNum++;
