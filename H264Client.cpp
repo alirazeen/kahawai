@@ -4,7 +4,9 @@
 
 
 H264Client::H264Client(void)
-	:KahawaiClient()
+	:KahawaiClient(),
+	_lastCommand(NULL),
+	_connectionAttemptDone(false)
 {
 }
 
@@ -13,13 +15,84 @@ H264Client::~H264Client(void)
 {
 }
 
+bool H264Client::Initialize()
+{
+	if (!KahawaiClient::Initialize())
+		return false;
+
+#ifndef NO_HANDLE_INPUT
+	_inputHandler = new InputHandlerClient(_serverIP, _serverPort+PORT_OFFSET_INPUT_HANDLER, _gameName);
+#endif
+
+	_clientWidth = _configReader->ReadIntegerValue(CONFIG_DELTA,CONFIG_WIDTH);
+	_clientHeight = _configReader->ReadIntegerValue(CONFIG_DELTA,CONFIG_HEIGHT);
+
+#ifndef MEASUREMENT_OFF
+	_measurement = new Measurement("h264_client.csv");
+	_inputHandler->SetMeasurement(_measurement);
+#endif
+
+	InitializeCriticalSection(&_socketCS);
+	InitializeConditionVariable(&_socketCV);
+
+	return true;
+}
+
+bool H264Client::StartOffload()
+{
+	bool result = KahawaiClient::StartOffload();
+
+	//Make sure the input handler is connected first
+	//before we allow the game to continue
+	if (result)
+	{
+		EnterCriticalSection(&_socketCS);
+		{
+			while(!_connectionAttemptDone)
+				SleepConditionVariableCS(&_socketCV, &_socketCS, INFINITE);
+		}
+		LeaveCriticalSection(&_socketCS);
+
+#ifndef NO_HANDLE_INPUT
+		result = _inputHandler->IsConnected();
+#endif
+	}
+	
+	return result;
+}
+
+void H264Client::OffloadAsync()
+{
+	//Connect input handler to server
+	EnterCriticalSection(&_socketCS);
+	{
+#ifndef NO_HANDLE_INPUT
+		_inputHandler->Connect();
+#endif
+		_connectionAttemptDone = true;
+	}
+	WakeConditionVariable(&_socketCV);
+	LeaveCriticalSection(&_socketCS);
+
+#ifndef NO_HANDLE_INPUT
+	if(!_inputHandler->IsConnected())
+	{
+		KahawaiLog("Unable to start input handler", KahawaiError);
+		_offloading = false;
+		return;
+	}
+#endif
+
+	KahawaiClient::OffloadAsync();
+}
+
 /**
  *  H264 Client does not need to capture the screen
  *  Overrides default behavior (doing nothing)
  */
 bool H264Client::Capture(int width, int height)
 {
-
+	bool result = KahawaiClient::Capture(width, height);
 	return true;
 }
 
@@ -29,6 +102,7 @@ bool H264Client::Capture(int width, int height)
  */
 bool H264Client::Transform(int width, int height)
 {
+	bool result = KahawaiClient::Transform(_clientWidth, _clientHeight);
 	return true;
 }
 
@@ -58,19 +132,41 @@ bool H264Client::StopOffload()
 }
 
 //////////////////////////////////////////////////////////////////////////
-//Input Handling (NO OP)
+//Input Handling
 //////////////////////////////////////////////////////////////////////////
 
 void* H264Client::HandleInput()
 {
-	//Overrides KahawaiClient by not doing anything.
-	return NULL;
+	_inputHandler->SetFrameNum(_gameFrameNum);
+
+	// Get the actual command
+	void* inputCommand = _fnSampleUserInput();
+
+	// Free memory from previous invocations
+	if(_lastCommand != NULL)
+	{
+		delete[] _lastCommand;
+		_lastCommand = NULL;
+	}
+
+	_localInputQueue.push(inputCommand);
+	_inputHandler->SendCommand(inputCommand);
+
+	if (!ShouldHandleInput())
+	{
+		return _inputHandler->GetEmptyCommand();
+	}
+	else
+	{
+		_lastCommand = _localInputQueue.front();
+		_localInputQueue.pop();
+		return _lastCommand;
+	}
 }
 
 int H264Client::GetFirstInputFrame()
 {
-	//No OP. H264 doesnt handle input
-	return 0;
+	return FRAME_GAP;
 }
 //////////////////////////////////////////////////////////////////////////
 

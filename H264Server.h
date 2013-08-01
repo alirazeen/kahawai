@@ -9,8 +9,11 @@ public:
 
 protected:
 	//Kahawai Lifecycle
+
+	bool	StartOffload();
 	void	OffloadAsync();
 	bool	Initialize();
+
 	int		Encode(void** compressedFrame);
 	bool	Send(void** compressedFrame, int frameSize);
 
@@ -19,5 +22,9 @@ protected:
 	int		GetFirstInputFrame();
 
 
+private:
+	bool				_connectionAttemptDone;
+	CRITICAL_SECTION	_socketCS;
+	CONDITION_VARIABLE	_socketCV;
 };
 
