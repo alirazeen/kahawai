@@ -216,6 +216,13 @@ void* DeltaClient::HandleInput()
 		_lastCommand = NULL;
 	}
 
+
+	//Create a copy of the command to push into the queue
+/*	size_t cmdLength = _inputHandler->GetCommandLength();
+	char* queuedCommand = new char[cmdLength];
+	memcpy(queuedCommand,inputCommand,cmdLength);
+	delete inputCommand;
+*/
 	_localInputQueue.push(inputCommand);
 	_inputHandler->SendCommand(inputCommand);
 
