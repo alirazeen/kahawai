@@ -205,7 +205,8 @@ int Kahawai::Sys_Milliseconds( void ) {
 	static int sys_prevTime;
 	static bool	timeInitialized = false;
 	if ( !timeInitialized ) {
-		sys_timeBase = timeGetTime();
+		//sys_timeBase = timeGetTime();
+		sys_timeBase = 0;
 		sys_prevFrame = _renderedFrames; //CUERVO:THis may be a synchronization issue
 		sys_prevTime = sys_timeBase;
 		timeInitialized = true;
