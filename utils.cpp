@@ -108,7 +108,7 @@ void CaptureFrameBuffer(int width, int height, char* filename)
 
 	//TODO: Replace with the appropriate Capturer
 	OpenGLCapturer capturer(1024,768);
-	buffer = (byte*)capturer.CaptureScreen();
+	buffer = (byte*)capturer.CaptureScreen(NULL);
 	//glReadBuffer( GL_FRONT );
 	//glReadPixels( 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer ); 
 

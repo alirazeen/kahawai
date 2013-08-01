@@ -6,6 +6,18 @@
 #include "FFMpegDecoder.h"
 #include "MediaFoundationDecoder.h"
 
+bool KahawaiClient::isClient() {
+	return true;
+}
+
+bool KahawaiClient::isMaster() {
+	return false;
+}
+
+bool KahawaiClient::isSlave() {
+	return false;
+}
+
 bool KahawaiClient::Initialize()
 {
 	if(!Kahawai::Initialize())

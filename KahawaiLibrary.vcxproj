@@ -42,6 +42,7 @@
     <ClCompile Include="..\kahawai\X264Encoder.cpp" />
     <ClCompile Include="Measurement.cpp" />
     <ClCompile Include="Phase.cpp" />
+    <ClCompile Include="SF4Serializer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\kahawai\Capturer.h" />
@@ -82,6 +83,8 @@
     <ClInclude Include="InputDescriptor.h" />
     <ClInclude Include="Measurement.h" />
     <ClInclude Include="Phase.h" />
+    <ClInclude Include="SF4cmd.h" />
+    <ClInclude Include="SF4Serializer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\ClassDiagram1.cd" />
@@ -139,7 +142,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;NO_SOUND;AUTORUN;WRITE_MOVIE;WRITE_DECODED_FRAMES;WRITE_SOURCE_FRAME;KAHAWAI;DETERMINISTIC_TIME;DETERMINISTIC_RANDOM;NO_ASYNC_THREAD;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NO_SOUND;AUTORUN;WRITE_MOVIE;WRITE_DECODED_FRAMES;WRITE_SOURCE_FRAME;KAHAWAI;DETERMINISTIC_TIME;DETERMINISTIC_RANDOM;NO_ASYNC_THREAD;_DEBUG;_LIB;NO_HANDLE_INPUT;MEASUREMENT_OFF;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>

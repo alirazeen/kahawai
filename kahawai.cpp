@@ -31,7 +31,7 @@ using namespace std;
  * @param the framebuffer captured from the game
  * @return true if the synchronous offload succeeded
  */
-bool Kahawai::Offload()
+bool Kahawai::Offload(void* args)
 {
 	if(!_offloading)
 	{
@@ -63,7 +63,7 @@ bool Kahawai::Offload()
 	// Transform/Decode/Show for the client
 	// are done in the other thread (Implemented in OffloadAsync)
     //////////////////////////////////////////////////////////////////////////
-	Capture(_width, _height); //TODO: We should NOT be doing capturing if we are not
+	Capture(_width, _height, args); //TODO: We should NOT be doing capturing if we are not
 								// going to render the frame, like in the case of pframes
 
 
@@ -299,10 +299,9 @@ bool Kahawai::Initialize()
 	{
 		_configReader->ReadProperty(CONFIG_DOOM3,CONFIG_DEMO_FILE,_demoFile);
 	}
-	else if(_strnicmp(_gameName, CONFIG_DOOM3,sizeof(CONFIG_SF4))==0)
+	else if(_strnicmp(_gameName, CONFIG_SF4,sizeof(CONFIG_SF4))==0)
 	{
-		KahawaiLog("Street Fighter IV hasn't been fully implemented yet. Aborting", KahawaiError);
-		return false;
+		//nothing special
 	}
 	else
 	{
@@ -327,7 +326,7 @@ bool Kahawai::Initialize()
 		_capturer = new OpenGLCapturer(_width,_height);
 	} else if(_captureMode == DirectX)
 	{
-		_capturer = new DirectXCapturer();
+		_capturer = new DirectXCapturer(_width, _height);
 	}
 	else
 	{
@@ -390,9 +389,9 @@ bool Kahawai::Finalize()
  * @param height the height of the target screen to be captured
  * @return true if the capture process was successful
  */
-bool Kahawai::Capture(int width, int height)
+bool Kahawai::Capture(int width, int height, void* args)
 {
-	uint8_t* frameBuffer = _capturer->CaptureScreen();
+	uint8_t* frameBuffer = _capturer->CaptureScreen(args);
 
 	//Acquire lock on the framebuffer. Make sure transform thread is done
 

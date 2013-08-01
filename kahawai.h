@@ -29,6 +29,12 @@ public:
 	//Rendering Settings
 	virtual bool		IsHD()=0; //Should render in hi or lo quality
 
+	//ADDED BY KIRON 
+	virtual bool isClient()=0;
+	virtual bool isSlave()=0;
+	virtual bool isMaster()=0;
+
+
 	//////////////////////////////////////////////////////////////////////////
 	// Kahawai Public concrete methods
 	//////////////////////////////////////////////////////////////////////////
@@ -37,7 +43,7 @@ public:
 
 	static Kahawai*		LoadFromFile(); //Factory to create Kahawai instance
 	virtual bool		StartOffload();
-	virtual bool		Offload();
+	virtual bool		Offload(void* args);
 	virtual bool		ShouldSkip(); //Should the frame be rendered (used in I/P rendering)
 	virtual bool		StopOffload();
 	bool				IsOffloading();
@@ -62,7 +68,7 @@ protected:
 
 	//Kahawai Pipeline
 	virtual bool		Initialize();
-	virtual bool		Capture(int width, int height);
+	virtual bool		Capture(int width, int height, void* args);
 	virtual bool		Transform(int width, int height);
 	//Encode and Send implemented by servers
 	//Decode and Show implemented by clients

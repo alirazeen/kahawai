@@ -33,7 +33,7 @@ public:
 	bool	Initialize();
 	bool	Finalize();
 
-	bool	Capture(int width, int height);
+	bool	Capture(int width, int height, void* args);
 	bool	Transform(int width, int height);
 	int		Encode(void** transformedFrame);
 	bool	Send(void** compressedFrame, int frameSize);
@@ -47,6 +47,11 @@ public:
 	bool	IsHD();
 
 
+	//ADDED BY KIRON
+	bool isClient();
+	bool isMaster();
+	bool isSlave();
+
 private:
 	bool	InitMapping();
 
@@ -55,6 +60,8 @@ private:
 	CRITICAL_SECTION	_inputSocketCS;
 	CONDITION_VARIABLE	_inputSocketCV;
 
+	bool theMaster;
+	bool theSlave;
 };
 
 byte Delta(byte hi, byte lo);

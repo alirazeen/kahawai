@@ -146,7 +146,7 @@ bool IFrameClient::ShouldSkip()
 	return (0 != _renderedFrames % _gop);
 }
 
-bool IFrameClient::Capture(int width, int height)
+bool IFrameClient::Capture(int width, int height, void* args)
 {
 	bool result = true;
 	if (!ShouldSkip())
@@ -155,7 +155,7 @@ bool IFrameClient::Capture(int width, int height)
 		_measurement->AddPhase(Phase::CAPTURE_BEGIN,_renderedFrames);
 #endif
 
-		result = KahawaiClient::Capture(width,height);
+		result = KahawaiClient::Capture(width,height, args);
 
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::CAPTURE_END,_renderedFrames);

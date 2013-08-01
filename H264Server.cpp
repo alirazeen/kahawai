@@ -16,6 +16,19 @@ H264Server::~H264Server(void)
 {
 }
 
+bool H264Server::isClient()
+{
+	return false;
+}
+bool H264Server::isSlave()
+{
+	return false;
+}
+bool H264Server::isMaster() 
+{
+	return false;
+}
+
 bool H264Server::Initialize()
 {
 	if(!KahawaiServer::Initialize())

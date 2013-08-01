@@ -43,6 +43,9 @@
     <Filter Include="Kahawai\Measurement">
       <UniqueIdentifier>{46627748-ce0f-44b9-8005-5338a643290d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Kahawai\Input\SF4">
+      <UniqueIdentifier>{82062553-8025-4890-90ef-471a9f098c66}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\kahawai\Kahawai.cpp">
@@ -125,6 +128,9 @@
     </ClCompile>
     <ClCompile Include="Phase.cpp">
       <Filter>Kahawai\Measurement</Filter>
+    </ClCompile>
+    <ClCompile Include="SF4Serializer.cpp">
+      <Filter>Kahawai\Input\SF4</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -241,6 +247,12 @@
     </ClInclude>
     <ClInclude Include="InputDescriptor.h">
       <Filter>Kahawai\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="SF4Serializer.h">
+      <Filter>Kahawai\Input\SF4</Filter>
+    </ClInclude>
+    <ClInclude Include="SF4cmd.h">
+      <Filter>Kahawai\Input\SF4</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
