@@ -69,7 +69,7 @@ void Measurement::Flush()
 			_phaseRecords.pop();
 
 			strcpy(line, "");
-			sprintf_s(line, "%s, %d, %s, %ld\n", record->phase->_str, record->frameNum, record->extra, record->time);
+			sprintf_s(line, "%s, %d, %s, %lu\n", record->phase->_str, record->frameNum, record->extra, record->time);
 			WriteMeasurementLine(line);
 
 			delete record;
