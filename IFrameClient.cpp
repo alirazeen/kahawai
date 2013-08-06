@@ -237,6 +237,7 @@ void IFrameClient::GrabInput()
 	{
 		void* inputCommand = _fnSampleUserInput();
 		_localInputQueue.push(inputCommand);
+		_inputHandler->SendCommand(inputCommand);
 		_measurement->AddPhase(Phase::INPUT_GRAB,FRAME_NUM_NOT_APPLICABLE);
 	}
 	WakeConditionVariable(&_inputQueueEmptyCV);
@@ -273,7 +274,7 @@ void* IFrameClient::HandleInput()
 			//TODO: THIS IS WRONG! IT SHOULD SEND THE COMMAND FROM THE START
 			//TO FILL UP THE INPUT PIPELINE. OTHERWISE, THERE IS NO POINT TO
 			//THE FRAME GAP.
-			_inputHandler->SendCommand(_lastCommand);
+			//_inputHandler->SendCommand(_lastCommand);
 			returnVal = _lastCommand;
 		}
 	}
