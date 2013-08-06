@@ -282,7 +282,14 @@ void* IFrameClient::HandleInput()
 int IFrameClient::GetFirstInputFrame()
 {
 	//TODO: Comment this properly. There is a relationship between the +3 and
-	//the +1 in DecodeShow(). This relationship needs to be properly documented
+	//the +1 in DecodeShow(). This relationship needs to be properly documented. It has
+	//something to do with how the FFMpegDecoder requires both frame X and frame X+1
+	//in its pipeline before it displays frame X on the SDL window. If there is no +3, 
+	//there will be a deadlock. 
+	//
+	//A deadlock where the FFMpegDecoder is waiting for the next frame to arrive before
+	//it displays the current frame in the pipeline but at the same time, the next frame
+	//can only be produced after the input for the current frame is sampled.
 
 	// TODO: This should actually be read from a config file
 	// or dynamically determined based on the RTT or some 
