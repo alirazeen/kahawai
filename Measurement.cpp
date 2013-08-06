@@ -23,6 +23,10 @@ Measurement::Measurement(char* filename, char* headerFmt, ...)
 
 		delete[] header;
 	}
+
+	//Init to 1 to prevent divide-by-zero error when we do LogFPS()
+	_kBegin = 1;
+	_kElapsed = 1;
 }
 
 Measurement::~Measurement()
@@ -34,6 +38,14 @@ void Measurement::AddPhase(const Phase* phase, int frameNum, char* extraFmt, ...
 {
 	DWORD time = timeGetTime();
 	
+	if (phase == Phase::KAHAWAI_BEGIN)
+	{
+		_kBegin = time;
+	} else if (phase == Phase::KAHAWAI_END)
+	{
+		_kElapsed = time - _kBegin;
+	}
+
 	PhaseRecord* record = new PhaseRecord();
 	record->phase = phase;
 	record->frameNum = frameNum;
@@ -75,9 +87,23 @@ void Measurement::Flush()
 			delete record;
 		}
 
+		LogFPS();
+
 		_measurementFile.flush();
 	}
 	LeaveCriticalSection(&_recordsCS);
+}
+
+void Measurement::LogFPS()
+{
+	int fps = (1000/_kElapsed);
+
+	char line[1024];
+	strcpy(line, "");
+	sprintf_s(line, "#Elapsed:%d, Fps:%d\n", _kElapsed, fps);
+	WriteMeasurementLine(line);
+
+
 }
 
 void Measurement::InitMeasurementFile(char* filename)

@@ -54,6 +54,10 @@ private:
 	void InitMeasurementFile(char* filename);
 	void WriteMeasurementLine(char* line);
 
+
+	DWORD	_kBegin; // Timestamp of KAHAWAI_BEGIN
+	DWORD	_kElapsed; // KAHAWAI_END - KAHAWAI_BEGIN
+	void	LogFPS();
 };
 
 #endif // MEASUREMENT_H
