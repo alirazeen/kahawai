@@ -270,6 +270,9 @@ void* IFrameClient::HandleInput()
 			_lastCommand = _localInputQueue.front();
 			_localInputQueue.pop();
 
+			//TODO: THIS IS WRONG! IT SHOULD SEND THE COMMAND FROM THE START
+			//TO FILL UP THE INPUT PIPELINE. OTHERWISE, THERE IS NO POINT TO
+			//THE FRAME GAP.
 			_inputHandler->SendCommand(_lastCommand);
 			returnVal = _lastCommand;
 		}
