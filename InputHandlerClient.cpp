@@ -129,6 +129,8 @@ void InputHandlerClient::SendCommandsAsync()
 		if (result != SOCKET_ERROR)
 		{
 			result = send(_inputSocket, command, _commandLength, 0); 
+			//simulate network delay
+			Sleep(200);
 		}
 		
 		if (result == SOCKET_ERROR)
