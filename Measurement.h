@@ -57,6 +57,7 @@ private:
 
 	DWORD	_kBegin; // Timestamp of KAHAWAI_BEGIN
 	DWORD	_kElapsed; // KAHAWAI_END - KAHAWAI_BEGIN
+	int		_numFrames;
 	void	LogFPS();
 };
 

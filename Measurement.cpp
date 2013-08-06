@@ -24,9 +24,9 @@ Measurement::Measurement(char* filename, char* headerFmt, ...)
 		delete[] header;
 	}
 
-	//Init to 1 to prevent divide-by-zero error when we do LogFPS()
-	_kBegin = 1;
-	_kElapsed = 1;
+	_kBegin = 0;
+	_kElapsed = 0;
+	_numFrames = 0;
 }
 
 Measurement::~Measurement()
@@ -38,14 +38,6 @@ void Measurement::AddPhase(const Phase* phase, int frameNum, char* extraFmt, ...
 {
 	DWORD time = timeGetTime();
 	
-	if (phase == Phase::KAHAWAI_BEGIN)
-	{
-		_kBegin = time;
-	} else if (phase == Phase::KAHAWAI_END)
-	{
-		_kElapsed = time - _kBegin;
-	}
-
 	PhaseRecord* record = new PhaseRecord();
 	record->phase = phase;
 	record->frameNum = frameNum;
@@ -59,6 +51,18 @@ void Measurement::AddPhase(const Phase* phase, int frameNum, char* extraFmt, ...
 	vsprintf_s(record->extra, extraLen, extraFmt, extraArgs);
 	
 	EnterCriticalSection(&_recordsCS);
+	
+	//FPS logging related code
+	if (phase == Phase::KAHAWAI_BEGIN)
+	{
+		_kBegin = time;
+	} else if (phase == Phase::KAHAWAI_END)
+	{
+		_kElapsed += time - _kBegin;
+		_numFrames++;
+	}
+	
+	
 	_phaseRecords.push(record);
 
 	if (_phaseRecords.size() > MAX_RECORDS_BEFORE_FLUSH)
@@ -96,14 +100,15 @@ void Measurement::Flush()
 
 void Measurement::LogFPS()
 {
-	int fps = (1000/_kElapsed);
+	int fps = (_numFrames*1000/_kElapsed);
 
 	char line[1024];
 	strcpy(line, "");
-	sprintf_s(line, "#Elapsed:%d, Fps:%d\n", _kElapsed, fps);
+	sprintf_s(line, "#Elapsed:%d, NumFrames:%d, Fps:%d\n", _kElapsed, _numFrames, fps);
 	WriteMeasurementLine(line);
 
-
+	_kElapsed = 0;
+	_numFrames = 0;
 }
 
 void Measurement::InitMeasurementFile(char* filename)
