@@ -56,7 +56,6 @@ bool IFrameClient::Initialize()
 #endif
 
 	InitializeCriticalSection(&_inputCS);
-	InitializeConditionVariable(&_inputQueueEmptyCV);
 
 	InitializeCriticalSection(&_inputSocketCS);
 	InitializeConditionVariable(&_inputSocketCV);
@@ -235,18 +234,16 @@ void IFrameClient::GrabInput()
 	EnterCriticalSection(&_inputCS);
 	{
 		void* inputCommand = _fnSampleUserInput();
-		_localInputQueue.push(inputCommand);
-		_inputHandler->SendCommand(inputCommand);
+		_grabbedInputQueue.push(inputCommand);
 		_measurement->AddPhase(Phase::INPUT_GRAB,FRAME_NUM_NOT_APPLICABLE);
 	}
-	WakeConditionVariable(&_inputQueueEmptyCV);
 	LeaveCriticalSection(&_inputCS);
 }
 
 void* IFrameClient::HandleInput()
 {
 	//Free memory from previous invocations
-	if(_lastCommand != NULL)
+	if(_lastCommand != NULL && _lastCommand != _inputHandler->GetEmptyCommand())
 	{
 		delete[] _lastCommand;
 		_lastCommand = NULL;
@@ -257,23 +254,33 @@ void* IFrameClient::HandleInput()
 	EnterCriticalSection(&_inputCS);
 	{
 		_inputHandler->SetFrameNum(_gameFrameNum);
-	
+
+		//Figure out the command that we're going to process
+		void* inputCommand = NULL;
+		if (_grabbedInputQueue.empty())
+		{
+			//Ok, there are no grabbed inputs but that's ok.
+			//Instead of waiting for an input to be grabbed, let's 
+			//just process an empty command and continue the game
+			inputCommand = _inputHandler->GetEmptyCommand();
+		}
+		else
+		{
+			inputCommand = _grabbedInputQueue.front();
+			_grabbedInputQueue.pop();
+		}
+
+		_localInputQueue.push(inputCommand);
+		_inputHandler->SendCommand(inputCommand);
+
 		if(!ShouldHandleInput())
 		{
 			returnVal = _inputHandler->GetEmptyCommand();
 		}
 		else
 		{
-			while (_localInputQueue.empty())
-				SleepConditionVariableCS(&_inputQueueEmptyCV, &_inputCS, INFINITE);
-
 			_lastCommand = _localInputQueue.front();
 			_localInputQueue.pop();
-
-			//TODO: THIS IS WRONG! IT SHOULD SEND THE COMMAND FROM THE START
-			//TO FILL UP THE INPUT PIPELINE. OTHERWISE, THERE IS NO POINT TO
-			//THE FRAME GAP.
-			//_inputHandler->SendCommand(_lastCommand);
 			returnVal = _lastCommand;
 		}
 	}

@@ -56,9 +56,9 @@ private:
 	int			_numTransformedFrames; //Number of frames transformed so far
 
 	//Input-handling variables
+	queue<void*>		_grabbedInputQueue;
 	void*				_lastCommand;
 	CRITICAL_SECTION	_inputCS;
-	CONDITION_VARIABLE	_inputQueueEmptyCV;
 
 	bool				_inputConnectionDone;
 	CRITICAL_SECTION	_inputSocketCS;
