@@ -154,11 +154,10 @@ bool IFrameClient::Capture(int width, int height, void* args)
 #ifndef MEASUREMENT_OFF
 		_measurement->AddPhase(Phase::CAPTURE_BEGIN,_renderedFrames);
 #endif
-
 		result = KahawaiClient::Capture(width,height, args);
 
 #ifndef MEASUREMENT_OFF
-		_measurement->AddPhase(Phase::CAPTURE_END,_renderedFrames);
+		_measurement->AddPhase(Phase::CAPTURE_END,_renderedFrames-1);
 #endif
 	}
 	else
