@@ -19,7 +19,6 @@ IFrameClientMuxer::IFrameClientMuxer(void)
 
 IFrameClientMuxer::~IFrameClientMuxer(void)
 {
-
 	if (_iFrameBuffers != NULL) 
 	{
 		delete _iFrameBuffers;
@@ -35,7 +34,6 @@ IFrameClientMuxer::~IFrameClientMuxer(void)
 
 bool IFrameClientMuxer::Initialize(ConfigReader* configReader)
 {
-
 	_serverPort = configReader->ReadIntegerValue(CONFIG_SERVER,CONFIG_SERVER_PORT);
 	_localMuxerPort = _serverPort + PORT_OFFSET_IFRAME_MUXER;
 	configReader->ReadProperty(CONFIG_SERVER,CONFIG_SERVER_ADDRESS, _serverIP);
@@ -71,7 +69,6 @@ bool IFrameClientMuxer::Initialize(ConfigReader* configReader)
 
 bool IFrameClientMuxer::BeginOffload()
 {
-	
 	//Establish a connection to the remote server
 	if (!InitSocketToServer())
 	{
@@ -152,7 +149,6 @@ DWORD WINAPI IFrameClientMuxer::AsyncMultiplex(void* Param)
 
 void IFrameClientMuxer::Multiplex()
 {
-
 	//Wait for the decoder socket to be created
 	EnterCriticalSection(&_initSocketCS);
 	{
@@ -169,15 +165,11 @@ void IFrameClientMuxer::Multiplex()
 	int bufferSize = -1;
 	while(true)
 	{
-
-
 		if (_currFrameNum % _gop == 0)
 		{
-
 #ifndef MEASUREMENT_OFF
 			_measurement->AddPhase(Phase::MULTIPLEX_IFRAME_BEGIN, _currFrameNum);
 #endif
-
 			// Get the next i frame
 			EnterCriticalSection(&_iFrameCS);
 			{
@@ -189,7 +181,6 @@ void IFrameClientMuxer::Multiplex()
 #ifndef MEASUREMENt_OFF
 			_measurement->AddPhase(Phase::MULTIPLEX_IFRAME_RECEIVED, _currFrameNum);
 #endif
-
 			// Send out the i frame
 			SendFrameToLocalDecoder((char*)buffer, bufferSize);
 
@@ -203,18 +194,12 @@ void IFrameClientMuxer::Multiplex()
 #ifndef MEASUREMENT_OFF
 			_measurement->AddPhase(Phase::MULTIPLEX_IFRAME_END, _currFrameNum);
 #endif
-
 			LeaveCriticalSection(&_iFrameCS);
-
-
-
 		} else 
 		{
-
 #ifndef MEASUREMENT_OFF
 			_measurement->AddPhase(Phase::MULTIPLEX_PFRAME_BEGIN, _currFrameNum);
 #endif
-
 			// Retrieve a pframe from the circular buffer
 			EnterCriticalSection(&_pFrameCS);
 			{
@@ -226,7 +211,6 @@ void IFrameClientMuxer::Multiplex()
 #ifndef MEASUREMENT_OFF
 			_measurement->AddPhase(Phase::MULTIPLEX_PFRAME_RECEIVED, _currFrameNum);
 #endif
-
 			// Now that we have a pFrame buffer, send it out to the local decoder
 			SendFrameToLocalDecoder((char*)buffer, bufferSize);
 
@@ -240,17 +224,11 @@ void IFrameClientMuxer::Multiplex()
 #ifndef MEASUREMENT_OFF
 			_measurement->AddPhase(Phase::MULTIPLEX_PFRAME_END, _currFrameNum);
 #endif
-
 			LeaveCriticalSection(&_pFrameCS);
-
-
 		}
-
-
 
 		_currFrameNum++;
 	}
-
 }
 
 bool IFrameClientMuxer::SendFrameToLocalDecoder(char* frame, int size)
