@@ -79,6 +79,15 @@ bool IFrameServer::StartOffload()
 
 void IFrameServer::OffloadAsync()
 {
+	//See comments in IFrameCLient::OffloadAsync to find out why
+	//we create a socket to the client before we attempt to connect
+	//the input handler
+	_socketToClient = CreateSocketToClient(_serverPort);
+	if(_socketToClient==INVALID_SOCKET)
+	{
+		KahawaiLog("Unable to create connection to client in IFrameServer::OffloadAsync()", KahawaiError);
+		return;
+	}
 
 #ifndef NO_HANDLE_INPUT
 	EnterCriticalSection(&_inputSocketCS);
@@ -96,13 +105,6 @@ void IFrameServer::OffloadAsync()
 		return;
 	}
 #endif
-
-	_socketToClient = CreateSocketToClient(_serverPort);
-	if(_socketToClient==INVALID_SOCKET)
-	{
-		KahawaiLog("Unable to create connection to client in IFrameServer::OffloadAsync()", KahawaiError);
-		return;
-	}
 
 	KahawaiServer::OffloadAsync();
 }

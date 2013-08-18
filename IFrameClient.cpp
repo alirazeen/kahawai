@@ -108,6 +108,32 @@ bool IFrameClient::StartOffload()
 
 void IFrameClient::OffloadAsync()
 {
+	//Unlike in the DeltaClient/DeltaServer, we do not establish the input
+	//handler connection first. Instead, we attempt to create the connection
+	//that will deliver the P-frames from the server to the client.
+	//_muxerComponent->BeginOffload() will NOT return until that connection 
+	// is established.
+	//
+	//We do this because of a weird reason. Suppose you created the input
+	//handler connection first and left the P-frame connection for later,
+	//the game thread in the client will move faster than the Kahawai thread.
+	//In fact, the delay between the two will be about 500ms. If you have
+	//measurements turned on, you can observe this difference in delay
+	//by comparing the elapsed time between the GAME_BEGIN and KAHAWAI_BEGIN
+	//phases in the client.
+	//
+	//This delays appears to be because that P-frame connection creation seems
+	//to be delayed. We have no idea what the reason for delay is. Funnily enough,
+	//if you add a Sleep(1) just before the call to Connect() in 
+	//CreateSocketToServer (Networking.cpp), the connection creation is not delayed.
+	//
+	//We do not know what trickery or voodoo is happening. But instead of relying
+	//on a hackish solution like Sleep(1), we just move the P-frame connection
+	//establishment to earlier. This change, and the synchronization between 
+	//OffloadAsync and StartOffload in the input handler connection creation
+	//will ensure that both the game and kahawai threads start at the same time.
+	_muxerComponent->BeginOffload();
+
 #ifndef NO_HANDLE_INPUT
 	//Connect input handler to server
 	EnterCriticalSection(&_inputSocketCS);
@@ -126,7 +152,7 @@ void IFrameClient::OffloadAsync()
 	}
 #endif
 
-	_muxerComponent->BeginOffload();
+
 	CreateKahawaiThread(AsyncDecodeShow, this);
 	
 	while(_offloading) {
