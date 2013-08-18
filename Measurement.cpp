@@ -71,6 +71,26 @@ void Measurement::AddPhase(const Phase* phase, int frameNum, char* extraFmt, ...
 	LeaveCriticalSection(&_recordsCS);
 }
 
+void Measurement::AddPhase(char* message, int frameNum)
+{
+	DWORD time = timeGetTime();
+
+	PhaseRecord* record = new PhaseRecord();
+	record->message = message;
+	record->phase = NULL;
+	record->frameNum = frameNum;
+	record->time = time;
+
+	EnterCriticalSection(&_recordsCS);
+	{
+		_phaseRecords.push(record);
+
+		if (_phaseRecords.size() > MAX_RECORDS_BEFORE_FLUSH)
+			Flush();
+	}
+	LeaveCriticalSection(&_recordsCS);
+}
+
 void Measurement::Flush()
 {
 	EnterCriticalSection(&_recordsCS);
@@ -85,7 +105,12 @@ void Measurement::Flush()
 			_phaseRecords.pop();
 
 			strcpy(line, "");
-			sprintf_s(line, "%s, %d, %s, %lu\n", record->phase->_str, record->frameNum, record->extra, record->time);
+
+			if (record->phase == NULL)
+				sprintf_s(line, "%s, %d, %lu\n", record->message, record->frameNum, record->time);
+			else
+				sprintf_s(line, "%s, %d, %s, %lu\n", record->phase->_str, record->frameNum, record->extra, record->time);
+			
 			WriteMeasurementLine(line);
 
 			delete record;

@@ -20,6 +20,7 @@ public:
 	~Measurement();
 
 	void AddPhase(const Phase* phase, int frameNum, char* extraFmt = "", ...);
+	void AddPhase(char* message, int frameNum);
 	void Flush();
 
 private:
@@ -27,6 +28,7 @@ private:
 	struct PhaseRecord
 	{
 		const Phase* phase;
+		char* message;
 		int frameNum;
 		DWORD time;
 		char* extra;
