@@ -59,7 +59,9 @@ bool DeltaClient::Initialize()
 #ifndef MEASUREMENT_OFF
 	//Initialize instrumentation class
 	_measurement = new Measurement("delta_client.csv");
+	KahawaiClient::SetMeasurement(_measurement);
 	_inputHandler->SetMeasurement(_measurement);
+	_decoder->SetMeasurement(_measurement);
 #endif
 
 	InitializeCriticalSection(&_inputSocketCS);
@@ -151,7 +153,7 @@ bool DeltaClient::Transform(int width, int height)
 #endif
 
 	//transforms the screen captured at the client resolution
-	bool result = KahawaiClient::Transform(_clientWidth, _clientHeight);
+	bool result = KahawaiClient::Transform(_clientWidth, _clientHeight, _kahawaiFrameNum);
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::TRANSFORM_END, _kahawaiFrameNum);

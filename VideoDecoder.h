@@ -1,7 +1,7 @@
 #pragma once
 #include "kahawaiBase.h"
 
-
+class Measurement;
 class VideoDecoder
 {
 public:
@@ -17,6 +17,8 @@ public:
 	int GetDisplayedFrames() { return _displayedFrames; }
 	void EnableFrameLogging(bool enabled) { _saveFrames = enabled;}
 
+	void SetMeasurement(Measurement* measurement) {_measurement = measurement;}
+
 protected:
 	int _width;
 	int _height;
@@ -28,5 +30,6 @@ protected:
 
 	VideoDecoder() { _displayedFrames = 0; }
 
+	Measurement* _measurement;
 };
 

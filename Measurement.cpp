@@ -107,7 +107,7 @@ void Measurement::Flush()
 			strcpy(line, "");
 
 			if (record->phase == NULL)
-				sprintf_s(line, "%s, %d, %lu\n", record->message, record->frameNum, record->time);
+				sprintf_s(line, "%s, %d, , %lu\n", record->message, record->frameNum, record->time);
 			else
 				sprintf_s(line, "%s, %d, %s, %lu\n", record->phase->_str, record->frameNum, record->extra, record->time);
 			

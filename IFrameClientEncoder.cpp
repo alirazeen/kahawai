@@ -2,6 +2,7 @@
 #ifdef KAHAWAI
 #include "IFrameClientEncoder.h"
 #include "X264Encoder.h"
+#include "Measurement.h"
 
 IFrameClientEncoder::IFrameClientEncoder(void)
 	: _encoder(NULL)
@@ -50,6 +51,11 @@ int IFrameClientEncoder::Encode(x264_picture_t* transformPicture)
 	_muxer->ReceiveIFrame(compressedFrame, size);
 
 	return (size > 0);
+}
+
+void IFrameClientEncoder::SetMeasurement(Measurement* _measurement)
+{
+	_encoder->SetMeasurement(_measurement);
 }
 
 #endif

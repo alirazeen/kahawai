@@ -29,6 +29,7 @@ bool H264Client::Initialize()
 
 #ifndef MEASUREMENT_OFF
 	_measurement = new Measurement("h264_client.csv");
+	KahawaiClient::SetMeasurement(_measurement);
 	_inputHandler->SetMeasurement(_measurement);
 #endif
 
@@ -101,7 +102,7 @@ bool H264Client::Capture(int width, int height, void *args)
  */
 bool H264Client::Transform(int width, int height)
 {
-	bool result = KahawaiClient::Transform(_clientWidth, _clientHeight);
+	bool result = KahawaiClient::Transform(_clientWidth, _clientHeight, _kahawaiFrameNum);
 	return true;
 }
 

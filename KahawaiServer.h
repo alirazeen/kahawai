@@ -54,7 +54,7 @@ protected:
 
 
 	int					_gameFrameNum;
-	int					_kahawaiFrameNum;
+	//int					_kahawaiFrameNum;
 
 public:
 	KahawaiServer(void);

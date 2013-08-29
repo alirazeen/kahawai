@@ -102,7 +102,7 @@ void KahawaiClient::OffloadAsync()
 #endif
 
 		//Exits on error
-		_offloading &= Transform(_width,_height);
+		_offloading &= Transform(_width,_height, _kahawaiFrameNum);
 		_offloading &= Decode();
 		_offloading &= Show();
 
@@ -158,8 +158,7 @@ KahawaiClient::KahawaiClient(void)
 	:Kahawai(),
 	_decoder(0),
 	_inputHandler(NULL),
-	_gameFrameNum(0),
-	_kahawaiFrameNum(0)
+	_gameFrameNum(0)
 {
 	strncpy_s(_serverIP,KAHAWAI_LOCALHOST,sizeof(KAHAWAI_LOCALHOST));
 

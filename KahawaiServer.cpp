@@ -26,7 +26,7 @@ void KahawaiServer::OffloadAsync()
 		_measurement->AddPhase(Phase::KAHAWAI_BEGIN, _kahawaiFrameNum);
 #endif
 
-		_offloading	 &=	Transform(_width,_height);
+		_offloading	 &=	Transform(_width,_height, _kahawaiFrameNum);
 		int frameSize = Encode(&compressedFrame);
 		_offloading	 &=	Send(&compressedFrame,frameSize);
 
@@ -126,8 +126,7 @@ KahawaiServer::KahawaiServer(void)
 	_inputHandler(NULL),
 	_crf(0),
 	_preset(0),
-	_gameFrameNum(0),
-	_kahawaiFrameNum(0)
+	_gameFrameNum(0)
 {
 }
 

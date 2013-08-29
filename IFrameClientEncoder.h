@@ -1,6 +1,8 @@
 #pragma once
 #include "kahawaiserver.h"
 #include "IFrameClientMuxer.h"
+
+class Measurement;
 class IFrameClientEncoder
 {
 public:
@@ -11,6 +13,7 @@ public:
 	bool				Initialize(ConfigReader* configReader, IFrameClientMuxer* muxer);
 	bool				ReceiveTransformedPicture(x264_picture_t* transformPicture);
 	int					Encode(x264_picture_t* transformPicture);
+	void				SetMeasurement(Measurement* _measurement);	
 
 private:
 

@@ -7,6 +7,7 @@
 #include "Capturer.h"
 
 class ConfigReader;
+class Measurement;
 
 typedef void* (*PFNSampleUserInput)();
 
@@ -69,7 +70,7 @@ protected:
 	//Kahawai Pipeline
 	virtual bool		Initialize();
 	virtual bool		Capture(int width, int height, void* args);
-	virtual bool		Transform(int width, int height);
+	virtual bool		Transform(int width, int height, int frameNum);
 	//Encode and Send implemented by servers
 	//Decode and Show implemented by clients
 	virtual bool		Finalize(); //Cleanup specially for locks and threads
@@ -85,6 +86,7 @@ protected:
 	//Post-initialization steps
 	void				SetReader(ConfigReader* reader);
 	void				SetCaptureMode(CAPTURE_MODE mode);
+	void				SetMeasurement(Measurement* measurement);
 
 	//Accessors
 	int					GetHeight();
@@ -159,6 +161,9 @@ protected:
 	//The function that will grab the user input
 	PFNSampleUserInput	_fnSampleUserInput;
 
+
+	int					_kahawaiFrameNum;
+
 private:
 	//Capture stage synchronization
 	CONDITION_VARIABLE	_captureFullCV;
@@ -169,7 +174,7 @@ private:
 	//Transform phase synchronization
 	bool				_frameInProcess;
 
-
+	Measurement*		_measurement;
 	//////////////////////////////////////////////////////////////////////////
 
 

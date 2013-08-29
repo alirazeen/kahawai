@@ -49,7 +49,7 @@ OpenGLCapturer::~OpenGLCapturer(void)
 uint8_t* OpenGLCapturer::CaptureScreen(void* args)
 {
 	glReadBuffer( GL_FRONT );
-	glReadPixels( 0, 0, _width, _height, GL_BGRA_EXT, GL_UNSIGNED_BYTE, _buffer ); 
+	glReadPixels( 0, 0, _width, _height, GL_BGRA_EXT, GL_UNSIGNED_BYTE, _buffer );
 	return _buffer;
 }
 #endif

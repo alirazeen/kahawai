@@ -48,7 +48,9 @@ bool IFrameServer::Initialize()
 
 #ifndef MEASUREMENT_OFF
 	_measurement = new Measurement("iframe_server.csv", "gop=%d\n", _gop);
+	KahawaiServer::SetMeasurement(_measurement);
 	_inputHandler->SetMeasurement(_measurement);
+	_encoder->SetMeasurement(_measurement);
 #endif
 
 	InitializeCriticalSection(&_inputSocketCS);
@@ -125,16 +127,16 @@ bool IFrameServer::Capture(int width, int height, void* args)
 	return result;
 }
 
-bool IFrameServer::Transform(int width, int height)
+bool IFrameServer::Transform(int width, int height, int frameNum)
 {
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::TRANSFORM_BEGIN, _kahawaiFrameNum);
+	_measurement->AddPhase(Phase::TRANSFORM_BEGIN, frameNum);
 #endif
 
-	bool result = KahawaiServer::Transform(width,height);
+	bool result = KahawaiServer::Transform(width,height, frameNum);
 	
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::TRANSFORM_END, _kahawaiFrameNum);
+	_measurement->AddPhase(Phase::TRANSFORM_END, frameNum);
 #endif
 
 	return result;

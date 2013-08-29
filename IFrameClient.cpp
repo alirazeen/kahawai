@@ -51,8 +51,11 @@ bool IFrameClient::Initialize()
 #ifndef MEASUREMENT_OFF
 	//Initialize instrumentation class
 	_measurement = new Measurement("iframe_client.csv", "gop=%d\n", _gop);
+	KahawaiClient::SetMeasurement(_measurement);
+	_encoderComponent->SetMeasurement(_measurement);
 	_muxerComponent->SetMeasurement(_measurement);
 	_inputHandler->SetMeasurement(_measurement);
+	_decoder->SetMeasurement(_measurement);
 #endif
 
 	InitializeCriticalSection(&_inputCS);
@@ -156,7 +159,8 @@ void IFrameClient::OffloadAsync()
 	CreateKahawaiThread(AsyncDecodeShow, this);
 	
 	while(_offloading) {
-		_offloading &= Transform(_width, _height);
+		_offloading &= Transform(_width, _height, _numTransformedFrames);
+		_numTransformedFrames += _gop;
 	}
 
 	Finalize();
@@ -191,32 +195,32 @@ bool IFrameClient::Capture(int width, int height, void* args)
 	return result;
 }
 
-bool IFrameClient::Transform(int width, int height)
+bool IFrameClient::Transform(int width, int height, int frameNum)
 {
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::TRANSFORM_BEGIN, _numTransformedFrames);
+	_measurement->AddPhase(Phase::TRANSFORM_BEGIN, frameNum);
 #endif
 
-	bool result = KahawaiClient::Transform(width, height);
+	bool result = KahawaiClient::Transform(width, height, frameNum);
 	if (result)
 	{
 
 #ifndef MEASUREMENT_OFF
-		_measurement->AddPhase(Phase::IFRAME_CLIENT_ENCODE_BEGIN, _numTransformedFrames);
+		_measurement->AddPhase(Phase::IFRAME_CLIENT_ENCODE_BEGIN, frameNum);
 #endif
 		
 		result = SendTransformPictureEncoder();
 
 #ifndef MEASUREMENT_OFF
-		_measurement->AddPhase(Phase::IFRAME_CLIENT_ENCODE_END, _numTransformedFrames);
+		_measurement->AddPhase(Phase::IFRAME_CLIENT_ENCODE_END, frameNum);
 #endif
 	}
 
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::TRANSFORM_END, _numTransformedFrames);
+	_measurement->AddPhase(Phase::TRANSFORM_END, frameNum);
 #endif
 
-	_numTransformedFrames += _gop;
+	
 	return result;
 }
 

@@ -2,7 +2,7 @@
 #ifdef KAHAWAI
 #include "FFMpegDecoder.h"
 #include "kahawaiBase.h"
-
+#include "Measurement.h"
 
 
 FFMpegDecoder::FFMpegDecoder(char* URL, int width, int height)
@@ -49,6 +49,9 @@ bool FFMpegDecoder::Decode(kahawaiTransform apply, byte* patch)
 	int				frameFinished = 0;
 	AVPacket		_Packet;
 
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase("DECODE_LOAD_VIDEO_STREAM", _displayedFrames);
+#endif
 
 	if(!_loaded)
 	{
@@ -56,7 +59,6 @@ bool FFMpegDecoder::Decode(kahawaiTransform apply, byte* patch)
 		if(!LoadVideoStream())
 			return false;
 	}
-
 
 	if(_streamFinished)
 	{
@@ -72,11 +74,21 @@ bool FFMpegDecoder::Decode(kahawaiTransform apply, byte* patch)
 	// Read frames 
 	while(!frameFinished)
 	{
+
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase("DECODE_BEFORE_READ_FRAME", _displayedFrames);
+#endif
+
 		if (av_read_frame(_pFormatCtx, &_Packet) >= 0) 
 		{
 			// Is this a packet from the video stream?
 			if (_Packet.stream_index == FIRST_VIDEO_STREAM) 
 			{
+
+#ifndef MEASUREMENT_OFF
+				_measurement->AddPhase("DECODE_BEFORE_DECODE_VIDEO", _displayedFrames);
+#endif
+
 				// Decode video frame
 				if(avcodec_decode_video2(_pCodecCtx, _pAVFrame, &frameFinished, &_Packet)<1)
 				{
@@ -87,11 +99,21 @@ bool FFMpegDecoder::Decode(kahawaiTransform apply, byte* patch)
 				// Did we get a video frame?
 				if (frameFinished) 
 				{
+
+#ifndef MEASUREMENT_OFF
+					_measurement->AddPhase("DECODE_BEFORE_COPY_FRAME_OVERLAY", _displayedFrames);
+#endif
+
 					CopyFrameToOverlay(_pAVFrame,_pYuvOverlay);
 
 					//Patch the frame if is invoked by the delta engine
 					if(apply)
 					{
+#ifndef MEASUREMENT_OFF
+						_measurement->AddPhase("DECODE_BEFORE_APPLY_PATCH", _displayedFrames);
+#endif
+
+
 						for (int i=0 ; i< _y420pFrameSize ; i++) 
 						{
 							_pYuvOverlay->pixels[0][i] = apply(_pYuvOverlay->pixels[0][i],patch[i]);
@@ -102,10 +124,18 @@ bool FFMpegDecoder::Decode(kahawaiTransform apply, byte* patch)
 					//writes the raw yuv file to disc if frame logging is enabled
 					LogYUVFrame(_saveFrames,"decoded", _displayedFrames, (char*)_pYuvOverlay->pixels[0], _width,_height);
 
+#ifndef MEASUREMENT_OFF
+					_measurement->AddPhase("DECODE_BEFORE_DISPLAY_OVERLAY", _displayedFrames);
+#endif
+
 					SDL_DisplayYUVOverlay(_pYuvOverlay, &_screenRect);
 					_displayedFrames++;
 				}
 			}
+
+#ifndef MEASUREMENT_OFF
+			_measurement->AddPhase("DECODE_BEFORE_FREE_PACKET", _displayedFrames-1);
+#endif
 
 			// Free the packet that was allocated by av_read_frame
 			av_free_packet(&_Packet);
@@ -117,7 +147,14 @@ bool FFMpegDecoder::Decode(kahawaiTransform apply, byte* patch)
 			frameFinished = 1;
 			_streamFinished = true;
 		}
+
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase("DECODE_ALL_DONE", _displayedFrames-1);
+#endif
 	}
+
+
+
 
 	return true;
 }
@@ -313,4 +350,5 @@ AVDictionary** FFMpegDecoder::SetupFindStreamInfoOptions(AVFormatContext *s,
 			0);
 		return opts;
 }
+
 #endif

@@ -1,6 +1,7 @@
 #include "kahawaiBase.h"
 #ifdef KAHAWAI
 #include "X264Encoder.h"
+#include "Measurement.h"
 
 #define ZERO_LATENCY "zerolatency"
 
@@ -84,6 +85,10 @@ int X264Encoder::Encode(void* pictureIn, void** pictureOut, kahawaiTransform app
 	//Delta Encoding//
 	if(apply)
 	{
+
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase("ENCODE_BEFORE_ENCODE_PATCHING", _numEncodedFrames);
+#endif
 		//Apply the delta transform if invoked from delta encoding (hi - lo)
 		for (int i=0 ; i< _y420pFrameSize ; i++) 
 		{
@@ -91,11 +96,20 @@ int X264Encoder::Encode(void* pictureIn, void** pictureOut, kahawaiTransform app
 		}
 	}
 
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase("ENCODE_BEFORE_ACTUAL_ENCODING", _numEncodedFrames);
+#endif
+
 	//Encode the frame
 	int frame_size = x264_encoder_encode(_encoder, &nals, &i_nals, inputPicture, &pic_out);
 
 	*pictureOut = nals[0].p_payload;
 
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase("ENCODE_ALL_DONE", _numEncodedFrames);
+#endif
+
+	_numEncodedFrames++;
 	return frame_size;
 }
 #endif

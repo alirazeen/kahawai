@@ -26,6 +26,7 @@ public:
 	bool Show(); 
 	AVDictionary* FilterCodecOptions(AVDictionary *opts, enum CodecID codec_id,	int encoder);
 	AVDictionary** SetupFindStreamInfoOptions(AVFormatContext *s, AVDictionary *codec_opts);
+	
 protected:
 	bool InitializeSDL(int width, int height);
 	bool LoadVideoStream();

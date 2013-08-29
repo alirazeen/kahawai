@@ -9,6 +9,7 @@
 #include "H264Server.h"
 #include "ConfigReader.h"
 #include "ConfigReader.h"
+#include "Measurement.h"
 #include "OpenGLCapturer.h"
 #include "DirectXCapturer.h"
 #include "Measurement.h"
@@ -247,6 +248,7 @@ Kahawai::Kahawai()
 	,_frameInProcess(false)
 	,_capturer(NULL)
 	,_finished(false)
+	,_kahawaiFrameNum(0)
 {
 
 }
@@ -392,10 +394,18 @@ bool Kahawai::Finalize()
  */
 bool Kahawai::Capture(int width, int height, void* args)
 {
+
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase("CAPTURE_SCREEN_BUFFER_BEGIN", _renderedFrames);
+#endif
+	
 	uint8_t* frameBuffer = _capturer->CaptureScreen(args);
 
-	//Acquire lock on the framebuffer. Make sure transform thread is done
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase("CAPTURE_BEFORE_ACQUIRE_LOCK", _renderedFrames);
+#endif
 
+	//Acquire lock on the framebuffer. Make sure transform thread is done
 	//This is how locking primitives work in Windows. Although the order may seem counterintuitive
 	//http://msdn.microsoft.com/en-us/library/windows/desktop/ms686353(v=vs.85).aspx
 
@@ -407,11 +417,21 @@ bool Kahawai::Capture(int width, int height, void* args)
 			if(!_offloading)
 				return false;
 		}
+
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase("CAPTURE_BEFORE_MEMCPY", _renderedFrames);
+#endif
+
 		memcpy(_sourceFrame,frameBuffer, width* height*SOURCE_BITS_PER_PIXEL);
 		_frameInProcess = true;
 	}
 	WakeConditionVariable(&_captureReadyCV);
 	LeaveCriticalSection(&_frameBufferCS);
+
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase("CAPTURE_COPY_BUFFER_END", _renderedFrames);
+#endif
+
 
 	//Increase the count of rendered frames sent to the Kahawai engine.
 	_renderedFrames++;
@@ -426,10 +446,13 @@ bool Kahawai::Capture(int width, int height, void* args)
  * @param height the target screen height
  * @return true if the conversion is successful
  */
-bool Kahawai::Transform(int width, int height)
+bool Kahawai::Transform(int width, int height, int frameNum)
 {
 	//Acquire lock on the framebuffer. Wait until game has produced a new frame
 
+#ifndef MEASUREMENT_OFF
+	_measurement->AddPhase("TRANSFORM_ACQUIRE_LOCK_BEGIN", frameNum);
+#endif
 	EnterCriticalSection(&_frameBufferCS);
 	{
 		while(!_frameInProcess)
@@ -439,11 +462,26 @@ bool Kahawai::Transform(int width, int height)
 				return false;
 		}
 
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase("TRANSFORM_VERTICAL_FLIP", frameNum);
+#endif
+
 		//Image colorspace transformation inverts image. Pre-inverting to save time
 		VerticalFlip(width, height, _sourceFrame, SOURCE_BITS_PER_PIXEL);
+		
+
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase("TRANSFORM_SWS_SCALE", frameNum);
+#endif
+
 		int srcstride = _width * SOURCE_BITS_PER_PIXEL; //RGB Stride
 		uint8_t *src[3]= {_sourceFrame, NULL, NULL}; 
 		sws_scale(_convertCtx, src, &srcstride, 0, height, _transformPicture->img.plane, _transformPicture->img.i_stride);
+
+
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase("TRANSFORM_PERFORM_END", frameNum);
+#endif
 
 		LogYUVFrame(_saveCaptures,"low",_renderedFrames,(char*)_transformPicture->img.plane[0],_width,_height);
 
@@ -473,6 +511,11 @@ void Kahawai::SetReader(ConfigReader* reader)
 void Kahawai::SetCaptureMode(CAPTURE_MODE mode)
 {
 	_captureMode = mode;
+}
+
+void Kahawai::SetMeasurement(Measurement* measurement)
+{
+	_measurement = measurement;
 }
 
 void Kahawai::SetSampleUserInputFN(PFNSampleUserInput fnSampleUserInput)

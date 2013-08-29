@@ -86,7 +86,9 @@ bool DeltaServer::Initialize()
 
 #ifndef MEASUREMENT_OFF
 	_measurement = new Measurement(measurement_file_name);
+	KahawaiServer::SetMeasurement(_measurement);
 	_inputHandler->SetMeasurement(_measurement);
+	_encoder->SetMeasurement(_measurement);
 #endif
 
 	InitializeCriticalSection(&_inputSocketCS);
@@ -233,7 +235,7 @@ bool DeltaServer::Transform(int width, int height)
 	_measurement->AddPhase(Phase::TRANSFORM_BEGIN, _kahawaiFrameNum);
 #endif
 
-	bool result = KahawaiServer::Transform(_width, _height);
+	bool result = KahawaiServer::Transform(_width, _height, _kahawaiFrameNum);
 
 #ifndef MEASUREMENT_OFF
 	_measurement->AddPhase(Phase::TRANSFORM_END, _kahawaiFrameNum);
@@ -263,8 +265,17 @@ int DeltaServer::Encode(void** transformedFrame)
 	
 		//Wait for the slave copy to finish writing the low quality version to shared memory
 		WaitForSingleObject(_masterBarrier, INFINITE);
+
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase("ENCODE_MASTER_AFTER_WAIT", _kahawaiFrameNum);
+#endif
+
 		result = _encoder->Encode(_transformPicture,transformedFrame,Delta, _mappedBuffer);
 		SetEvent(_slaveBarrier);
+
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase("ENCODE_MASTER_SET_EVENT", _kahawaiFrameNum);
+#endif
 	}
 	else
 	{
@@ -302,12 +313,18 @@ bool DeltaServer::Send(void** compressedFrame, int frameSize)
 			KahawaiLog("Unable to send frame to client", KahawaiError);
 			return false;
 		}
+
 		LogVideoFrame(_saveCaptures,"transferred","deltaMovie.h264",(char*)*compressedFrame,frameSize);
 	}
 	else //Slave
 	{
+
 		//Copy the low fidelity capture to shared memory
 		memcpy(_mappedBuffer,(char*) *compressedFrame,frameSize);
+
+#ifndef MEASUREMENT_OFF
+		_measurement->AddPhase("SEND_SLAVE_BEFORE_WAIT", _kahawaiFrameNum);
+#endif
 
 		SetEvent(_masterBarrier);
 		WaitForSingleObject(_slaveBarrier, INFINITE);

@@ -2,6 +2,8 @@
 #ifdef KAHAWAI
 #include "MediaFoundationDecoder.h"
 #include "KahawaiBase.h"
+#include "Measurement.h"
+
 
 MediaFoundationDecoder::MediaFoundationDecoder(void)
 {
@@ -25,4 +27,5 @@ bool MediaFoundationDecoder::Show()
 	KahawaiLog("Unimplemented Method: FFMpegDecoder::Decode",KahawaiError);
 	return false;
 }
+
 #endif

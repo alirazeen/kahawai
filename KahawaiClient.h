@@ -69,7 +69,7 @@ protected:
 	//multiple frame counters. It's not the most elegant solution but it'll have 
 	//to suffice for now.
 	int					_gameFrameNum; //Number of frames rendered by the game
-	int					_kahawaiFrameNum; //Number of frames rendered by Kahawai
+	//int					_kahawaiFrameNum; //Number of frames rendered by Kahawai
 
 public:
 	KahawaiClient(void);
