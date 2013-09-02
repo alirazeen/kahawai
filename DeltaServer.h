@@ -34,7 +34,7 @@ public:
 	bool	Finalize();
 
 	bool	Capture(int width, int height, void* args);
-	bool	Transform(int width, int height);
+	bool	Transform(int width, int height, int frameNum);
 	int		Encode(void** transformedFrame);
 	bool	Send(void** compressedFrame, int frameSize);
 	

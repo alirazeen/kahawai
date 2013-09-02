@@ -146,17 +146,17 @@ bool DeltaClient::Capture(int width, int height, void* args)
  * @param width the width of the screen to be captured
  * @return true if the transformation is successful
  */
-bool DeltaClient::Transform(int width, int height)
+bool DeltaClient::Transform(int width, int height, int frameNum)
 {
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::TRANSFORM_BEGIN, _kahawaiFrameNum);
+	_measurement->AddPhase(Phase::TRANSFORM_BEGIN, frameNum);
 #endif
 
 	//transforms the screen captured at the client resolution
 	bool result = KahawaiClient::Transform(_clientWidth, _clientHeight, _kahawaiFrameNum);
 
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::TRANSFORM_END, _kahawaiFrameNum);
+	_measurement->AddPhase(Phase::TRANSFORM_END, frameNum);
 #endif
 
 	return result;

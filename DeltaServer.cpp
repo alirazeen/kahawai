@@ -229,16 +229,16 @@ bool DeltaServer::Capture(int width, int height, void* args)
  * @see Kahawai::Transform
  * @return true if the transformation was successful
  */
-bool DeltaServer::Transform(int width, int height)
+bool DeltaServer::Transform(int width, int height, int frameNum)
 {
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::TRANSFORM_BEGIN, _kahawaiFrameNum);
+	_measurement->AddPhase(Phase::TRANSFORM_BEGIN, frameNum);
 #endif
 
 	bool result = KahawaiServer::Transform(_width, _height, _kahawaiFrameNum);
 
 #ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::TRANSFORM_END, _kahawaiFrameNum);
+	_measurement->AddPhase(Phase::TRANSFORM_END, frameNum);
 #endif
 
 	return result;
