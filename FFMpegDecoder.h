@@ -24,7 +24,7 @@ public:
 	~FFMpegDecoder(void);
 	bool Decode(kahawaiTransform apply = 0, byte* patch = 0); 
 	bool Show(); 
-	AVDictionary* FilterCodecOptions(AVDictionary *opts, enum CodecID codec_id,	int encoder);
+	AVDictionary* FilterCodecOptions(AVDictionary *opts, enum AVCodecID codec_id,	int encoder);
 	AVDictionary** SetupFindStreamInfoOptions(AVFormatContext *s, AVDictionary *codec_opts);
 	
 protected:

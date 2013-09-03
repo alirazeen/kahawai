@@ -287,7 +287,7 @@ bool FFMpegDecoder::InitializeSDL(int width, int height)
 
 
 
-AVDictionary* FFMpegDecoder::FilterCodecOptions(AVDictionary *opts, enum CodecID codec_id,
+AVDictionary* FFMpegDecoder::FilterCodecOptions(AVDictionary *opts, enum AVCodecID codec_id,
 	int encoder) {
 		AVCodecContext*		_avcodec_opts[AVMEDIA_TYPE_NB];
 		AVDictionary *ret = NULL;
