@@ -125,6 +125,10 @@ void Measurement::Flush()
 
 void Measurement::LogFPS()
 {
+	//Print divide-by-zero error
+	if (_kElapsed == 0)
+		return;
+
 	int fps = (_numFrames*1000/_kElapsed);
 
 	char line[1024];
