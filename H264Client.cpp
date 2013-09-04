@@ -31,6 +31,7 @@ bool H264Client::Initialize()
 	_measurement = new Measurement("h264_client.csv");
 	KahawaiClient::SetMeasurement(_measurement);
 	_inputHandler->SetMeasurement(_measurement);
+	_decoder->SetMeasurement(_measurement);
 #endif
 
 	InitializeCriticalSection(&_inputSocketCS);
