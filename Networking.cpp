@@ -58,6 +58,13 @@ SOCKET CreateSocketToServer(char* serverAddress, int port)
 	memset(&(my_addr.sin_zero), 0, 8);
 	my_addr.sin_addr.s_addr = inet_addr(serverAddress);
 
+	
+	int opt = 1; // '1' means TRUE and '0' means FALSE when I use it with setsockopt below
+	int val = setsockopt(serverSocket,IPPROTO_TCP, TCP_NODELAY,(char*)&opt, sizeof(opt));
+	if (val != 0)
+	{
+		KahawaiLog("Error setting TCP_NODELAY option on CreateSocketToServer. Return value: %d\n", KahawaiError, val);
+	}
 
 	if( connect(serverSocket, (struct sockaddr*)&my_addr, sizeof(my_addr)) == SOCKET_ERROR ){
 		KahawaiLog("Unable to establish connection to server",KahawaiError);
@@ -108,6 +115,14 @@ SOCKET CreateSocketToClient(int host_port)
 
 	memset(&(my_addr.sin_zero), 0, 8);
 	my_addr.sin_addr.s_addr = INADDR_ANY ;
+	
+	int opt = 1; // '1' means TRUE and '0' means FALSE when I use it with setsockopt below
+	int val = setsockopt(hsock,IPPROTO_TCP, TCP_NODELAY,(char*)&opt, sizeof(opt));
+	if (val != 0)
+	{
+		KahawaiLog("Error setting TCP_NODELAY option on CreateSocketToClient. Return value: %d\n", KahawaiError, val);
+	}
+
 
 	if( bind( hsock, (struct sockaddr*)&my_addr, sizeof(my_addr)) == -1 ){
 		KahawaiLog("Error binding to socket, make sure nothing else is listening on this port",KahawaiError);
