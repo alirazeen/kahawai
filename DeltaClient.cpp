@@ -206,7 +206,7 @@ bool DeltaClient::Show()
 
 void* DeltaClient::HandleInput()
 {
-	_inputHandler->SetFrameNum(_gameFrameNum);
+	_inputHandler->SetFrameNum(_gameFrameNum+FRAME_GAP);
 
 	//Get the actual command
 	void* inputCommand = _fnSampleUserInput();

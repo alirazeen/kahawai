@@ -283,7 +283,7 @@ void* IFrameClient::HandleInput()
 
 	EnterCriticalSection(&_inputCS);
 	{
-		_inputHandler->SetFrameNum(_gameFrameNum);
+		_inputHandler->SetFrameNum(_gameFrameNum+FRAME_GAP);
 
 		//Figure out the command that we're going to process
 		void* inputCommand = NULL;
