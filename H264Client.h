@@ -16,7 +16,7 @@ protected:
 	bool		Initialize();
 
 	bool		Capture(int width, int height, void *args);
-	bool		Transform(int width, int height);
+	bool		Transform(int width, int height, int frameNum);
 	bool		Decode();
 	bool		Show();	
 

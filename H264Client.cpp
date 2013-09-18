@@ -101,7 +101,7 @@ bool H264Client::Capture(int width, int height, void *args)
  *  H264 Client does not need to capture the screen
  *  Overrides default behavior (doing nothing)
  */
-bool H264Client::Transform(int width, int height)
+bool H264Client::Transform(int width, int height, int frameNum)
 {
 	bool result = KahawaiClient::Transform(_clientWidth, _clientHeight, _kahawaiFrameNum);
 	return true;
