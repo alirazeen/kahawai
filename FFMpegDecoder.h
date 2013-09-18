@@ -22,6 +22,7 @@ class FFMpegDecoder :
 public:
 	FFMpegDecoder(char* URL, int width, int height);
 	~FFMpegDecoder(void);
+	void WaitForConnection();
 	bool Decode(kahawaiTransform apply = 0, byte* patch = 0); 
 	bool Show(); 
 	AVDictionary* FilterCodecOptions(AVDictionary *opts, enum AVCodecID codec_id,	int encoder);
@@ -56,5 +57,9 @@ protected:
 	//SWS Context
 	SwsContext* _img_convert_ctx;
 
+private:
+	static DWORD WINAPI		AsyncConnect(void* Param);
+	CRITICAL_SECTION		_connectCS;
+	CONDITION_VARIABLE		_connectCV;
 };
 

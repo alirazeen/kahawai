@@ -28,6 +28,9 @@ FFMpegDecoder::FFMpegDecoder(char* URL, int width, int height)
 		width, height, PIX_FMT_YUV420P,
 		SWS_FAST_BILINEAR, NULL, NULL, NULL);
 
+	InitializeCriticalSection(&_connectCS);
+	InitializeConditionVariable(&_connectCV);
+	CreateKahawaiThread(AsyncConnect, this);
 }
 
 
@@ -53,12 +56,13 @@ bool FFMpegDecoder::Decode(kahawaiTransform apply, byte* patch)
 	_measurement->AddPhase("DECODE_LOAD_VIDEO_STREAM", _displayedFrames);
 #endif
 
+	EnterCriticalSection(&_connectCS);
 	if(!_loaded)
 	{
-		KahawaiLog("Initializing Remote Video Stream\n", KahawaiDebug);
-		if(!LoadVideoStream())
-			return false;
+		KahawaiLog("Connection NOT established. Call WaitForConnection() before calling Decode()\n", KahawaiError);
+		return false;
 	}
+	LeaveCriticalSection(&_connectCS);
 
 	if(_streamFinished)
 	{
@@ -244,7 +248,12 @@ bool FFMpegDecoder::LoadVideoStream()
 	// Allocate video frame
 	_pAVFrame = avcodec_alloc_frame();
 
-	_loaded = true;
+	EnterCriticalSection(&_connectCS);
+	{
+		_loaded = true;
+	}
+	WakeConditionVariable(&_connectCV);
+	LeaveCriticalSection(&_connectCS);
 
 	return true;
 
@@ -349,6 +358,23 @@ AVDictionary** FFMpegDecoder::SetupFindStreamInfoOptions(AVFormatContext *s,
 			opts[i] = FilterCodecOptions(codec_opts, s->streams[i]->codec->codec_id,
 			0);
 		return opts;
+}
+
+DWORD WINAPI FFMpegDecoder::AsyncConnect(void* Param)
+{
+	FFMpegDecoder *This = (FFMpegDecoder*)Param;
+	This->LoadVideoStream();
+	return 0;
+}
+
+void FFMpegDecoder::WaitForConnection()
+{
+	EnterCriticalSection(&_connectCS);
+	{
+		while (!_loaded)
+			SleepConditionVariableCS(&_connectCV, &_connectCS, INFINITE);
+	}
+	LeaveCriticalSection(&_connectCS);
 }
 
 #endif

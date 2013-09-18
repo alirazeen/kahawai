@@ -95,6 +95,9 @@ bool DeltaClient::StartOffload()
 
 void DeltaClient::OffloadAsync()
 {
+
+	_decoder->WaitForConnection();
+
 #ifndef NO_HANDLE_INPUT
 	//Connect input handler to server
 	EnterCriticalSection(&_inputSocketCS);

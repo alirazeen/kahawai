@@ -54,6 +54,7 @@ public:
 
 private:
 	bool	InitMapping();
+	bool	ConnectToClientDecoder();
 
 	bool				_masterInputReady;
 	bool				_inputConnectionDone;

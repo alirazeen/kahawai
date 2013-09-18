@@ -164,6 +164,13 @@ void DeltaServer::OffloadAsync()
 	//Create socket and input connection to client (if master)
 	if(_master)
 	{
+		bool connected = ConnectToClientDecoder();
+		if (!connected)
+		{
+			KahawaiLog("Unable to connect client decoder\n", KahawaiError);
+			return;
+		}
+
 #ifndef NO_HANDLE_INPUT
 		EnterCriticalSection(&_inputSocketCS);
 		{
@@ -180,13 +187,6 @@ void DeltaServer::OffloadAsync()
 			return;
 		}
 #endif
-
-		_socketToClient = CreateSocketToClient(_serverPort);
-		if (_socketToClient==INVALID_SOCKET)
-		{
-			KahawaiLog("Unable to create connection to client in DeltaServer::OffloadAsync()", KahawaiError);
-			return;
-		}
 
 	} else
 	{
@@ -506,6 +506,40 @@ int DeltaServer::GetFirstInputFrame()
 	return FRAME_GAP;
 }
 
+bool DeltaServer::ConnectToClientDecoder()
+{
+
+	x264_picture_t *blankFrame = new x264_picture_t;
+	x264_picture_alloc(blankFrame, X264_CSP_I420, _width, _height);
+	void *encodedFrame = NULL;
+	uint8_t* blankSourceFrame = new uint8_t[_width*_height*SOURCE_BITS_PER_PIXEL];
+
+	int srcstride = _width * SOURCE_BITS_PER_PIXEL; //RGB Stride
+	uint8_t *src[3]= {_sourceFrame, NULL, NULL};
+	sws_scale(_convertCtx, src, &srcstride, 0, _height, blankFrame->img.plane, blankFrame->img.i_stride);
+
+
+	int frameSize = _encoder->Encode(_transformPicture, &encodedFrame, NULL, NULL);
+
+
+	_socketToClient = CreateSocketToClient(_serverPort);
+	if (_socketToClient==INVALID_SOCKET)
+	{
+		KahawaiLog("Unable to create connection to client in DeltaServer::OffloadAsync()", KahawaiError);
+		return false;
+	}
+
+	if(send(_socketToClient,(char*) encodedFrame, frameSize, 0)==SOCKET_ERROR)
+	{
+		KahawaiLog("Unable to send frame to client", KahawaiError);
+		return false;
+	}
+
+	x264_picture_clean(blankFrame);
+	delete[] blankSourceFrame;
+
+	return true;
+}
 
 //////////////////////////////////////////////////////////////////////////
 // Constructor / Destructor
