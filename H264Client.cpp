@@ -93,17 +93,15 @@ void H264Client::OffloadAsync()
  */
 bool H264Client::Capture(int width, int height, void *args)
 {
-	bool result = KahawaiClient::Capture(width, height, args);
 	return true;
 }
 
 /**
- *  H264 Client does not need to capture the screen
+ *  H264 Client does not need to transform anything
  *  Overrides default behavior (doing nothing)
  */
 bool H264Client::Transform(int width, int height, int frameNum)
 {
-	bool result = KahawaiClient::Transform(_clientWidth, _clientHeight, _kahawaiFrameNum);
 	return true;
 }
 
@@ -113,8 +111,7 @@ bool H264Client::Transform(int width, int height, int frameNum)
  */
 bool H264Client::Decode()
 {
-	return _decoder->Decode(NULL,_transformPicture->img.plane[0]);
-
+	return _decoder->Decode(NULL,NULL);
 }
 
 /**
@@ -122,6 +119,15 @@ bool H264Client::Decode()
  */
 bool H264Client::Show()
 {
+	if (_kahawaiFrameNum > 0)
+	{
+		// If we are showing anything other than the first
+		// frame, grab the inputs and send it to the server
+		// Do also see H264Server::GetFirstInputFrame for more details
+		void* inputCommand = _fnSampleUserInput();
+		_inputHandler->SendCommand(inputCommand);
+	}
+
 	return _decoder->Show();
 }
 
@@ -138,36 +144,16 @@ bool H264Client::StopOffload()
 
 void* H264Client::HandleInput()
 {
-	_inputHandler->SetFrameNum(_gameFrameNum);
-
-	// Get the actual command
-	void* inputCommand = _fnSampleUserInput();
-
-	// Free memory from previous invocations
-	if(_lastCommand != NULL)
-	{
-		delete[] _lastCommand;
-		_lastCommand = NULL;
-	}
-
-	_localInputQueue.push(inputCommand);
-	_inputHandler->SendCommand(inputCommand);
-
-	if (!ShouldHandleInput())
-	{
-		return _inputHandler->GetEmptyCommand();
-	}
-	else
-	{
-		_lastCommand = _localInputQueue.front();
-		_localInputQueue.pop();
-		return _lastCommand;
-	}
+	// We won't process any inputs in this client so always return
+	// the empty command
+	return _inputHandler->GetEmptyCommand();
 }
 
 int H264Client::GetFirstInputFrame()
 {
-	return FRAME_GAP;
+	// This function is not valid for the client since it does not
+	// actually process any frames
+	return 0;
 }
 //////////////////////////////////////////////////////////////////////////
 

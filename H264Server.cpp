@@ -140,7 +140,20 @@ void* H264Server::HandleInput()
 
 int H264Server::GetFirstInputFrame()
 {
-	return FRAME_GAP;
+	//TODO: Expand comment on why this is +3
+	//It has to do with three facts:
+	//A) The client starts grabbing input from the very first frame
+	//B) The client only grabs an input for frame X just before Show() for frame X+1 is called
+	//C) The FFMpegDecoder needs to have received both frame X and X+1 before it displays frame X
+	//
+	//The first three frames must be delivered for free without expecting any user-inputs, even when
+	//network latency is 0 and FRAME_GAP is also set to 0. This is why there is a +3.
+	//
+	//What remains to be investigated is this: Suppose we have a non-zero network latency, and set
+	//FRAME_GAP to a value greater than 3, do we still need to do FRAME_GAP + 3? Or in other words, should
+	//FRAME_GAP just be minimally be 3, or should there be an additive +3 factor to all values of 
+	//FRAME_GAP?
+	return FRAME_GAP+3;
 }
 
 //////////////////////////////////////////////////////////////////////////
