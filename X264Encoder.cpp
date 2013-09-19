@@ -112,4 +112,33 @@ int X264Encoder::Encode(void* pictureIn, void** pictureOut, kahawaiTransform app
 	_numEncodedFrames++;
 	return frame_size;
 }
+
+
+
+int X264Encoder::GetBlackFrame(SwsContext* convertCtx, void** pictureOut)
+{
+	uint8_t* blankSourceFrame = new uint8_t[_width*_height*SOURCE_BITS_PER_PIXEL];
+	memset(blankSourceFrame, 0, _width*_height*SOURCE_BITS_PER_PIXEL);
+
+	x264_picture_t *blankFrame = new x264_picture_t;
+	x264_picture_alloc(blankFrame, X264_CSP_I420, _width, _height);
+
+	x264_nal_t*			nals;
+	int					i_nals;
+	x264_picture_t		pic_out;
+	void *encodedFrame = NULL;
+
+	int srcstride = _width * SOURCE_BITS_PER_PIXEL; //RGB Stride
+	uint8_t *src[3]= {blankSourceFrame, NULL, NULL};
+	sws_scale(convertCtx, src, &srcstride, 0, _height, blankFrame->img.plane, blankFrame->img.i_stride);
+
+	int frameSize = x264_encoder_encode(_encoder, &nals, &i_nals, blankFrame, &pic_out);
+	*pictureOut = nals[0].p_payload;
+
+	x264_picture_clean(blankFrame);
+	delete[] blankSourceFrame;
+
+	return frameSize;
+}
+
 #endif

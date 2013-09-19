@@ -508,21 +508,10 @@ int DeltaServer::GetFirstInputFrame()
 
 bool DeltaServer::ConnectToClientDecoder()
 {
-
-	x264_picture_t *blankFrame = new x264_picture_t;
-	x264_picture_alloc(blankFrame, X264_CSP_I420, _width, _height);
+	//TODO: POSSIBLE MEMLEAK BECAUSE WE ARE NOT DELETING encodedFrame??
 	void *encodedFrame = NULL;
-	uint8_t* blankSourceFrame = new uint8_t[_width*_height*SOURCE_BITS_PER_PIXEL];
-	memset(blankSourceFrame, 0, _width*_height*SOURCE_BITS_PER_PIXEL);
-
-	int srcstride = _width * SOURCE_BITS_PER_PIXEL; //RGB Stride
-	uint8_t *src[3]= {_sourceFrame, NULL, NULL};
-	sws_scale(_convertCtx, src, &srcstride, 0, _height, blankFrame->img.plane, blankFrame->img.i_stride);
-
-
-	int frameSize = _encoder->Encode(_transformPicture, &encodedFrame, NULL, NULL);
-
-
+	int frameSize = _encoder->GetBlackFrame(_convertCtx, &encodedFrame);
+	
 	_socketToClient = CreateSocketToClient(_serverPort);
 	if (_socketToClient==INVALID_SOCKET)
 	{
@@ -535,9 +524,6 @@ bool DeltaServer::ConnectToClientDecoder()
 		KahawaiLog("Unable to send frame to client", KahawaiError);
 		return false;
 	}
-
-	x264_picture_clean(blankFrame);
-	delete[] blankSourceFrame;
 
 	return true;
 }
