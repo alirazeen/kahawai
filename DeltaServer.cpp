@@ -513,6 +513,7 @@ bool DeltaServer::ConnectToClientDecoder()
 	x264_picture_alloc(blankFrame, X264_CSP_I420, _width, _height);
 	void *encodedFrame = NULL;
 	uint8_t* blankSourceFrame = new uint8_t[_width*_height*SOURCE_BITS_PER_PIXEL];
+	memset(blankSourceFrame, 0, _width*_height*SOURCE_BITS_PER_PIXEL);
 
 	int srcstride = _width * SOURCE_BITS_PER_PIXEL; //RGB Stride
 	uint8_t *src[3]= {_sourceFrame, NULL, NULL};
