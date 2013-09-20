@@ -1,6 +1,8 @@
 #include "kahawaiBase.h"
 #ifdef KAHAWAI
 #include "IFrameClientMuxer.h"
+#include "IFrameClientEncoder.h"
+
 
 // Number of buffers to create in the circular buffer
 #define NUM_IFRAME_BUFFERS 1 // This should only be 1. We do not want the client to produce I-frames faster than the server
@@ -122,6 +124,10 @@ bool IFrameClientMuxer::InitLocalSocket()
 	}
 	WakeConditionVariable(&_initSocketCV);
 	LeaveCriticalSection(&_initSocketCS);
+
+	void* blankFrame = NULL;
+	int frameSize = _clientEncoder->GetBlankFrame(&blankFrame);
+	SendFrameToLocalDecoder((char*)blankFrame, frameSize);
 
 	return _socketToDecoder != INVALID_SOCKET;
 }
@@ -304,6 +310,11 @@ void IFrameClientMuxer::ReceivePFrame()
 	}
 	WakeConditionVariable(&_pFrameWaitForFrameCV);
 	LeaveCriticalSection(&_pFrameCS);
+}
+
+void IFrameClientMuxer::SetClientEncoder(IFrameClientEncoder* clientEncoder)
+{
+	_clientEncoder = clientEncoder;
 }
 
 void IFrameClientMuxer::SetMeasurement(Measurement* measurement)

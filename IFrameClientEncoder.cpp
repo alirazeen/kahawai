@@ -53,6 +53,17 @@ int IFrameClientEncoder::Encode(x264_picture_t* transformPicture)
 	return (size > 0);
 }
 
+void IFrameClientEncoder::SetConvertCtx(SwsContext* convertCtx)
+{
+	// The context is required to generate blank frames
+	_convertCtx = convertCtx;
+}
+
+int IFrameClientEncoder::GetBlankFrame(void** pictureOut)
+{
+	return _encoder->GetBlackFrame(_convertCtx, pictureOut);
+}
+
 void IFrameClientEncoder::SetMeasurement(Measurement* _measurement)
 {
 	_encoder->SetMeasurement(_measurement);

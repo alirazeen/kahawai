@@ -3,6 +3,7 @@
 #include "CircularBuffer.h"
 #include "Measurement.h"
 
+class IFrameClientEncoder;
 class IFrameClientMuxer
 {
 public:
@@ -17,6 +18,9 @@ public:
 
 	//Receive I-frame from the local encoder
 	void		ReceiveIFrame(void* frame, int size);
+
+	//Set the client encoder
+	void		SetClientEncoder(IFrameClientEncoder* clientEncoder);
 
 	//Set the measurement profiler
 	void		SetMeasurement(Measurement* measurement);
@@ -77,6 +81,9 @@ private:
 
 	//Send a frame to the local decoder
 	bool		SendFrameToLocalDecoder(char* frame, int size);
+
+	//Used to get blank frames from the encoder
+	IFrameClientEncoder*	_clientEncoder;
 
 	//Instrumentation
 	Measurement* _measurement;

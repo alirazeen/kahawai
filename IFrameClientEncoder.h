@@ -2,6 +2,7 @@
 #include "kahawaiserver.h"
 #include "IFrameClientMuxer.h"
 
+
 class Measurement;
 class IFrameClientEncoder
 {
@@ -13,6 +14,8 @@ public:
 	bool				Initialize(ConfigReader* configReader, IFrameClientMuxer* muxer);
 	bool				ReceiveTransformedPicture(x264_picture_t* transformPicture);
 	int					Encode(x264_picture_t* transformPicture);
+	void				SetConvertCtx(SwsContext* convertCtx);
+	int					GetBlankFrame(void** pictureOut);
 	void				SetMeasurement(Measurement* _measurement);	
 
 private:
@@ -27,5 +30,7 @@ private:
 
 	VideoEncoder*		_encoder;
 	IFrameClientMuxer*	_muxer;
+
+	SwsContext*			_convertCtx;
 };
 
