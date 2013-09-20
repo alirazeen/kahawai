@@ -225,7 +225,8 @@ void* IFrameServer::HandleInput()
 
 int IFrameServer::GetFirstInputFrame()
 {
-	//See comments in IFrameClient::GetFirstInputFrame()
+	//The reasons for the +3 here is similar to the reasons in
+	//H264Server::GetFirstInputFrame()
 	return FRAME_GAP+3;
 }
 

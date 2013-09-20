@@ -63,6 +63,7 @@ bool IFrameClient::Initialize()
 #endif
 
 	InitializeCriticalSection(&_inputCS);
+	InitializeConditionVariable(&_inputQueueEmptyCV);
 
 	InitializeCriticalSection(&_inputSocketCS);
 	InitializeConditionVariable(&_inputSocketCV);
@@ -245,9 +246,11 @@ void IFrameClient::GrabInput()
 	EnterCriticalSection(&_inputCS);
 	{
 		void* inputCommand = _fnSampleUserInput();
-		_grabbedInputQueue.push(inputCommand);
+		_localInputQueue.push(inputCommand);
 		_measurement->AddPhase(Phase::INPUT_GRAB,FRAME_NUM_NOT_APPLICABLE);
+		_inputHandler->SendCommand(inputCommand);
 	}
+	WakeConditionVariable(&_inputQueueEmptyCV);
 	LeaveCriticalSection(&_inputCS);
 }
 
@@ -262,38 +265,23 @@ void* IFrameClient::HandleInput()
 
 	void* returnVal = NULL;
 
+	if(!ShouldHandleInput())
+	{
+		return _inputHandler->GetEmptyCommand();
+	}
+
 	EnterCriticalSection(&_inputCS);
 	{
-		_inputHandler->SetFrameNum(_gameFrameNum+FRAME_GAP);
 
-		//Figure out the command that we're going to process
-		void* inputCommand = NULL;
-		if (_grabbedInputQueue.empty())
-		{
-			//Ok, there are no grabbed inputs but that's ok.
-			//Instead of waiting for an input to be grabbed, let's 
-			//just process an empty command and continue the game
-			inputCommand = _inputHandler->GetEmptyCommand();
-		}
-		else
-		{
-			inputCommand = _grabbedInputQueue.front();
-			_grabbedInputQueue.pop();
-		}
-
-		_localInputQueue.push(inputCommand);
-		_inputHandler->SendCommand(inputCommand);
-
-		if(!ShouldHandleInput())
-		{
-			returnVal = _inputHandler->GetEmptyCommand();
-		}
-		else
-		{
-			_lastCommand = _localInputQueue.front();
-			_localInputQueue.pop();
-			returnVal = _lastCommand;
-		}
+		_inputHandler->SetFrameNum(_gameFrameNum);
+	
+		while (_localInputQueue.empty())
+			SleepConditionVariableCS(&_inputQueueEmptyCV, &_inputCS, INFINITE);
+		
+		_lastCommand = _localInputQueue.front();
+		_localInputQueue.pop();
+		returnVal = _lastCommand;
+		
 	}
 	LeaveCriticalSection(&_inputCS);
 
@@ -302,19 +290,12 @@ void* IFrameClient::HandleInput()
 
 int IFrameClient::GetFirstInputFrame()
 {
-	//TODO: Comment this properly. There is a relationship between the +3 and
-	//the +1 in DecodeShow(). This relationship needs to be properly documented. It has
-	//something to do with how the FFMpegDecoder requires both frame X and frame X+1
-	//in its pipeline before it displays frame X on the SDL window. If there is no +3, 
-	//there will be a deadlock. 
+	//THe IFrameServer has a FRAME_GAP+3. Since the client processes 
+	//inputs locally, both the client and the server must have the same
+	//framegap so there is a +3 too.
 	//
-	//A deadlock where the FFMpegDecoder is waiting for the next frame to arrive before
-	//it displays the current frame in the pipeline but at the same time, the next frame
-	//can only be produced after the input for the current frame is sampled.
-
-	// TODO: This should actually be read from a config file
-	// or dynamically determined based on the RTT or some 
-	// combination of the two. It should NOT be a static value
+	//The reasons for the +3 in the first place is similar to the reasons
+	//found in H264Server::GetFirstInputFrame()
 	return FRAME_GAP+3;
 }
 
@@ -350,7 +331,7 @@ void IFrameClient::DecodeShow()
 		//This is why in terms of line ordering, GrabInput() appears before Decode/Show.
 		//Note that the _kahawaiFrameNum > FRAME_GAP, ensures that we correctly
 		//collect an input for frame X when frame X+1 is about to be decoded/shown.
-		if (_kahawaiFrameNum > FRAME_GAP+1)
+		if (_kahawaiFrameNum > 0)
 			GrabInput();
 
 		offloading &= Decode();
