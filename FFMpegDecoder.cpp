@@ -11,7 +11,8 @@ FFMpegDecoder::FFMpegDecoder(char* URL, int width, int height)
 	_height(height),
 	_streamFinished(false),
 	_loaded(false),
-	_y420pFrameSize(YUV420pBitsPerPixel(width,height))
+	_y420pFrameSize(YUV420pBitsPerPixel(width,height)),
+	_connectionAttempted(false)
 {
 	_URL = new char[100];
 	memcpy(_URL,URL,sizeof(char)*100);
@@ -56,13 +57,11 @@ bool FFMpegDecoder::Decode(kahawaiTransform apply, byte* patch)
 	_measurement->AddPhase("DECODE_LOAD_VIDEO_STREAM", _displayedFrames);
 #endif
 
-	EnterCriticalSection(&_connectCS);
 	if(!_loaded)
 	{
 		KahawaiLog("Connection NOT established. Call WaitForConnection() before calling Decode()\n", KahawaiError);
 		return false;
 	}
-	LeaveCriticalSection(&_connectCS);
 
 	if(_streamFinished)
 	{
@@ -222,10 +221,10 @@ bool FFMpegDecoder::LoadVideoStream()
 #endif
 	}
 
-	if(opened!=0)
+	if(opened != 0)
 	{
 		KahawaiLog("Error loading video stream", KahawaiError);
-		return false; // Couldn't open file
+		return FinishConnectionAttempt(false); // Couldn't open file
 	}
 
 	opts = SetupFindStreamInfoOptions(_pFormatCtx, pCodec_opts);
@@ -239,24 +238,20 @@ bool FFMpegDecoder::LoadVideoStream()
 	pCodec = avcodec_find_decoder(_pCodecCtx->codec_id);
 	if (pCodec == NULL) {
 		fprintf(stderr, "Unsupported codec!\n");
-		return false; // Codec not found
+		return FinishConnectionAttempt(false); // Codec not found
 	}
+
 	// Open codec
 	if (avcodec_open2(_pCodecCtx, pCodec, opts) < 0)
-		return false; // Could not open codec
-
+	{
+		return FinishConnectionAttempt(false); // Could not open codec
+	}
+	
 	// Allocate video frame
 	_pAVFrame = avcodec_alloc_frame();
-
-	EnterCriticalSection(&_connectCS);
-	{
-		_loaded = true;
-	}
-	WakeConditionVariable(&_connectCV);
-	LeaveCriticalSection(&_connectCS);
-
-	return true;
-
+	_loaded = true;
+	
+	return FinishConnectionAttempt(true);
 }
 
 
@@ -371,10 +366,23 @@ void FFMpegDecoder::WaitForConnection()
 {
 	EnterCriticalSection(&_connectCS);
 	{
-		while (!_loaded)
+		while (!_connectionAttempted)
 			SleepConditionVariableCS(&_connectCV, &_connectCS, INFINITE);
 	}
 	LeaveCriticalSection(&_connectCS);
+}
+
+bool FFMpegDecoder::FinishConnectionAttempt(bool successful)
+{
+
+	EnterCriticalSection(&_connectCS);
+	{
+		_connectionAttempted = true;
+	}
+	WakeConditionVariable(&_connectCV);
+	LeaveCriticalSection(&_connectCS);
+
+	return successful;
 }
 
 #endif

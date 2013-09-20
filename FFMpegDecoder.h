@@ -59,7 +59,10 @@ protected:
 
 private:
 	static DWORD WINAPI		AsyncConnect(void* Param);
+	bool					FinishConnectionAttempt(bool successful);
+
 	CRITICAL_SECTION		_connectCS;
 	CONDITION_VARIABLE		_connectCV;
+	bool					_connectionAttempted;
 };
 
