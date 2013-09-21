@@ -298,7 +298,7 @@ void IFrameClientMuxer::ReceivePFrame()
 	while(receivedBytes < length)
 	{
 		int burst = 0;
-		burst = recv(_socketToServer, (char*)buffer+receivedBytes, length, 0);
+		burst = recv(_socketToServer, (char*)buffer+receivedBytes, length-receivedBytes, 0);
 		VERIFY(burst != SOCKET_ERROR);
 		receivedBytes += burst;
 	}

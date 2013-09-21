@@ -28,7 +28,7 @@ void InputHandlerServer::ReceiveCommandsAsync()
 
 		while(receivedBytes < size && burst > 0)
 		{
-			burst = recv(_inputSocket, (char*)&frameNum+receivedBytes, size, 0);
+			burst = recv(_inputSocket, (char*)&frameNum+receivedBytes, size-receivedBytes, 0);
 			receivedBytes += burst;
 		}
 
@@ -39,7 +39,7 @@ void InputHandlerServer::ReceiveCommandsAsync()
 
 		while(receivedBytes < size && burst > 0)
 		{
-			burst = recv(_inputSocket, command+receivedBytes, size, 0);
+			burst = recv(_inputSocket, command+receivedBytes, size-receivedBytes, 0);
 			receivedBytes+=burst;
 		}
 
