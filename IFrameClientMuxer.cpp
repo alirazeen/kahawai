@@ -6,7 +6,7 @@
 
 // Number of buffers to create in the circular buffer
 #define NUM_IFRAME_BUFFERS 1 // This should only be 1. We do not want the client to produce I-frames faster than the server
-#define NUM_PFRAME_BUFFERS 10
+#define NUM_PFRAME_BUFFERS FRAME_GAP // Since the server will send us FRAME_GAP-1 P-frames, we need that same amount of buffer space
 
 IFrameClientMuxer::IFrameClientMuxer(void)
 	:_socketToServer(INVALID_SOCKET),
