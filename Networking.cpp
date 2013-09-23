@@ -1,5 +1,6 @@
 #include "Networking.h"
 
+int TCP_BUFFER_SIZE = 8192 * 8; // 64kB buffer size
 
 bool InitNetworking()
 {
@@ -66,6 +67,9 @@ SOCKET CreateSocketToServer(char* serverAddress, int port)
 		KahawaiLog("Error setting TCP_NODELAY option on CreateSocketToServer. Return value: %d\n", KahawaiError, val);
 	}
 
+	setsockopt(serverSocket, SOL_SOCKET, SO_SNDBUF, (char*)&TCP_BUFFER_SIZE, sizeof(TCP_BUFFER_SIZE));
+	setsockopt(serverSocket, SOL_SOCKET, SO_RCVBUF, (char*)&TCP_BUFFER_SIZE, sizeof(TCP_BUFFER_SIZE));
+
 	if( connect(serverSocket, (struct sockaddr*)&my_addr, sizeof(my_addr)) == SOCKET_ERROR ){
 		KahawaiLog("Unable to establish connection to server",KahawaiError);
 		return INVALID_SOCKET;
@@ -123,6 +127,8 @@ SOCKET CreateSocketToClient(int host_port)
 		KahawaiLog("Error setting TCP_NODELAY option on CreateSocketToClient. Return value: %d\n", KahawaiError, val);
 	}
 
+	setsockopt(hsock, SOL_SOCKET, SO_SNDBUF, (char*)&TCP_BUFFER_SIZE, sizeof(TCP_BUFFER_SIZE));
+	setsockopt(hsock, SOL_SOCKET, SO_RCVBUF, (char*)&TCP_BUFFER_SIZE, sizeof(TCP_BUFFER_SIZE));
 
 	if( bind( hsock, (struct sockaddr*)&my_addr, sizeof(my_addr)) == -1 ){
 		KahawaiLog("Error binding to socket, make sure nothing else is listening on this port",KahawaiError);
