@@ -91,7 +91,6 @@ DWORD WINAPI InputHandlerClient::AsyncInputHandler(void* Param)
 void InputHandlerClient::SendCommandsAsync()
 {
 	char* command = NULL;
-	int frameNum = -1;
 	_offloading = true;
 
 	while(_offloading)
@@ -103,12 +102,8 @@ void InputHandlerClient::SendCommandsAsync()
 				SleepConditionVariableCS(&_inputReadyCV,&_inputBufferCS,INFINITE);
 			}
 
-			InputDescriptor* descriptor = _commandQueue.front();
-			command = (char*)descriptor->_command;
-			frameNum = descriptor->_frameNum;
-
+			command = (char*)_commandQueue.front();
 			_commandQueue.pop();
-			delete descriptor;
 		}
 		//Wake the game thread if it is waiting to send more frames.
 		WakeConditionVariable(&_inputFullCV);
@@ -117,13 +112,7 @@ void InputHandlerClient::SendCommandsAsync()
 #ifndef MEASUREMENT_OFF
 		_measurement->InputClientSendBegin(_numSentInput);
 #endif
-		int result = send(_inputSocket, (char*)&frameNum, sizeof(frameNum), 0);
-		if (result != SOCKET_ERROR)
-		{
-			result = send(_inputSocket, command, _commandLength, 0); 
-			//simulate network delay
-			//Sleep(200);
-		}
+		int result = send(_inputSocket, command, _commandLength, 0); 
 		
 		if (result == SOCKET_ERROR)
 		{
@@ -136,7 +125,6 @@ void InputHandlerClient::SendCommandsAsync()
 
 		delete[] command;
 		command = NULL;
-		frameNum = -1;
 	}
 
 }
@@ -171,8 +159,7 @@ void InputHandlerClient::SendCommand(void* command)
 			SleepConditionVariableCS(&_inputFullCV,&_inputBufferCS,INFINITE);
 		}
 
-		InputDescriptor* descriptor = new InputDescriptor(_frameNum, copyCommand);
-		_commandQueue.push(descriptor);
+		_commandQueue.push(copyCommand);
 	}
 	WakeConditionVariable(&_inputReadyCV);
 	LeaveCriticalSection(&_inputBufferCS);

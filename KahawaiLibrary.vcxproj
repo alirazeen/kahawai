@@ -80,7 +80,6 @@
     <ClInclude Include="..\kahawai\VideoDecoder.h" />
     <ClInclude Include="..\kahawai\VideoEncoder.h" />
     <ClInclude Include="..\kahawai\X264Encoder.h" />
-    <ClInclude Include="InputDescriptor.h" />
     <ClInclude Include="Measurement.h" />
     <ClInclude Include="Phase.h" />
     <ClInclude Include="SF4cmd.h" />

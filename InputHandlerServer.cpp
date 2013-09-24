@@ -17,25 +17,12 @@ void InputHandlerServer::ReceiveCommandsAsync()
 #ifndef MEASUREMENT_OFF
 		_measurement->InputServerReceiveBegin(_numReceivedInput);
 #endif
-
-		int frameNum = -1;
 		char* command = new char[KAHAWAI_INPUT_COMMAND_BUFFER];
 		
-		//First, receive the frame number the command is intended for
+		//Receive the command from the server
 		int receivedBytes = 0;
 		int burst = 1;
-		int size = sizeof(frameNum);
-
-		while(receivedBytes < size && burst > 0)
-		{
-			burst = recv(_inputSocket, (char*)&frameNum+receivedBytes, size-receivedBytes, 0);
-			receivedBytes += burst;
-		}
-
-		//Receive the command from the server
-		receivedBytes = 0;
-		burst = 1;
-		size = _serializer->GetCommandSize();
+		int size = _serializer->GetCommandSize();
 
 		while(receivedBytes < size && burst > 0)
 		{
@@ -49,7 +36,6 @@ void InputHandlerServer::ReceiveCommandsAsync()
 			continue;
 		}
 
-
 		EnterCriticalSection(&_inputBufferCS);
 		{
 			while(_commandQueue.size()>MAX_INPUT_QUEUE_LENGTH_SERVER)
@@ -57,8 +43,7 @@ void InputHandlerServer::ReceiveCommandsAsync()
 				SleepConditionVariableCS(&_inputFullCV,&_inputBufferCS,INFINITE);
 			}
 
-			InputDescriptor* descriptor = new InputDescriptor(frameNum, command);
-			_commandQueue.push(descriptor);			
+			_commandQueue.push(command);			
 
 #ifndef MEASUREMENT_OFF
 			_measurement->InputServerReceiveEnd(_numReceivedInput);
@@ -87,28 +72,8 @@ bool InputHandlerServer::Finalize()
 	return true;
 }
 
-int InputHandlerServer::PeekCommandFrame()
-{
-	int frameNum = -1;
-
-	EnterCriticalSection(&_inputBufferCS);
-	{
-		while(_commandQueue.empty())
-		{
-			SleepConditionVariableCS(&_inputReadyCV, &_inputBufferCS, INFINITE);
-		}
-
-		InputDescriptor* descriptor = _commandQueue.front();
-		frameNum = descriptor->_frameNum;
-	}
-	LeaveCriticalSection(&_inputBufferCS);
-
-	return frameNum;
-}
-
 void* InputHandlerServer::ReceiveCommand()
 {
-	int frameNum = -1;
 	char* command = NULL;
 
 	EnterCriticalSection(&_inputBufferCS);
@@ -118,12 +83,8 @@ void* InputHandlerServer::ReceiveCommand()
 			SleepConditionVariableCS(&_inputReadyCV,&_inputBufferCS,INFINITE);
 		}
 
-		InputDescriptor* descriptor = _commandQueue.front();
-		frameNum = descriptor->_frameNum;
-
-		command = (char*) descriptor->_command;			
+		command = (char*) _commandQueue.front();
 		_commandQueue.pop();
-		delete descriptor;
 	}
 
 	WakeConditionVariable(&_inputFullCV);

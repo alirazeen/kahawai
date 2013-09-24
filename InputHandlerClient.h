@@ -2,7 +2,6 @@
 #include "kahawaiBase.h"
 #ifdef KAHAWAI
 #include "InputSerializer.h"
-#include "InputDescriptor.h"
 #include <queue>
 #include "Measurement.h"
 using namespace std;
@@ -38,7 +37,7 @@ private:
 	CONDITION_VARIABLE		_inputFullCV;
 	CONDITION_VARIABLE		_inputReadyCV;
 	CRITICAL_SECTION		_inputBufferCS;
-	queue<InputDescriptor*>	_commandQueue;
+	queue<void*>			_commandQueue;
 
 	//Serialization
 	InputSerializer*		_serializer;
@@ -47,7 +46,6 @@ private:
 
 	//Instrumentation
 	Measurement*			_measurement;
-	int						_frameNum;
 	int						_numSentInput;
 };
 #endif
