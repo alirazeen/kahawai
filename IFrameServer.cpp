@@ -8,7 +8,8 @@
 IFrameServer::IFrameServer(void)
 	:_gop(0),
 	_currFrameNum(0),
-	_inputConnectionDone(false)
+	_inputConnectionDone(false),
+	_numInputProcessed(0)
 {
 }
 
@@ -213,13 +214,16 @@ bool IFrameServer::Send(void** compressedFrame, int frameSize)
 
 void* IFrameServer::HandleInput()
 {
-	_inputHandler->SetFrameNum(_gameFrameNum);
-
 	if(!ShouldHandleInput())
 		return _inputHandler->GetEmptyCommand();
 
-	int frameNum = _inputHandler->PeekCommandFrame();
-	return _inputHandler->ReceiveCommand();
+	void* cmd = _inputHandler->ReceiveCommand();
+#ifndef MEASUREMENT_OFF
+	_measurement->InputProcessed(_numInputProcessed, _gameFrameNum);
+#endif
+	_numInputProcessed++;
+
+	return cmd;
 }
 
 

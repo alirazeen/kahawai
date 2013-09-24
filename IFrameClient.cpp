@@ -8,7 +8,9 @@
 IFrameClient::IFrameClient(void) :
 	_lastCommand(NULL),
 	_numTransformedFrames(0),
-	_inputConnectionDone(false)
+	_inputConnectionDone(false),
+	_numInputProcessed(0),
+	_numInputSampled(0)
 {
 	_encoderComponent = new IFrameClientEncoder();
 	_muxerComponent = new IFrameClientMuxer();
@@ -246,8 +248,11 @@ void IFrameClient::GrabInput()
 	EnterCriticalSection(&_inputCS);
 	{
 		void* inputCommand = _fnSampleUserInput();
+#ifndef MEASUREMENT_OFF
+		_measurement->InputSampled(_numInputSampled);
+#endif
+		_numInputSampled++;
 		_localInputQueue.push(inputCommand);
-		_measurement->AddPhase(Phase::INPUT_GRAB,FRAME_NUM_NOT_APPLICABLE);
 		_inputHandler->SendCommand(inputCommand);
 	}
 	WakeConditionVariable(&_inputQueueEmptyCV);
@@ -272,16 +277,17 @@ void* IFrameClient::HandleInput()
 
 	EnterCriticalSection(&_inputCS);
 	{
-
-		_inputHandler->SetFrameNum(_gameFrameNum);
-	
 		while (_localInputQueue.empty())
 			SleepConditionVariableCS(&_inputQueueEmptyCV, &_inputCS, INFINITE);
 		
 		_lastCommand = _localInputQueue.front();
 		_localInputQueue.pop();
 		returnVal = _lastCommand;
-		
+
+#ifndef MEASUREMENT_OFF
+		_measurement->InputProcessed(_numInputProcessed, _gameFrameNum);
+#endif
+		_numInputProcessed++;
 	}
 	LeaveCriticalSection(&_inputCS);
 

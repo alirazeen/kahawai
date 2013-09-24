@@ -32,5 +32,7 @@ private:
 	CONDITION_VARIABLE	_inputSocketCV;
 	bool				_inputConnectionDone;
 
+	int		_numInputSampled;
+
 };
 

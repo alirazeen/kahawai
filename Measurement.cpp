@@ -91,6 +91,39 @@ void Measurement::AddPhase(char* message, int frameNum)
 	LeaveCriticalSection(&_recordsCS);
 }
 
+
+
+void Measurement::InputSampled(int inputNum)
+{
+	AddPhase(Phase::INPUT_SAMPLED,FRAME_NUM_NOT_APPLICABLE, "%d", inputNum);
+}
+
+void Measurement::InputProcessed(int inputNum, int frameNum)
+{
+	AddPhase(Phase::INPUT_PROCESSED, frameNum, "%d", inputNum);
+}
+
+void Measurement::InputClientSendBegin(int inputNum)
+{
+	AddPhase(Phase::INPUT_CLIENT_SEND_BEGIN,FRAME_NUM_NOT_APPLICABLE, "%d", inputNum);
+}
+
+void Measurement::InputClientSendEnd(int inputNum)
+{
+	AddPhase(Phase::INPUT_CLIENT_SEND_END, FRAME_NUM_NOT_APPLICABLE, "%d", inputNum);
+}
+
+void Measurement::InputServerReceiveBegin(int inputNum)
+{
+	AddPhase(Phase::INPUT_SERVER_RECEIVE_BEGIN, FRAME_NUM_NOT_APPLICABLE, "%d", inputNum);
+}
+
+void Measurement::InputServerReceiveEnd(int inputNum)
+{
+	AddPhase(Phase::INPUT_SERVER_RECEIVE_END, FRAME_NUM_NOT_APPLICABLE, "%d", inputNum);
+}
+
+
 void Measurement::Flush()
 {
 	EnterCriticalSection(&_recordsCS);

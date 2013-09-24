@@ -55,22 +55,15 @@ public:
 	static const Phase* MULTIPLEX_PFRAME_RECEIVED;
 	static const Phase* MULTIPLEX_PFRAME_END;
 
-	//Applicable only to the IFrame technique
-	static const Phase* INPUT_GRAB;
+	static const Phase* INPUT_SAMPLED;
+	static const Phase* INPUT_PROCESSED;
 
-	//From the client's perspective, receiving an input
-	//means receiving it from the game and sending an input
-	//means sending it to the cloud server
-	static const Phase* INPUT_CLIENT_RECEIVE;
 	static const Phase* INPUT_CLIENT_SEND_BEGIN;
 	static const Phase* INPUT_CLIENT_SEND_END;
 
-	//From the server's perspective, receiving an input
-	//means receiving it from the client and sending an input
-	//means sending it to the game
 	static const Phase* INPUT_SERVER_RECEIVE_BEGIN;
 	static const Phase* INPUT_SERVER_RECEIVE_END;
-	static const Phase* INPUT_SERVER_SEND;
+
 
 private:
 

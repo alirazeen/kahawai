@@ -21,6 +21,14 @@ public:
 
 	void AddPhase(const Phase* phase, int frameNum, char* extraFmt = "", ...);
 	void AddPhase(char* message, int frameNum);
+	
+	void InputSampled(int inputNum);
+	void InputProcessed(int inputNum, int frameNum);
+	void InputClientSendBegin(int inputNum);
+	void InputClientSendEnd(int inputNum);
+	void InputServerReceiveBegin(int inputNum);
+	void InputServerReceiveEnd(int inputNum);
+
 	void Flush();
 
 private:
@@ -29,6 +37,7 @@ private:
 	{
 		const Phase* phase;
 		char* message;
+		boolean newedMessage;
 		int frameNum;
 		DWORD time;
 		char* extra;
@@ -36,6 +45,7 @@ private:
 		PhaseRecord()
 		{
 			extra = NULL;
+			newedMessage = false;
 		}
 
 		~PhaseRecord()
@@ -44,6 +54,12 @@ private:
 			{
 				delete[] extra;
 				extra = NULL;
+			}
+
+			if (newedMessage && message != NULL)
+			{
+				delete[] message;
+				message = NULL;
 			}
 		}
 	};

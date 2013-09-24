@@ -34,6 +34,8 @@ private:
 	CONDITION_VARIABLE	_inputSocketCV;
 	bool				_inputConnectionDone;
 
+	int		_numInputSampled;
+	int		_numInputProcessed;
 };
 
 byte Patch(byte delta, byte lo);

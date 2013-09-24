@@ -468,7 +468,6 @@ bool DeltaServer::IsHD()
  */
 void* DeltaServer::HandleInput()
 {
-	_inputHandler->SetFrameNum(_gameFrameNum);
 
 	if(!ShouldHandleInput())
 		return _inputHandler->GetEmptyCommand();
@@ -484,6 +483,12 @@ void* DeltaServer::HandleInput()
 		memcpy(_sharedInputBuffer,cmd,length);
 		SetEvent(_masterInputEvent);
 		WaitForSingleObject(_slaveInputEvent, INFINITE);
+
+#ifndef MEASUREMENT_OFF
+		_measurement->InputProcessed(_numInputProcessed, _gameFrameNum);
+#endif
+		_numInputProcessed++;
+
 		return cmd;
 	}
 	else
@@ -541,7 +546,8 @@ DeltaServer::DeltaServer(void)
 	_mutex(NULL),
 	_map(NULL),
 	_inputConnectionDone(false),
-	_masterInputReady(false)
+	_masterInputReady(false),
+	_numInputProcessed(0)
 {
 
 }

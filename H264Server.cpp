@@ -7,7 +7,8 @@
 
 H264Server::H264Server(void)
 	:KahawaiServer(),
-	_inputConnectionDone(false)
+	_inputConnectionDone(false),
+	_numInputProcessed(0)
 {
 }
 
@@ -129,12 +130,16 @@ bool H264Server::Send(void** compressedFrame,int frameSize)
 
 void* H264Server::HandleInput()
 {
-	_inputHandler->SetFrameNum(_gameFrameNum);
-
 	if (!ShouldHandleInput())
 		return _inputHandler->GetEmptyCommand();
 
 	char* cmd = (char*) _inputHandler->ReceiveCommand();
+
+#ifndef MEASUREMENT_OFF
+	_measurement->InputProcessed(_numInputProcessed, _gameFrameNum);
+#endif
+	_numInputProcessed++;
+
 	return cmd;
 }
 

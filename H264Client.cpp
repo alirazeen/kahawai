@@ -6,7 +6,8 @@
 H264Client::H264Client(void)
 	:KahawaiClient(),
 	_lastCommand(NULL),
-	_inputConnectionDone(false)
+	_inputConnectionDone(false),
+	_numInputSampled(0)
 {
 }
 
@@ -126,6 +127,11 @@ bool H264Client::Show()
 		// Do also see H264Server::GetFirstInputFrame for more details
 		void* inputCommand = _fnSampleUserInput();
 		_inputHandler->SendCommand(inputCommand);
+
+#ifndef MEASUREMENT_OFF
+		_measurement->InputSampled(_numInputSampled);
+#endif
+		_numInputSampled++;
 	}
 
 	return _decoder->Show();

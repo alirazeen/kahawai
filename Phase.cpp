@@ -46,12 +46,11 @@ const Phase* Phase::MULTIPLEX_PFRAME_BEGIN = new Phase("MULTIPLEX_PFRAME_BEGIN")
 const Phase* Phase::MULTIPLEX_PFRAME_RECEIVED = new Phase("MULTIPLEX_PFRAME_RECEIVED");
 const Phase* Phase::MULTIPLEX_PFRAME_END = new Phase("MULTIPLEX_PFRAME_END");
 
-const Phase* Phase::INPUT_GRAB = new Phase("INPUT_GRAB");
+const Phase* Phase::INPUT_SAMPLED = new Phase("INPUT_SAMPLED");
+const Phase* Phase::INPUT_PROCESSED = new Phase("INPUT_PROCESSED");
 
-const Phase* Phase::INPUT_CLIENT_RECEIVE = new Phase("INPUT_CLIENT_RECEIVE");
 const Phase* Phase::INPUT_CLIENT_SEND_BEGIN = new Phase("INPUT_CLIENT_SEND_BEGIN");
 const Phase* Phase::INPUT_CLIENT_SEND_END = new Phase("INPUT_CLIENT_SEND_END");
 
 const Phase* Phase::INPUT_SERVER_RECEIVE_BEGIN = new Phase("INPUT_SERVER_RECEIVE_BEGIN");
 const Phase* Phase::INPUT_SERVER_RECEIVE_END = new Phase("INPUT_SERVER_RECEIVE_END");
-const Phase* Phase::INPUT_SERVER_SEND = new Phase("INPUT_SERVER_SEND");

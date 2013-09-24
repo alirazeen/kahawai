@@ -47,8 +47,6 @@ InputHandlerClient::InputHandlerClient(char* serverIP, int port, char* gameName)
 	_serverIP(serverIP),
 	_inputSocket(INVALID_SOCKET),
 	_connected(false),
-	_frameNum(0),
-	_numReceivedInput(0),
 	_numSentInput(0)
 {
 
@@ -75,11 +73,6 @@ void InputHandlerClient::SetMeasurement(Measurement* measurement)
 #ifndef MEASUREMENT_OFF
 	_measurement = measurement;
 #endif
-}
-
-void InputHandlerClient::SetFrameNum(int frameNum)
-{
-	_frameNum = frameNum;
 }
 
 InputHandlerClient::~InputHandlerClient(void)
@@ -122,9 +115,8 @@ void InputHandlerClient::SendCommandsAsync()
 		LeaveCriticalSection(&_inputBufferCS);
 
 #ifndef MEASUREMENT_OFF
-		_measurement->AddPhase(Phase::INPUT_CLIENT_SEND_BEGIN, frameNum, "InputNum=%d",_numSentInput);
+		_measurement->InputClientSendBegin(_numSentInput);
 #endif
-
 		int result = send(_inputSocket, (char*)&frameNum, sizeof(frameNum), 0);
 		if (result != SOCKET_ERROR)
 		{
@@ -137,11 +129,9 @@ void InputHandlerClient::SendCommandsAsync()
 		{
 			KahawaiLog("Unable to send frame number of input or the input itself to the server", KahawaiError);
 		}
-
 #ifndef MEASUREMENT_OFF
-		_measurement->AddPhase(Phase::INPUT_CLIENT_SEND_END, frameNum, "InputNum=%d", _numSentInput);
+		_measurement->InputClientSendEnd(_numSentInput);
 #endif
-
 		_numSentInput++;
 
 		delete[] command;
@@ -183,11 +173,6 @@ void InputHandlerClient::SendCommand(void* command)
 
 		InputDescriptor* descriptor = new InputDescriptor(_frameNum, copyCommand);
 		_commandQueue.push(descriptor);
-
-#ifndef MEASUREMENT_OFF
-		_measurement->AddPhase(Phase::INPUT_CLIENT_RECEIVE, _frameNum, "InputNum=%d", _numReceivedInput);
-#endif
-		_numReceivedInput++;
 	}
 	WakeConditionVariable(&_inputReadyCV);
 	LeaveCriticalSection(&_inputBufferCS);

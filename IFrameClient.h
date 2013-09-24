@@ -70,5 +70,8 @@ private:
 	//We will run DecodeShow in a different thread due to reasons explained above.
 	static DWORD WINAPI		AsyncDecodeShow(void* Param);
 	void					DecodeShow();
+
+	int		_numInputSampled;
+	int		_numInputProcessed;
 };
 

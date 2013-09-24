@@ -37,5 +37,7 @@ private:
 	bool				_inputConnectionDone;
 	CRITICAL_SECTION	_inputSocketCS;
 	CONDITION_VARIABLE	_inputSocketCV;
+
+	int		_numInputProcessed;
 };
 

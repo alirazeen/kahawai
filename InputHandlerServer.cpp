@@ -15,7 +15,7 @@ void InputHandlerServer::ReceiveCommandsAsync()
 	{
 
 #ifndef MEASUREMENT_OFF
-		_measurement->AddPhase(Phase::INPUT_SERVER_RECEIVE_BEGIN, FRAME_NUM_NOT_APPLICABLE, "InputNum=%d", _numReceivedInput);
+		_measurement->InputServerReceiveBegin(_numReceivedInput);
 #endif
 
 		int frameNum = -1;
@@ -61,7 +61,7 @@ void InputHandlerServer::ReceiveCommandsAsync()
 			_commandQueue.push(descriptor);			
 
 #ifndef MEASUREMENT_OFF
-			_measurement->AddPhase(Phase::INPUT_SERVER_RECEIVE_END, frameNum, "InputNum=%d", _numReceivedInput);
+			_measurement->InputServerReceiveEnd(_numReceivedInput);
 #endif
 			_numReceivedInput++;
 		}
@@ -130,11 +130,6 @@ void* InputHandlerServer::ReceiveCommand()
 	LeaveCriticalSection(&_inputBufferCS);
 
 	void* processedCommand = _serializer->Deserialize(command);
-	
-#ifndef MEASUREMENT_OFF
-	_measurement->AddPhase(Phase::INPUT_SERVER_SEND, frameNum, "InputNum=%d", _numSentInput);
-#endif
-	_numSentInput++;
 
 	delete[] command;
 	command = NULL;
@@ -168,9 +163,7 @@ void* InputHandlerServer::GetEmptyCommand()
 
 InputHandlerServer::InputHandlerServer(int port, char* gameName)
 	:_port(port),
-	_frameNum(0),
-	_numReceivedInput(0),
-	_numSentInput(0)
+	_numReceivedInput(0)
 {
 	//Obtain the game specific serializer
 	if(strcmp(gameName,CONFIG_DOOM3)==0)
@@ -193,11 +186,6 @@ InputHandlerServer::InputHandlerServer(int port, char* gameName)
 void InputHandlerServer::SetMeasurement(Measurement* measurement)
 {
 	_measurement = measurement;
-}
-
-void InputHandlerServer::SetFrameNum(int frameNum)
-{
-	_frameNum = frameNum;
 }
 
 DWORD WINAPI InputHandlerServer::AsyncInputHandler(void* Param)

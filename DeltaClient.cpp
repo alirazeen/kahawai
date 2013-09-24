@@ -25,7 +25,9 @@ DeltaClient::DeltaClient(void)
 	_clientHeight(0),
 	_clientWidth(0),
 	_lastCommand(NULL),
-	_inputConnectionDone(false)
+	_inputConnectionDone(false),
+	_numInputSampled(0),
+	_numInputProcessed(0)
 {
 }
 
@@ -209,10 +211,13 @@ bool DeltaClient::Show()
 
 void* DeltaClient::HandleInput()
 {
-	_inputHandler->SetFrameNum(_gameFrameNum+FRAME_GAP);
-
 	//Get the actual command
 	void* inputCommand = _fnSampleUserInput();
+
+#ifndef MEASUREMENT_OOF
+	_measurement->InputSampled(_numInputSampled);
+#endif
+	_numInputSampled++;
 
 	//Free memory from previous invocations
 	if(_lastCommand != NULL)
@@ -239,6 +244,12 @@ void* DeltaClient::HandleInput()
 	{
 		_lastCommand = _localInputQueue.front();
 		_localInputQueue.pop();
+
+#ifndef MEASUREMENT_OFF
+		_measurement->InputProcessed(_numInputProcessed, _gameFrameNum);
+#endif
+		_numInputProcessed++;
+
 		return _lastCommand;
 	}	
 }

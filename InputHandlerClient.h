@@ -23,7 +23,6 @@ public:
 	bool					IsConnected();
 
 	void					SetMeasurement(Measurement* measurement);
-	void					SetFrameNum(int frameNum);
 
 private:
 	void					SendCommandsAsync();
@@ -49,7 +48,6 @@ private:
 	//Instrumentation
 	Measurement*			_measurement;
 	int						_frameNum;
-	int						_numReceivedInput;
 	int						_numSentInput;
 };
 #endif

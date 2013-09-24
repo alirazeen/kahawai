@@ -63,6 +63,8 @@ private:
 
 	bool theMaster;
 	bool theSlave;
+
+	int _numInputProcessed;
 };
 
 byte Delta(byte hi, byte lo);
