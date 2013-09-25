@@ -214,7 +214,7 @@ void* DeltaClient::HandleInput()
 	//Get the actual command
 	void* inputCommand = _fnSampleUserInput();
 
-#ifndef MEASUREMENT_OOF
+#ifndef MEASUREMENT_OFF
 	_measurement->InputSampled(_numInputSampled);
 #endif
 	_numInputSampled++;
